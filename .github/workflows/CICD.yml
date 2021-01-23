@@ -2,21 +2,56 @@ name: CICD
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  lint-build-test:
-    runs-on: ubuntu-18.04
+  lint-build-test-release-package-upload:
+    name: Lint, Build, Test, Build release, Package, Upload
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - { name: ubuntu-18.04 }
+          - { name: macos-10.15 }
+          - { name: windows-2019, bin-suffix: .exe }
+    runs-on: ${{ matrix.os.name }}
+    defaults:
+      run:
+        shell: bash
     steps:
-    - uses: actions/checkout@v2
-    - name: Lint
-      run: cargo clippy -- --deny warnings
-    - name: Build
-      run: cargo build
-    - name: Tests
-      run: cargo test
+      - uses: actions/checkout@v2
+      - name: Lint
+        run: |
+          cargo clippy --locked -- --deny warnings
+      - name: Build
+        run: |
+          cargo build --locked
+      - name: Test
+        run: |
+          cargo test --locked
+      - name: Build release
+        id: release
+        run: |
+          cargo build --release --locked
+          echo ::set-output name=BIN_PATH::./target/release/git-repo-language-trends${{ matrix.os.bin-suffix }}
+      - name: Strip release build
+        run: |
+          if command -v strip; then strip ${{ steps.release.outputs.BIN_PATH }}; fi
+      - name: Package release build
+        id: package
+        run: |
+          VERSION=$(sed -n 's/version = "\([^"]*\)"/\1/p' Cargo.toml)
+          TRIPLET=$(rustup show active-toolchain | sed -n 's/stable-\([^ ]*\) .*/\1/p')
+          PACKAGE_NAME=git-repo-language-trends_${VERSION}_${TRIPLET}.zip
+          7z a $PACKAGE_NAME ${{ steps.release.outputs.BIN_PATH }}
+          echo ::set-output name=PACKAGE_NAME::${PACKAGE_NAME}
+      - name: Upload artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: ${{ steps.package.outputs.PACKAGE_NAME }}
+          path: ${{ steps.package.outputs.PACKAGE_NAME }}
