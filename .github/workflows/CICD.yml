@@ -1,0 +1,22 @@
+name: CICD
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  lint-build-test:
+    runs-on: ubuntu-18.04
+    steps:
+    - uses: actions/checkout@v2
+    - name: Lint
+      run: cargo clippy -- --deny warnings
+    - name: Build
+      run: cargo build
+    - name: Tests
+      run: cargo test
