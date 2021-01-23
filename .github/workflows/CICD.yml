@@ -2,21 +2,35 @@ name: CICD
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  lint-build-test:
-    runs-on: ubuntu-18.04
+  lint-build-test-release:
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - { name: ubuntu-18.04               }
+          - { name: macos-10.15                }
+          - { name: windows-2019, bin-suffix: .exe }
+    runs-on: ${{ matrix.os.name }}
     steps:
-    - uses: actions/checkout@v2
-    - name: Lint
-      run: cargo clippy -- --deny warnings
-    - name: Build
-      run: cargo build
-    - name: Tests
-      run: cargo test
+      - uses: actions/checkout@v2
+      - name: Lint
+        run: cargo clippy -- --deny warnings
+      - name: Build
+        run: cargo build --locked
+      - name: Test
+        run: cargo test --locked
+      - name: Build release
+        run: cargo build --release --locked
+      - name: Upload artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: git-repo-language-trends${{ matrix.os.bin-suffix }}
+          path: ./target/release/git-repo-language-trends${{ matrix.os.bin-suffix }}
