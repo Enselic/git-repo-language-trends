@@ -48,29 +48,37 @@ EXAMPLES
     for row in command_stdout_as_lines(git_log) {
         let mut split = row.split(':');
         let week = split.next().unwrap(); // Year and week, e.g. "2021w02"
-        let commit = split.next().unwrap(); // Commit, e.g. "979f8d7"
+        let commit = split.next().unwrap(); // Commit, e.g. "979f8d74e9"
 
         if !analyzed_weeks.contains(week) {
             analyzed_weeks.insert(week.to_owned());
 
-            print_row(week, commit, &extensions)
+            process_and_print_row(week, commit, &extensions)
         };
     }
 }
 
-fn print_row(year_and_week: &str, commit: &str, extensions: &[String]) {
-    let data = from_commit(commit, extensions);
-    print!("{}", year_and_week);
+fn process_and_print_row(week: &str, commit: &str, extensions: &[String]) {
+    let data = process_commit(week, commit, extensions);
+    print!("{}", week);
     for ext in extensions {
         print!("\t{}", data.get(ext).unwrap_or(&0));
     }
     println!();
 }
 
-fn from_commit(commit: &str, extensions: &[String]) -> HashMap<String, usize> {
+fn process_commit(week: &str, commit: &str, extensions: &[String]) -> HashMap<String, usize> {
     let mut ext_to_total_lines = HashMap::new();
+    let files = command_stdout_as_lines(format!("git ls-tree --name-only -r {}", commit));
 
-    for file in command_stdout_as_lines(format!("git ls-tree --name-only -r {}", commit)) {
+    use indicatif::{ProgressBar, ProgressStyle};
+    let pb = ProgressBar::new(files.len() as u64);
+    pb.set_prefix(week);
+    pb.set_message(commit);
+    pb.set_style(ProgressStyle::default_bar().template("{prefix} {wide_bar} {pos}/{len} commit {msg}"));
+
+    for (index, file) in files.iter().enumerate() {
+        pb.set_position(index as u64);
         if let Some(extension) = file.rsplitn(2, '.').next() {
             if !extensions.contains(&extension.to_owned()) {
                 continue;
@@ -82,12 +90,18 @@ fn from_commit(commit: &str, extensions: &[String]) -> HashMap<String, usize> {
         }
     }
 
+    pb.finish_and_clear();
+
     ext_to_total_lines
 }
 
 fn command_stdout_as_lines<T: AsRef<str>>(command: T) -> Vec<String> {
     let stdout = command_stdout(command);
-    String::from_utf8(stdout).unwrap().lines().map(String::from).collect()
+    String::from_utf8(stdout)
+        .unwrap()
+        .lines()
+        .map(String::from)
+        .collect()
 }
 
 fn command_stdout_line_count<T: AsRef<str>>(command: T) -> usize {
