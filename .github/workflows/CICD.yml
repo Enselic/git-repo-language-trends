@@ -28,11 +28,20 @@ jobs:
       - name: Test
         run: cargo test --locked
       - name: Build release
-        run: cargo build --release --locked
+        id: release
+        run: |
+          cargo build --release --locked
+          echo ::set-output name=BIN_PATH::./target/release/git-repo-language-trends${{ matrix.os.bin-suffix }}
       - name: Strip release build
-        run: if command -v strip; then strip ./target/release/git-repo-language-trends${{ matrix.os.bin-suffix }}; fi
+        run: if command -v strip; then strip ${{ steps.release.outputs.BIN_PATH }}; fi
+      - name: Package release build
+        id: package
+        run: |
+          PACKAGE_NAME=git-repo-language-trends_${{ matrix.os.name }}.zip
+          echo ::set-output name=PACKAGE_NAME::${PACKAGE_NAME}
+          zip $PACKAGE_NAME ${{ steps.release.outputs.BIN_PATH }}
       - name: Upload artifact
         uses: actions/upload-artifact@v2
         with:
-          name: git-repo-language-trends-${{ matrix.os.name }}.${{ matrix.os.bin-suffix }}
-          path: ./target/release/git-repo-language-trends${{ matrix.os.bin-suffix }}
+          name: ${{ steps.package.outputs.PACKAGE_NAME }}
+          path: ${{ steps.package.outputs.PACKAGE_NAME }}
