@@ -25,18 +25,22 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Lint
-        run: cargo clippy --locked -- --deny warnings
+        run: |
+          cargo clippy --locked -- --deny warnings
       - name: Build
-        run: cargo build --locked
+        run: |
+          cargo build --locked
       - name: Test
-        run: cargo test --locked
+        run: |
+          cargo test --locked
       - name: Build release
         id: release
         run: |
           cargo build --release --locked
           echo ::set-output name=BIN_PATH::./target/release/git-repo-language-trends${{ matrix.os.bin-suffix }}
       - name: Strip release build
-        run: if command -v strip; then strip ${{ steps.release.outputs.BIN_PATH }}; fi
+        run: |
+          if command -v strip; then strip ${{ steps.release.outputs.BIN_PATH }}; fi
       - name: Package release build
         id: package
         run: |
