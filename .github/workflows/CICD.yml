@@ -32,5 +32,5 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v2
         with:
-          name: git-repo-language-trends${{ matrix.os.bin-suffix }}
+          name: git-repo-language-trends-${{ matrix.os.name }}.${{ matrix.os.bin-suffix }}
           path: ./target/release/git-repo-language-trends${{ matrix.os.bin-suffix }}
