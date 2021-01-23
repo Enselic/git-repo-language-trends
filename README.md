@@ -16,8 +16,27 @@ Simply pass the file extensions of the languages you want the trend for. In the 
 2021w01 386     27
 ```
 
-# To Do
+# Installation
 
-Performance is OK as is, but would probably be a lot faster with the (git2
-crate)[https://github.com/rust-lang/git2-rs] to avoid spawning thousands of
-child processes.
+## Pre-built binaries
+
+You can download pre-built binaries for **Linux**, **Mac** and **Windows** for the latest release [here](https://github.com/Enselic/git-repo-language-trends/releases).
+
+
+## cargo install
+
+If you have Rust and Cargo installed, all you need to do to fetch, build and install the self-contained `git-repo-language-trends` binary from source is:
+
+```
+cargo install git-repo-language-trends
+```
+
+## From source
+You can of course also clone this repo and then simply `cargo build` it if you have Rust and Cargo installed on your system.
+
+# Implementation details
+
+The current implementation spawns lots of `git` child processes for the
+processing. Using the [git2-rs library](https://github.com/rust-lang/git2-rs)
+directly would probably result in a significant speedup, but at the cost of much
+more complicated code.

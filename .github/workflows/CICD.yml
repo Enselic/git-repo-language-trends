@@ -15,14 +15,14 @@ jobs:
       fail-fast: false
       matrix:
         os:
-          - { name: ubuntu-18.04               }
-          - { name: macos-10.15                }
+          - { name: ubuntu-18.04                   }
+          - { name: macos-10.15                    }
           - { name: windows-2019, bin-suffix: .exe }
     runs-on: ${{ matrix.os.name }}
     steps:
       - uses: actions/checkout@v2
       - name: Lint
-        run: cargo clippy -- --deny warnings
+        run: cargo clippy --locked -- --deny warnings
       - name: Build
         run: cargo build --locked
       - name: Test
