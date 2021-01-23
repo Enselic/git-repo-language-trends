@@ -31,6 +31,8 @@ cargo install git-repo-language-trends
 You can of course also clone this repo and then simply `cargo build` it if you have Rust and Cargo installed on your system.
 
 # Implementation details
+Currently, the program counts ~20 000 lines / second on a 2018 Macbook Pro.
+
 The current implementation spawns lots of `git` child processes for the
 processing. Using the [git2-rs library](https://github.com/rust-lang/git2-rs)
 directly would probably result in a significant speedup, but at the cost of much
