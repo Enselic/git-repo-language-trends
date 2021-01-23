@@ -29,6 +29,8 @@ jobs:
         run: cargo test --locked
       - name: Build release
         run: cargo build --release --locked
+      - name: Strip release build
+        run: if command -v strip; then strip ./target/release/git-repo-language-trends${{ matrix.os.bin-suffix }}; fi
       - name: Upload artifact
         uses: actions/upload-artifact@v2
         with:
