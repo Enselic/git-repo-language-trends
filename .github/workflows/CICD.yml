@@ -3,6 +3,8 @@ name: CICD
 on:
   push:
     branches: [main]
+    tags:
+      - v*
   pull_request:
     branches: [main]
 
@@ -10,18 +12,19 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  lint-build-test-release:
+  lint-build-test-release-package-upload:
+    name: Lint, Build, Test, Build release, Package, Upload
     strategy:
       fail-fast: false
       matrix:
         os:
-          - { name: ubuntu-18.04                   }
-          - { name: macos-10.15                    }
+          - { name: ubuntu-18.04 }
+          - { name: macos-10.15 }
           - { name: windows-2019, bin-suffix: .exe }
     runs-on: ${{ matrix.os.name }}
     defaults:
       run:
-        shell: bash        
+        shell: bash
     steps:
       - uses: actions/checkout@v2
       - name: Lint
