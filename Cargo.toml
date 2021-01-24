@@ -1,13 +1,13 @@
 [package]
-name = "git-repo-language-trends"
-version = "0.1.2"
 authors = ["Martin Nordholts <enselic@gmail.com>"]
-license = "MIT"
 description = "Prints tabulated data about programming language usage over time in a git repository for a given set of file extensions."
 documentation = "https://github.com/Enselic/git-repo-language-trends/blob/main/README.md"
-homepage = "https://github.com/Enselic/git-repo-language-trends"
-repository = "https://github.com/Enselic/git-repo-language-trends"
 edition = "2018"
+homepage = "https://github.com/Enselic/git-repo-language-trends"
+license = "MIT"
+name = "git-repo-language-trends"
+repository = "https://github.com/Enselic/git-repo-language-trends"
+version = "0.1.2"
 
 [dependencies]
-indicatif = "0.15.0"
+git2 = "0.13.16"

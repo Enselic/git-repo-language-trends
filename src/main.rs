@@ -4,15 +4,16 @@ use std::env;
 use std::path;
 use std::process;
 
-fn main() {
+fn run() -> Result<(), git2::Error> {
     let mut args = env::args();
     let bin_path = args.next().unwrap();
     let bin = bin_path.rsplit(path::MAIN_SEPARATOR).next().unwrap();
-    let extensions: Vec<String> = args.collect();
-    if extensions.is_empty()
-        || extensions.contains(&"-h".to_owned())
-        || extensions.contains(&"--help".to_owned())
-    {
+    let extensions_owned: Vec<String> = args.collect();
+    let extensions: Vec<&str> = extensions_owned
+        .iter()
+        .map(std::ops::Deref::deref)
+        .collect();
+    if extensions.is_empty() || extensions.contains(&"-h") || extensions.contains(&"--help") {
         println!(
             "\
 Prints tabulated data about programming language usage over time in a git repository
@@ -34,6 +35,8 @@ EXAMPLES
         process::exit(1);
     }
 
+    let repo = git2::Repository::open(".")?;
+
     // Print column headers
     for ext in &extensions {
         print!("\t{}", ext);
@@ -44,55 +47,100 @@ EXAMPLES
     let mut analyzed_weeks = HashSet::new();
     // Use --no-merges --first-parent to get a continous history
     // Otherwise there can be confusing bumps in the graph
+    // git log is much easier than libgit2, and the top level loop
+    // is not performance critical, so use a plain git log child process
     let git_log = "git log --format=%cd:%h --date=format:%Yw%U --no-merges --first-parent";
     for row in command_stdout_as_lines(git_log) {
         let mut split = row.split(':');
         let week = split.next().unwrap(); // Year and week, e.g. "2021w02"
         let commit = split.next().unwrap(); // Commit, e.g. "979f8d74e9"
 
+        // TODO: Use days and parse weeks instead
         if !analyzed_weeks.contains(week) {
             analyzed_weeks.insert(week.to_owned());
 
-            process_and_print_row(week, commit, &extensions)
+            // TODO: Keep going if one fails?
+            process_and_print_row(&repo, week, commit, &extensions)?;
         };
     }
+
+    // TODO: Output simple graphs in addition to tabulated data
+    Ok(())
 }
 
-fn process_and_print_row(week: &str, commit: &str, extensions: &[String]) {
-    let data = process_commit(week, commit, extensions);
+fn process_and_print_row(
+    repo: &git2::Repository,
+    week: &str,
+    commit: &str,
+    extensions: &[&str],
+) -> Result<(), git2::Error> {
+    let data = process_commit(repo, commit, extensions)?;
     print!("{}", week);
     for ext in extensions {
         print!("\t{}", data.get(ext).unwrap_or(&0));
     }
     println!();
+
+    Ok(())
 }
 
-fn process_commit(week: &str, commit: &str, extensions: &[String]) -> HashMap<String, usize> {
+fn process_commit<'a>(
+    repo: &git2::Repository,
+    commit: &str,
+    extensions: &'a [&str],
+) -> Result<HashMap<&'a str, usize>, git2::Error> {
     let mut ext_to_total_lines = HashMap::new();
-    let files = command_stdout_as_lines(format!("git ls-tree --name-only -r {}", commit));
 
-    use indicatif::{ProgressBar, ProgressStyle};
-    let pb = ProgressBar::new(files.len() as u64);
-    pb.set_prefix(week);
-    pb.set_message(commit);
-    pb.set_style(ProgressStyle::default_bar().template("{prefix} {wide_bar} {pos}/{len} commit {msg}"));
-
-    for (index, file) in files.iter().enumerate() {
-        pb.set_position(index as u64);
-        if let Some(extension) = file.rsplitn(2, '.').next() {
-            if !extensions.contains(&extension.to_owned()) {
-                continue;
+    let commito = repo.revparse_single(commit)?;
+    let treeo = commito.peel(git2::ObjectType::Tree)?;
+    let tree = treeo
+        .as_tree()
+        .ok_or_else(|| git2::Error::from_str("tree not a tree"))?;
+    tree.walk(git2::TreeWalkMode::PostOrder, |_, entry| {
+        if Some(git2::ObjectType::Blob) == entry.kind() {
+            if let Some(entry_extension) = extension_for_raw_name(entry.name_bytes()) {
+                for extension in extensions {
+                    if *extension == entry_extension {
+                        if let Ok(lines) = get_lines_in_blob(repo, &entry.id()) {
+                            let total_lines = ext_to_total_lines.entry(*extension).or_insert(0);
+                            *total_lines += lines;
+                        } else {
+                            // TODO: Propagate error
+                        }
+                    }
+                }
             }
+        }
 
-            let lines = command_stdout_line_count(format!("git show {}:{}", commit, file));
-            let total_lines = ext_to_total_lines.entry(extension.to_owned()).or_insert(0);
-            *total_lines += lines;
+        git2::TreeWalkResult::Ok
+    })?;
+
+    Ok(ext_to_total_lines)
+}
+
+fn get_lines_in_blob(repo: &git2::Repository, blobid: &git2::Oid) -> Result<usize, git2::Error> {
+    let blobo = repo.find_object(*blobid, Some(git2::ObjectType::Blob))?;
+    let blob = blobo
+        .as_blob()
+        .ok_or_else(|| git2::Error::from_str("the blob was not a blob, hmm"))?;
+    let content = blob.content();
+    let mut lines = 0;
+    for b in content {
+        if *b == b'\n' {
+            lines += 1;
         }
     }
+    Ok(lines)
+}
 
-    pb.finish_and_clear();
-
-    ext_to_total_lines
+fn extension_for_raw_name(raw_name: &[u8]) -> Option<&str> {
+    match raw_name.iter().rposition(|u| *u == b'.') {
+        Some(dot_index) => {
+            let raw_ext = &raw_name[dot_index..];
+            std::str::from_utf8(raw_ext).ok()
+        }
+        None => None,
+    }
 }
 
 fn command_stdout_as_lines<T: AsRef<str>>(command: T) -> Vec<String> {
@@ -104,11 +152,6 @@ fn command_stdout_as_lines<T: AsRef<str>>(command: T) -> Vec<String> {
         .collect()
 }
 
-fn command_stdout_line_count<T: AsRef<str>>(command: T) -> usize {
-    let stdout = command_stdout(command);
-    stdout.into_iter().filter(|c| *c == b'\n').count()
-}
-
 fn command_stdout<T: AsRef<str>>(command: T) -> Vec<u8> {
     let mut args = command.as_ref().split_ascii_whitespace();
 
@@ -118,4 +161,12 @@ fn command_stdout<T: AsRef<str>>(command: T) -> Vec<u8> {
         .output()
         .unwrap()
         .stdout
+}
+
+// TODO: Use StructOpt and top-level main() with run() and add error handling
+fn main() {
+    match run() {
+        Ok(()) => {}
+        Err(e) => eprintln!("error: {}", e),
+    }
 }
