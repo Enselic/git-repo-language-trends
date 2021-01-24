@@ -11,3 +11,4 @@ version = "0.1.2"
 
 [dependencies]
 git2 = "0.13.16"
+structopt = "0.3.21"

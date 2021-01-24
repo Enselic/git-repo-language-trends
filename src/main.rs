@@ -1,39 +1,32 @@
 use std::collections::HashMap;
 use std::collections::HashSet;
-use std::env;
-use std::path;
 use std::process;
+use structopt::StructOpt;
 
-fn run() -> Result<(), git2::Error> {
-    let mut args = env::args();
-    let bin_path = args.next().unwrap();
-    let bin = bin_path.rsplit(path::MAIN_SEPARATOR).next().unwrap();
-    let extensions_owned: Vec<String> = args.collect();
-    let extensions: Vec<&str> = extensions_owned
-        .iter()
-        .map(std::ops::Deref::deref)
-        .collect();
-    if extensions.is_empty() || extensions.contains(&"-h") || extensions.contains(&"--help") {
-        println!(
-            "\
+#[derive(Debug, StructOpt)]
+#[structopt(about = "\
 Prints tabulated data about programming language usage over time in a git repository
 for a given set of file extensions. The data points are on a week-by-week basis.
 
 Copy-paste the output into e.g. Google Sheets or Microsoft Excel to easily make a graph.
 Stacked area chart is recommended.
 
-USAGE
-    {} EXT1 EXT2 EXT3 ...
-
 EXAMPLES
-    {} java kt             # Java vs Kotlin
-    {} m swift             # Objective-C vs Swift
-    {} cpp rs              # C++ vs Rust
-",
-            bin, bin, bin, bin
-        );
-        process::exit(1);
-    }
+    git-repo-language-trend .cpp  .rs             # C++ vs Rust
+    git-repo-language-trend .java .kt             # Java vs Kotlin
+    git-repo-language-trend .m    .swift          # Objective-C vs Swift
+")]
+struct Args {
+    #[structopt(name = "EXT1", required = true)]
+    file_extensions: Vec<String>,
+}
+
+fn run(args: &Args) -> Result<(), git2::Error> {
+    let extensions: Vec<&str> = args
+        .file_extensions
+        .iter()
+        .map(std::ops::Deref::deref)
+        .collect();
 
     let repo = git2::Repository::open(".")?;
 
@@ -165,7 +158,8 @@ fn command_stdout<T: AsRef<str>>(command: T) -> Vec<u8> {
 
 // TODO: Use StructOpt and top-level main() with run() and add error handling
 fn main() {
-    match run() {
+    let args = Args::from_args();
+    match run(&args) {
         Ok(()) => {}
         Err(e) => eprintln!("error: {}", e),
     }
