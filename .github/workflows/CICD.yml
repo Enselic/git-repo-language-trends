@@ -26,9 +26,11 @@ jobs:
         shell: bash
     steps:
       - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
       - name: Lint
         run: |
-          cargo clippy --locked -- --deny warnings
+          cargo clippy --locked --all-targets --all-features -- --deny warnings
       - name: Build
         run: |
           cargo build --locked

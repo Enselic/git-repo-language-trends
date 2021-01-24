@@ -6,7 +6,7 @@ use structopt::StructOpt;
 #[derive(Debug, StructOpt)]
 #[structopt(about = "\
 Prints tabulated data about programming language usage over time in a git repository
-for a given set of file extensions. The data points are on a week-by-week basis.
+for a given set of file extensions.
 
 Copy-paste the output into e.g. Google Sheets or Microsoft Excel to easily make a graph.
 Stacked area chart is recommended.
@@ -17,6 +17,11 @@ EXAMPLES
     git-repo-language-trend .m    .swift          # Objective-C vs Swift
 ")]
 struct Args {
+    // TODO: Select day, week, or months statistics
+    // Figure out tabulation though
+
+    // TODO: Allow all commits, not just --first-parent
+
     #[structopt(default_value = "", long, help = "Optional. The commit to start parsing from.")]
     start_commit: String,
 
@@ -40,26 +45,25 @@ fn run(args: &Args) -> Result<(), git2::Error> {
     println!();
 
     // Print rows
-    let mut analyzed_weeks = HashSet::new();
+    let mut analyzed_dates = HashSet::new();
     // Use --no-merges --first-parent to get a continous history
     // Otherwise there can be confusing bumps in the graph
     // git log is much easier than libgit2, and the top level loop
     // is not performance critical, so use a plain git log child process
     let git_log = format!(
-        "git log --format=%cd:%h --date=format:%Yw%U --no-merges --first-parent {}",
+        "git log --format=%cd:%h --date=format:%Y-%m-%d --no-merges --first-parent {}",
         args.start_commit
     );
     for row in command_stdout_as_lines(git_log) {
         let mut split = row.split(':');
-        let week = split.next().unwrap(); // Year and week, e.g. "2021w02"
-        let commit = split.next().unwrap(); // Commit, e.g. "979f8d74e9"
+        let date = split.next().unwrap(); // e.g. "2021-01-14"
+        let commit = split.next().unwrap(); // e.g. "979f8d74e9"
 
-        // TODO: Use days and parse weeks instead
-        if !analyzed_weeks.contains(week) {
-            analyzed_weeks.insert(week.to_owned());
+        if !analyzed_dates.contains(date) {
+            analyzed_dates.insert(date.to_owned());
 
             // TODO: Keep going if one fails?
-            process_and_print_row(&repo, week, commit, &extensions)?;
+            process_and_print_row(&repo, date, commit, &extensions)?;
         };
     }
 
@@ -69,12 +73,12 @@ fn run(args: &Args) -> Result<(), git2::Error> {
 
 fn process_and_print_row(
     repo: &git2::Repository,
-    week: &str,
+    date: &str,
     commit: &str,
     extensions: &[&str],
 ) -> Result<(), git2::Error> {
     let data = process_commit(repo, commit, extensions)?;
-    print!("{}", week);
+    print!("{}", date);
     for ext in extensions {
         print!("\t{}", data.get(ext).unwrap_or(&0));
     }
