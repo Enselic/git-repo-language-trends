@@ -5,7 +5,7 @@ fn sanity_analysis_of_own_git_repo() {
     Command::cargo_bin("git-repo-language-trends")
         .unwrap()
         .arg("--start-commit")
-        .arg("68b285abcc") // tag: v0.1.2
+        .arg("v0.1.2")
         .arg(".rs")
         .arg(".a")
         .assert()
