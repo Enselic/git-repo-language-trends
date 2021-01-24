@@ -8,14 +8,13 @@ a graph. Stacked area chart is recommended.
 # Example
 Simply pass the file extensions of the languages you want the trend for.
 ```
-% cd ~/src/some-git-repo
-% git-repo-language-trends cpp rs
-        .cpp    .rs
-2021w03 0       245
-2021w02 143     198
-2021w01 386     27
+% cd ~/src/your-project
+% git-repo-language-trends .cpp .rs
+           .cpp    .rs
+2021-01-23 121     0
+2021-01-22 107     0
+2021-01-19 66      0
 ```
-In the output, e.g. `2021w02` means "year 2021, week 02".
 
 # Installation
 ## Pre-built binaries

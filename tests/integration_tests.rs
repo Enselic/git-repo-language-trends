@@ -5,16 +5,16 @@ fn sanity_analysis_of_own_git_repo() {
     Command::cargo_bin("git-repo-language-trends")
         .unwrap()
         .arg("--start-commit")
-        .arg("3340ee71f9")
+        .arg("68b285abcc") // tag: v0.1.2
         .arg(".rs")
         .arg(".a")
-        .arg(".")
         .assert()
         .success()
         .stdout(
-            "	.rs	.a	.
-2021w04	185	4	3
-2021w03	121	0	0
+            "	.rs	.a
+2021-01-23	121	0
+2021-01-22	107	0
+2021-01-19	66	0
 ",
         )
         .stderr("");
