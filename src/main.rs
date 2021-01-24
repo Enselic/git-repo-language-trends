@@ -17,6 +17,9 @@ EXAMPLES
     git-repo-language-trend .m    .swift          # Objective-C vs Swift
 ")]
 struct Args {
+    #[structopt(default_value = "", long, help = "Optional. The commit to start parsing from.")]
+    start_commit: String,
+
     #[structopt(name = "EXT1", required = true)]
     file_extensions: Vec<String>,
 }
@@ -42,7 +45,10 @@ fn run(args: &Args) -> Result<(), git2::Error> {
     // Otherwise there can be confusing bumps in the graph
     // git log is much easier than libgit2, and the top level loop
     // is not performance critical, so use a plain git log child process
-    let git_log = "git log --format=%cd:%h --date=format:%Yw%U --no-merges --first-parent";
+    let git_log = format!(
+        "git log --format=%cd:%h --date=format:%Yw%U --no-merges --first-parent {}",
+        args.start_commit
+    );
     for row in command_stdout_as_lines(git_log) {
         let mut split = row.split(':');
         let week = split.next().unwrap(); // Year and week, e.g. "2021w02"
@@ -156,7 +162,6 @@ fn command_stdout<T: AsRef<str>>(command: T) -> Vec<u8> {
         .stdout
 }
 
-// TODO: Use StructOpt and top-level main() with run() and add error handling
 fn main() {
     let args = Args::from_args();
     match run(&args) {

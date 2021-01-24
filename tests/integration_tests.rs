@@ -4,6 +4,8 @@ use assert_cmd::Command;
 fn sanity_analysis_of_own_git_repo() {
     Command::cargo_bin("git-repo-language-trends")
         .unwrap()
+        .arg("--start-commit")
+        .arg("3340ee71f9")
         .arg(".rs")
         .arg(".a")
         .arg(".")
