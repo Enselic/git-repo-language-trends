@@ -1,4 +1,4 @@
-name: CICD
+name: CI/CD
 
 on:
   push:
@@ -11,8 +11,8 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  lint-build-test-release-package-upload:
-    name: Lint, Build, Test, Build release, Package, Upload
+  cicd:
+    name: CI/CD
     strategy:
       fail-fast: false
       matrix:
