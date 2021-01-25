@@ -41,6 +41,10 @@ struct Args {
     #[structopt(long)]
     benchmark: bool,
 
+    // Prints debug information during processing.
+    #[structopt(long)]
+    debug: bool,
+
     #[structopt(name = "EXT1", required = true)]
     file_extensions: Vec<String>,
 }
@@ -97,13 +101,25 @@ fn run(args: &Args) -> Result<(), git2::Error> {
         let mut split = row.split(':'); // e.g. "2021-01-14:979f8d74e9"
         let date = split.next().unwrap(); // e.g. "2021-01-14"
         let commit = split.next().unwrap(); // e.g. "979f8d74e9"
+        if args.debug {
+            eprint!("-> Looking at {} {} ...", commit, date);
+        }
 
         let current_date = NaiveDate::parse_from_str(date, date_fmt).expect("parsing");
         if match last_date {
             Some(last_date) => {
-                last_date.signed_duration_since(current_date).num_days() >= args.interval as i64
+                let days_passed = last_date.signed_duration_since(current_date).num_days();
+                if args.debug {
+                    eprintln!(" made {} days after last printed one", days_passed);
+                }
+                days_passed >= args.interval as i64
             }
-            None => true,
+            None => {
+                if args.debug {
+                    eprintln!(" first printed row");
+                }
+                true
+            }
         } {
             // TODO: Keep going if one fails?
             process_and_print_row(&repo, date, commit, &extensions, &mut performance_data)?;
