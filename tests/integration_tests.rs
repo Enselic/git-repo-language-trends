@@ -76,6 +76,21 @@ fn own_git_repo_7_day_interval() {
 }
 
 #[test]
+fn negative_interval() {
+    Command::cargo_bin("git-repo-language-trends")
+        .unwrap()
+        .arg("--interval")
+        .arg("-1")
+        .arg(".rs")
+        .assert()
+        .failure()
+        .stdout("")
+        .stderr(predicates::str::contains(
+            "Found argument '-1' which wasn't expected",
+        ));
+}
+
+#[test]
 fn own_git_repo_max_rows_5() {
     Command::cargo_bin("git-repo-language-trends")
         .unwrap()
@@ -121,16 +136,15 @@ fn own_git_repo_max_rows_0() {
 }
 
 #[test]
-fn negative_interval() {
+fn benchmark() {
     Command::cargo_bin("git-repo-language-trends")
         .unwrap()
+        .arg("--benchmark")
         .arg("--interval")
-        .arg("-1")
-        .arg(".rs")
+        .arg("0")
+        .arg(".yml")
         .assert()
-        .failure()
-        .stdout("")
-        .stderr(predicates::str::contains(
-            "Found argument '-1' which wasn't expected",
-        ));
+        .success()
+        .stdout(predicates::str::contains("lines/second"))
+        .stderr("");
 }

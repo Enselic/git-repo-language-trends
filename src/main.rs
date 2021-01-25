@@ -1,5 +1,5 @@
 // Features missing:
-//  * Measure performance in lines/second
+//  * print progress bar for large projects such as the Linux kernel
 //  * Auto-detect extensions using first commit
 //  * Auto-convert file extension to name, e.g. .rs <-> Rust
 //  * get rid of dependence of git binary by using git2-rs instead of git log
@@ -34,11 +34,21 @@ struct Args {
     max_rows: u64,
 
     /// Optional. The commit to start parsing from.
-    #[structopt(default_value = "HEAD", long)]
+    #[structopt(long, default_value = "HEAD")]
     start_commit: String,
+
+    /// Prints total counted lines/second.
+    #[structopt(long)]
+    benchmark: bool,
 
     #[structopt(name = "EXT1", required = true)]
     file_extensions: Vec<String>,
+}
+
+struct PerformanceData {
+    start_time: std::time::Instant,
+    total_lines_counted: usize,
+    total_files_processed: usize,
 }
 
 fn run(args: &Args) -> Result<(), git2::Error> {
@@ -67,6 +77,16 @@ fn run(args: &Args) -> Result<(), git2::Error> {
         date_fmt, args.start_commit
     );
 
+    let mut performance_data = if args.benchmark {
+        Some(PerformanceData {
+            start_time: std::time::Instant::now(),
+            total_lines_counted: 0,
+            total_files_processed: 0,
+        })
+    } else {
+        None
+    };
+
     let mut rows_left = args.max_rows;
     let mut last_date: Option<NaiveDate> = None;
     for row in command_stdout_as_lines(git_log) {
@@ -86,10 +106,24 @@ fn run(args: &Args) -> Result<(), git2::Error> {
             None => true,
         } {
             // TODO: Keep going if one fails?
-            process_and_print_row(&repo, date, commit, &extensions)?;
+            process_and_print_row(&repo, date, commit, &extensions, &mut performance_data)?;
             rows_left -= 1;
         }
         last_date = Some(current_date);
+    }
+
+    if let Some(performance_data) = performance_data {
+        let end_time = std::time::Instant::now();
+        let duration = end_time - performance_data.start_time;
+        let seconds = duration.as_secs_f64();
+        let lines_per_second = performance_data.total_lines_counted as f64 / seconds;
+        println!(
+            "Counted {} lines/second ({} lines in {} files in {:.3} seconds)",
+            lines_per_second.floor(),
+            performance_data.total_lines_counted,
+            performance_data.total_files_processed,
+            seconds
+        );
     }
 
     Ok(())
@@ -100,8 +134,9 @@ fn process_and_print_row(
     date: &str,
     commit: &str,
     extensions: &[&str],
+    performance_data: &mut Option<PerformanceData>,
 ) -> Result<(), git2::Error> {
-    let data = process_commit(repo, commit, extensions)?;
+    let data = process_commit(repo, commit, extensions, performance_data)?;
     print!("{}", date);
     for ext in extensions {
         print!("\t{}", data.get(ext).unwrap_or(&0));
@@ -115,6 +150,7 @@ fn process_commit<'a>(
     repo: &git2::Repository,
     commit: &str,
     extensions: &'a [&str],
+    performance_data: &mut Option<PerformanceData>,
 ) -> Result<HashMap<&'a str, usize>, git2::Error> {
     let mut ext_to_total_lines = HashMap::new();
 
@@ -131,6 +167,11 @@ fn process_commit<'a>(
                         if let Ok(lines) = get_lines_in_blob(repo, &entry.id()) {
                             let total_lines = ext_to_total_lines.entry(*extension).or_insert(0);
                             *total_lines += lines;
+
+                            if let Some(performance_data) = performance_data {
+                                performance_data.total_files_processed += 1;
+                                performance_data.total_lines_counted += lines;
+                            }
                         } else {
                             // TODO: Propagate error
                         }
@@ -194,6 +235,6 @@ fn main() {
     let args = Args::from_args();
     match run(&args) {
         Ok(()) => {}
-        Err(e) => eprintln!("error: {}", e),
+        Err(e) => eprintln!("Error: {}", e),
     }
 }
