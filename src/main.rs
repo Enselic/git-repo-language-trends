@@ -4,7 +4,6 @@
 //  * Auto-convert file extension to name, e.g. .rs <-> Rust
 //  * get rid of dependence of git binary by using git2-rs instead of git log
 //  * output a graph by default with https://crates.io/crates/plotters
-//  * allow ignoring --first-parent
 
 use chrono::NaiveDate;
 use std::collections::HashMap;
@@ -45,6 +44,14 @@ struct Args {
     #[structopt(long)]
     debug: bool,
 
+    /// (Advanced.) By default, --first-parent is passed to the internal git log
+    /// command. This ensures that the data in each row comes from a source code
+    /// tree that is an ancestor to the row above it. If you prefer data for as
+    /// many commits as possible, even though the data can become "jumpy",
+    /// enable this flag.
+    #[structopt(long)]
+    all_parents: bool,
+
     #[structopt(name = "EXT1", required = true)]
     file_extensions: Vec<String>,
 }
@@ -75,10 +82,17 @@ fn run(args: &Args) -> Result<(), git2::Error> {
     // Otherwise there can be confusing bumps in the graph
     // git log is much easier than libgit2, and the top level loop
     // is not performance critical, so use a plain git log child process
+    let parent_flag = if args.all_parents {
+        ""
+    } else {
+        "--first-parent"
+    };
     let date_fmt = "%Y-%m-%d";
     let git_log = format!(
-        "git log --format=%cd:%h --date=format:{} --no-merges --first-parent {}",
-        date_fmt, args.start_commit
+        "git log --format=%cd:%h --date=format:{date_fmt} --no-merges {parent_flag} {start_commit}",
+        date_fmt = date_fmt,
+        parent_flag = parent_flag,
+        start_commit = args.start_commit,
     );
 
     let mut performance_data = if args.benchmark {

@@ -156,3 +156,30 @@ fn benchmark() {
         .stdout(predicates::str::contains("lines/second"))
         .stderr("");
 }
+
+#[test]
+fn all_parents() {
+    git_repo_language_trends_bin()
+        .arg("--all-parents")
+        .arg("--interval=0")
+        .arg("--max-rows=10")
+        .arg("--start-commit=v0.2.0")
+        .arg(".rs")
+        .assert()
+        .success()
+        .stdout(
+            "	.rs
+2021-01-24	196
+2021-01-24	196
+2021-01-24	196
+2021-01-24	196
+2021-01-24	192
+2021-01-24	192
+2021-01-24	192
+2021-01-24	185
+2021-01-24	166
+2021-01-24	172
+",
+        )
+        .stderr("");
+}
