@@ -1,5 +1,14 @@
+// Features missing:
+//  * Limit rows to a specific number
+//  * Measure performance in lines/second
+//  * Auto-detect extensions using first commit
+//  * Auto-convert file extension to name, e.g. .rs <-> Rust
+//  * get rid of dependence of git binary by using git2-rs instead of git log
+//  * output a graph by default with https://crates.io/crates/plotters
+//  * allow ignoring --first-parent
+
+use chrono::NaiveDate;
 use std::collections::HashMap;
-use std::collections::HashSet;
 use std::process;
 use structopt::StructOpt;
 
@@ -17,12 +26,19 @@ EXAMPLES
     git-repo-language-trend .m    .swift          # Objective-C vs Swift
 ")]
 struct Args {
-    // TODO: Select day, week, or months statistics
-    // Figure out tabulation though
+    #[structopt(
+        short,
+        long,
+        default_value = "7",
+        help = "Optional. The mimimum interval in days between data points."
+    )]
+    interval: u32,
 
-    // TODO: Allow all commits, not just --first-parent
-
-    #[structopt(default_value = "", long, help = "Optional. The commit to start parsing from.")]
+    #[structopt(
+        default_value = "HEAD",
+        long,
+        help = "Optional. The commit to start parsing from."
+    )]
     start_commit: String,
 
     #[structopt(name = "EXT1", required = true)]
@@ -45,29 +61,34 @@ fn run(args: &Args) -> Result<(), git2::Error> {
     println!();
 
     // Print rows
-    let mut analyzed_dates = HashSet::new();
     // Use --no-merges --first-parent to get a continous history
     // Otherwise there can be confusing bumps in the graph
     // git log is much easier than libgit2, and the top level loop
     // is not performance critical, so use a plain git log child process
+    let date_fmt = "%Y-%m-%d";
     let git_log = format!(
-        "git log --format=%cd:%h --date=format:%Y-%m-%d --no-merges --first-parent {}",
-        args.start_commit
+        "git log --format=%cd:%h --date=format:{} --no-merges --first-parent {}",
+        date_fmt, args.start_commit
     );
+    let mut last_date: Option<NaiveDate> = None;
     for row in command_stdout_as_lines(git_log) {
-        let mut split = row.split(':');
+        let mut split = row.split(':'); // e.g. "2021-01-14:979f8d74e9"
         let date = split.next().unwrap(); // e.g. "2021-01-14"
         let commit = split.next().unwrap(); // e.g. "979f8d74e9"
 
-        if !analyzed_dates.contains(date) {
-            analyzed_dates.insert(date.to_owned());
-
+        let current_date = NaiveDate::parse_from_str(date, date_fmt).expect("parsing");
+        if match last_date {
+            Some(last_date) => {
+                last_date.signed_duration_since(current_date).num_days() >= args.interval as i64
+            }
+            None => true,
+        } {
             // TODO: Keep going if one fails?
             process_and_print_row(&repo, date, commit, &extensions)?;
-        };
+        }
+        last_date = Some(current_date);
     }
 
-    // TODO: Output simple graphs in addition to tabulated data
     Ok(())
 }
 
