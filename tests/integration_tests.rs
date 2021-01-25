@@ -1,11 +1,13 @@
 use assert_cmd::Command;
 
+fn git_repo_language_trends_bin() -> Command {
+    Command::cargo_bin("git-repo-language-trends").unwrap()
+}
+
 #[test]
 fn own_git_repo_0_day_interval() {
-    Command::cargo_bin("git-repo-language-trends")
-        .unwrap()
-        .arg("--interval")
-        .arg("0")
+    git_repo_language_trends_bin()
+        .arg("--interval=0")
         .arg("--start-commit")
         .arg("v0.1.2")
         .arg(".yml")
@@ -34,12 +36,9 @@ fn own_git_repo_0_day_interval() {
 
 #[test]
 fn own_git_repo_1_day_interval() {
-    Command::cargo_bin("git-repo-language-trends")
-        .unwrap()
-        .arg("--interval")
-        .arg("1")
-        .arg("--start-commit")
-        .arg("v0.2.0")
+    git_repo_language_trends_bin()
+        .arg("--interval=1")
+        .arg("--start-commit=v0.2.0")
         .arg(".rs")
         .arg(".a")
         .assert()
@@ -57,12 +56,9 @@ fn own_git_repo_1_day_interval() {
 
 #[test]
 fn own_git_repo_7_day_interval() {
-    Command::cargo_bin("git-repo-language-trends")
-        .unwrap()
-        .arg("--interval")
-        .arg("7")
-        .arg("--start-commit")
-        .arg("v0.2.0")
+    git_repo_language_trends_bin()
+        .arg("--interval=7")
+        .arg("--start-commit=v0.2.0")
         .arg(".rs")
         .arg(".a")
         .assert()
@@ -77,8 +73,7 @@ fn own_git_repo_7_day_interval() {
 
 #[test]
 fn negative_interval() {
-    Command::cargo_bin("git-repo-language-trends")
-        .unwrap()
+    git_repo_language_trends_bin()
         .arg("--interval")
         .arg("-1")
         .arg(".rs")
@@ -96,12 +91,9 @@ fn negative_interval() {
 /// the that stream of commits went on for longer than the current --interval.
 #[test]
 fn interval_calculated_for_last_printed_commit_only() {
-    Command::cargo_bin("git-repo-language-trends")
-        .unwrap()
-        .arg("--interval")
-        .arg("2")
-        .arg("--start-commit")
-        .arg("v0.2.0")
+    git_repo_language_trends_bin()
+        .arg("--interval=2")
+        .arg("--start-commit=v0.2.0")
         .arg(".rs")
         .assert()
         .success()
@@ -117,14 +109,10 @@ fn interval_calculated_for_last_printed_commit_only() {
 
 #[test]
 fn own_git_repo_max_rows_5() {
-    Command::cargo_bin("git-repo-language-trends")
-        .unwrap()
-        .arg("--interval")
-        .arg("0")
-        .arg("--max-rows")
-        .arg("5")
-        .arg("--start-commit")
-        .arg("v0.1.2")
+    git_repo_language_trends_bin()
+        .arg("--interval=0")
+        .arg("--max-rows=5")
+        .arg("--start-commit=v0.1.2")
         .arg(".yml")
         .arg(".rs")
         .assert()
@@ -143,12 +131,9 @@ fn own_git_repo_max_rows_5() {
 
 #[test]
 fn own_git_repo_max_rows_0() {
-    Command::cargo_bin("git-repo-language-trends")
-        .unwrap()
-        .arg("--max-rows")
-        .arg("0")
-        .arg("--start-commit")
-        .arg("v0.1.2")
+    git_repo_language_trends_bin()
+        .arg("--max-rows=0")
+        .arg("--start-commit=v0.1.2")
         .arg(".yml")
         .arg(".rs")
         .assert()
@@ -162,11 +147,9 @@ fn own_git_repo_max_rows_0() {
 
 #[test]
 fn benchmark() {
-    Command::cargo_bin("git-repo-language-trends")
-        .unwrap()
+    git_repo_language_trends_bin()
         .arg("--benchmark")
-        .arg("--interval")
-        .arg("0")
+        .arg("--interval=0")
         .arg(".yml")
         .assert()
         .success()
