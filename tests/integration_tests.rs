@@ -90,6 +90,31 @@ fn negative_interval() {
         ));
 }
 
+/// Regression test for a bug where the "last printed row date" was updated for
+/// every commit, and not only printed commits. This resulted in not printing
+/// commits that were part of a long stream of regular commits each day, even if
+/// the that stream of commits went on for longer than the current --interval.
+#[test]
+fn interval_calculated_for_last_printed_commit_only() {
+    Command::cargo_bin("git-repo-language-trends")
+        .unwrap()
+        .arg("--interval")
+        .arg("2")
+        .arg("--start-commit")
+        .arg("v0.2.0")
+        .arg(".rs")
+        .assert()
+        .success()
+        .stdout(
+            "	.rs
+2021-01-24	196
+2021-01-22	107
+2021-01-19	66
+",
+        )
+        .stderr("");
+}
+
 #[test]
 fn own_git_repo_max_rows_5() {
     Command::cargo_bin("git-repo-language-trends")

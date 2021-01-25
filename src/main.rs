@@ -92,7 +92,7 @@ fn run(args: &Args) -> Result<(), git2::Error> {
     };
 
     let mut rows_left = args.max_rows;
-    let mut last_date: Option<NaiveDate> = None;
+    let mut date_of_last_row: Option<NaiveDate> = None;
     for row in command_stdout_as_lines(git_log) {
         if rows_left == 0 {
             break;
@@ -106,9 +106,9 @@ fn run(args: &Args) -> Result<(), git2::Error> {
         }
 
         let current_date = NaiveDate::parse_from_str(date, date_fmt).expect("parsing");
-        if match last_date {
-            Some(last_date) => {
-                let days_passed = last_date.signed_duration_since(current_date).num_days();
+        if match date_of_last_row {
+            Some(date_of_last_row) => {
+                let days_passed = date_of_last_row.signed_duration_since(current_date).num_days();
                 if args.debug {
                     eprintln!(" made {} days after last printed one", days_passed);
                 }
@@ -123,9 +123,9 @@ fn run(args: &Args) -> Result<(), git2::Error> {
         } {
             // TODO: Keep going if one fails?
             process_and_print_row(&repo, date, commit, &extensions, &mut performance_data)?;
+            date_of_last_row = Some(current_date);
             rows_left -= 1;
         }
-        last_date = Some(current_date);
     }
 
     if let Some(performance_data) = performance_data {
