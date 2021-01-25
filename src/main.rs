@@ -1,5 +1,4 @@
 // Features missing:
-//  * Limit rows to a specific number
 //  * Measure performance in lines/second
 //  * Auto-detect extensions using first commit
 //  * Auto-convert file extension to name, e.g. .rs <-> Rust
@@ -26,19 +25,16 @@ EXAMPLES
     git-repo-language-trend .m    .swift          # Objective-C vs Swift
 ")]
 struct Args {
-    #[structopt(
-        short,
-        long,
-        default_value = "7",
-        help = "Optional. The mimimum interval in days between data points."
-    )]
+    /// Optional. The mimimum interval in days between data points.
+    #[structopt(long, default_value = "7")]
     interval: u32,
 
-    #[structopt(
-        default_value = "HEAD",
-        long,
-        help = "Optional. The commit to start parsing from."
-    )]
+    /// Optional. Maximum number of data rows to print.
+    #[structopt(long, default_value = "18446744073709551615")]
+    max_rows: u64,
+
+    /// Optional. The commit to start parsing from.
+    #[structopt(default_value = "HEAD", long)]
     start_commit: String,
 
     #[structopt(name = "EXT1", required = true)]
@@ -70,8 +66,14 @@ fn run(args: &Args) -> Result<(), git2::Error> {
         "git log --format=%cd:%h --date=format:{} --no-merges --first-parent {}",
         date_fmt, args.start_commit
     );
+
+    let mut rows_left = args.max_rows;
     let mut last_date: Option<NaiveDate> = None;
     for row in command_stdout_as_lines(git_log) {
+        if rows_left == 0 {
+            break;
+        }
+
         let mut split = row.split(':'); // e.g. "2021-01-14:979f8d74e9"
         let date = split.next().unwrap(); // e.g. "2021-01-14"
         let commit = split.next().unwrap(); // e.g. "979f8d74e9"
@@ -85,6 +87,7 @@ fn run(args: &Args) -> Result<(), git2::Error> {
         } {
             // TODO: Keep going if one fails?
             process_and_print_row(&repo, date, commit, &extensions)?;
+            rows_left -= 1;
         }
         last_date = Some(current_date);
     }

@@ -76,6 +76,51 @@ fn own_git_repo_7_day_interval() {
 }
 
 #[test]
+fn own_git_repo_max_rows_5() {
+    Command::cargo_bin("git-repo-language-trends")
+        .unwrap()
+        .arg("--interval")
+        .arg("0")
+        .arg("--max-rows")
+        .arg("5")
+        .arg("--start-commit")
+        .arg("v0.1.2")
+        .arg(".yml")
+        .arg(".rs")
+        .assert()
+        .success()
+        .stdout(
+            "	.yml	.rs
+2021-01-23	66	121
+2021-01-23	67	121
+2021-01-23	78	121
+2021-01-23	57	121
+2021-01-23	22	121
+",
+        )
+        .stderr("");
+}
+
+#[test]
+fn own_git_repo_max_rows_0() {
+    Command::cargo_bin("git-repo-language-trends")
+        .unwrap()
+        .arg("--max-rows")
+        .arg("0")
+        .arg("--start-commit")
+        .arg("v0.1.2")
+        .arg(".yml")
+        .arg(".rs")
+        .assert()
+        .success()
+        .stdout(
+            "	.yml	.rs
+",
+        )
+        .stderr("");
+}
+
+#[test]
 fn negative_interval() {
     Command::cargo_bin("git-repo-language-trends")
         .unwrap()
