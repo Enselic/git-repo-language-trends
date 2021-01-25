@@ -15,7 +15,7 @@ fn own_git_repo_0_day_interval() {
         .assert()
         .success()
         .stdout(
-            "	.yml	.rs
+            "          	.yml	.rs
 2021-01-23	66	121
 2021-01-23	67	121
 2021-01-23	78	121
@@ -44,7 +44,7 @@ fn own_git_repo_1_day_interval() {
         .assert()
         .success()
         .stdout(
-            "	.rs	.a
+            "          	.rs	.a
 2021-01-24	196	4
 2021-01-23	121	0
 2021-01-22	107	0
@@ -64,7 +64,7 @@ fn own_git_repo_7_day_interval() {
         .assert()
         .success()
         .stdout(
-            "	.rs	.a
+            "          	.rs	.a
 2021-01-24	196	4
 ",
         )
@@ -98,7 +98,7 @@ fn interval_calculated_for_last_printed_commit_only() {
         .assert()
         .success()
         .stdout(
-            "	.rs
+            "          	.rs
 2021-01-24	196
 2021-01-22	107
 2021-01-19	66
@@ -118,7 +118,7 @@ fn own_git_repo_max_rows_5() {
         .assert()
         .success()
         .stdout(
-            "	.yml	.rs
+            "          	.yml	.rs
 2021-01-23	66	121
 2021-01-23	67	121
 2021-01-23	78	121
@@ -138,10 +138,7 @@ fn own_git_repo_max_rows_0() {
         .arg(".rs")
         .assert()
         .success()
-        .stdout(
-            "	.yml	.rs
-",
-        )
+        .stdout("")
         .stderr("");
 }
 
@@ -168,7 +165,7 @@ fn all_parents() {
         .assert()
         .success()
         .stdout(
-            "	.rs
+            "          	.rs
 2021-01-24	196
 2021-01-24	196
 2021-01-24	196

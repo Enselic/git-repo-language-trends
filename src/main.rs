@@ -71,12 +71,6 @@ fn run(args: &Args) -> Result<(), git2::Error> {
 
     let repo = git2::Repository::open(".")?;
 
-    // Print column headers
-    for ext in &extensions {
-        print!("\t{}", ext);
-    }
-    println!();
-
     // Print rows
     // Use --no-merges --first-parent to get a continous history
     // Otherwise there can be confusing bumps in the graph
@@ -105,6 +99,7 @@ fn run(args: &Args) -> Result<(), git2::Error> {
         None
     };
 
+    let mut headers_printed = false;
     let mut rows_left = args.max_rows;
     let mut date_of_last_row: Option<NaiveDate> = None;
     for row in command_stdout_as_lines(git_log) {
@@ -115,6 +110,18 @@ fn run(args: &Args) -> Result<(), git2::Error> {
         let mut split = row.split(':'); // e.g. "2021-01-14:979f8d74e9"
         let date = split.next().unwrap(); // e.g. "2021-01-14"
         let commit = split.next().unwrap(); // e.g. "979f8d74e9"
+
+        if !headers_printed {
+            for _ in date.chars() {
+                print!(" ");
+            }
+            for ext in &extensions {
+                print!("\t{}", ext);
+            }
+            println!();
+            headers_printed = true;
+        }
+
         if args.debug {
             eprint!("-> Looking at {} {} ...", commit, date);
         }
@@ -122,7 +129,9 @@ fn run(args: &Args) -> Result<(), git2::Error> {
         let current_date = NaiveDate::parse_from_str(date, date_fmt).expect("parsing");
         if match date_of_last_row {
             Some(date_of_last_row) => {
-                let days_passed = date_of_last_row.signed_duration_since(current_date).num_days();
+                let days_passed = date_of_last_row
+                    .signed_duration_since(current_date)
+                    .num_days();
                 if args.debug {
                     eprintln!(" made {} days after last printed one", days_passed);
                 }
