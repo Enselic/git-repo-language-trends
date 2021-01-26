@@ -69,7 +69,7 @@ fn run(args: &Args) -> Result<(), git2::Error> {
         .map(std::ops::Deref::deref)
         .collect();
 
-    let repo = git2::Repository::open(".")?;
+    let repo = git2::Repository::open(std::env::var("GIT_DIR").unwrap_or_else(|_| ".".to_owned()))?;
 
     // Print rows
     // Use --no-merges --first-parent to get a continous history
