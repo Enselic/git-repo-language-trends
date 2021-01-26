@@ -1,5 +1,4 @@
 // Features missing:
-//  * print progress bar for large projects such as the Linux kernel
 //  * Auto-detect extensions using first commit
 //  * Auto-convert file extension to name, e.g. .rs <-> Rust
 //  * get rid of dependence of git binary by using git2-rs instead of git log
@@ -183,7 +182,7 @@ fn process_and_print_row(
     extensions: &[&str],
     performance_data: &mut Option<PerformanceData>,
 ) -> Result<(), git2::Error> {
-    let data = process_commit(repo, commit, extensions, performance_data)?;
+    let data = process_commit(repo, date, commit, extensions, performance_data)?;
     print!("{}", date);
     for ext in extensions {
         print!("\t{}", data.get(ext).unwrap_or(&0));
@@ -193,42 +192,68 @@ fn process_and_print_row(
     Ok(())
 }
 
-fn process_commit<'a>(
-    repo: &git2::Repository,
-    commit: &str,
-    extensions: &'a [&str],
-    performance_data: &mut Option<PerformanceData>,
-) -> Result<HashMap<&'a str, usize>, git2::Error> {
-    let mut ext_to_total_lines = HashMap::new();
+fn get_blobs_in_tree(tree: &git2::Tree) -> Result<Vec<(git2::Oid, String)>, git2::Error> {
+    let mut blobs = vec![];
 
-    let commito = repo.revparse_single(commit)?;
-    let treeo = commito.peel(git2::ObjectType::Tree)?;
-    let tree = treeo
-        .as_tree()
-        .ok_or_else(|| git2::Error::from_str("tree not a tree"))?;
     tree.walk(git2::TreeWalkMode::PostOrder, |_, entry| {
         if Some(git2::ObjectType::Blob) == entry.kind() {
-            if let Some(entry_extension) = extension_for_raw_name(entry.name_bytes()) {
-                for extension in extensions {
-                    if *extension == entry_extension {
-                        if let Ok(lines) = get_lines_in_blob(repo, &entry.id()) {
-                            let total_lines = ext_to_total_lines.entry(*extension).or_insert(0);
-                            *total_lines += lines;
-
-                            if let Some(performance_data) = performance_data {
-                                performance_data.total_files_processed += 1;
-                                performance_data.total_lines_counted += lines;
-                            }
-                        } else {
-                            // TODO: Propagate error
-                        }
-                    }
-                }
+            if let Some(ext) = extension_for_raw_name(entry.name_bytes()) {
+                blobs.push((entry.id(), ext.to_owned()));
             }
         }
 
         git2::TreeWalkResult::Ok
     })?;
+
+    Ok(blobs)
+}
+
+fn process_commit<'a>(
+    repo: &git2::Repository,
+    date: &str,
+    commit: &str,
+    extensions: &'a [&str],
+    performance_data: &mut Option<PerformanceData>,
+) -> Result<HashMap<&'a str, usize>, git2::Error> {
+    let mut ext_to_total_lines = HashMap::new();
+    let commito = repo.revparse_single(commit)?;
+    let treeo = commito.peel(git2::ObjectType::Tree)?;
+    let tree = treeo
+        .as_tree()
+        .ok_or_else(|| git2::Error::from_str("tree not a tree"))?;
+
+    let blobs = get_blobs_in_tree(&tree)?;
+
+    // TODO: Allow disalbe to optimze for speed
+    use indicatif::{ProgressBar, ProgressStyle};
+    let pb = ProgressBar::new(blobs.len() as u64);
+    pb.set_prefix(date);
+    pb.set_message(commit);
+    pb.set_style(
+        ProgressStyle::default_bar().template("{prefix} {wide_bar} {pos}/{len} commit {msg}"),
+    );
+
+    for (index, blob) in blobs.iter().enumerate() {
+        pb.set_position(index as u64);
+
+        for extension in extensions {
+            if *extension == blob.1 {
+                if let Ok(lines) = get_lines_in_blob(repo, &blob.0) {
+                    let total_lines = ext_to_total_lines.entry(*extension).or_insert(0);
+                    *total_lines += lines;
+
+                    if let Some(performance_data) = performance_data {
+                        performance_data.total_files_processed += 1;
+                        performance_data.total_lines_counted += lines;
+                    }
+                } else {
+                    // TODO: Propagate error
+                }
+            }
+        }
+    }
+
+    pb.finish_and_clear();
 
     Ok(ext_to_total_lines)
 }

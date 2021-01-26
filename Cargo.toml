@@ -10,6 +10,7 @@ repository = "https://github.com/Enselic/git-repo-language-trends"
 version = "0.2.0"
 
 [dependencies]
+indicatif = "0.15.0"
 chrono = "0.4"
 git2 = "0.13"
 structopt = "0.3"
