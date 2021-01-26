@@ -156,12 +156,20 @@ fn run(args: &Args) -> Result<(), git2::Error> {
         let duration = end_time - performance_data.start_time;
         let seconds = duration.as_secs_f64();
         let lines_per_second = performance_data.total_lines_counted as f64 / seconds;
+        let files_per_second = performance_data.total_files_processed as f64 / seconds;
+        let lines_per_file = performance_data.total_lines_counted as f64
+            / performance_data.total_files_processed as f64;
         println!(
-            "Counted {} lines/second ({} lines in {} files in {:.3} seconds)",
-            lines_per_second.floor(),
+            "Counted {} lines in {} files in {:.3} seconds. On average:
+            {} lines/second
+            {} files/second
+            {} lines/file",
             performance_data.total_lines_counted,
             performance_data.total_files_processed,
-            seconds
+            seconds,
+            lines_per_second.floor(),
+            files_per_second.floor(),
+            lines_per_file.floor(),
         );
     }
 
