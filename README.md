@@ -1,9 +1,9 @@
 # git-repo-language-trends
 Prints tabulated data about programming language usage over time in a git
-repository for a given set of file extensions.
+repository.
 
-Copy-paste the output into e.g. Google Sheets or Microsoft Excel to easily make
-a graph. Stacked area chart is recommended.
+Copy-paste the output into your favourite spreadsheet software to easily make a
+graph. Stacked area chart is recommended.
 
 # Example
 Simply pass the file extensions of the languages you want the trend for to `--filter`.
@@ -15,6 +15,8 @@ Simply pass the file extensions of the languages you want the trend for to `--fi
 2021-01-22 107     0
 2021-01-19 66      0
 ```
+Then copy-paste the output into your favourite spreadsheet software and make a
+graph.
 
 # Installation
 ## Pre-built binaries
@@ -31,8 +33,9 @@ cargo install git-repo-language-trends
 You can of course also clone this repo and then simply `cargo build` it if you have Rust and Cargo installed on your system.
 
 # Performance
-This program is very fast. It counts ~5 000 000 lines / second on a high-end
-2018 laptop.
+This program is fast. It counts ~5 000 000 lines / second on a high-end 2018
+laptop on a large repository (with `--disable-progress-bar`). (For smaller
+repositories, the number is lower.)
 
 This is because the inner loop uses the Rust `libgit2`
 [bindings](https://github.com/rust-lang/git2-rs). A regular shell script on a

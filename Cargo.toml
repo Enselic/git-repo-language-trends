@@ -1,6 +1,6 @@
 [package]
 authors = ["Martin Nordholts <enselic@gmail.com>"]
-description = "Prints tabulated data about programming language usage over time in a git repository for a given set of file extensions."
+description = "Prints tabulated data about programming language usage over time in a git repository."
 documentation = "https://github.com/Enselic/git-repo-language-trends/blob/main/README.md"
 edition = "2018"
 homepage = "https://github.com/Enselic/git-repo-language-trends"

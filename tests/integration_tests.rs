@@ -5,9 +5,9 @@ fn git_repo_language_trends_bin() -> Command {
 }
 
 #[test]
-fn own_git_repo_0_day_interval() {
+fn own_git_repo_0_day_min_interval() {
     git_repo_language_trends_bin()
-        .arg("--interval=0")
+        .arg("--min-interval=0")
         .arg("--start-commit")
         .arg("v0.1.2")
         .arg("--filter")
@@ -32,13 +32,13 @@ fn own_git_repo_0_day_interval() {
 2021-01-19	0	0
 ",
         )
-        .stderr("");
+        .stderr(predicates::str::contains("Copy and paste the above output into your favourite spreadsheet software and make a graph."));
 }
 
 #[test]
-fn own_git_repo_1_day_interval() {
+fn own_git_repo_1_day_min_interval() {
     git_repo_language_trends_bin()
-        .arg("--interval=1")
+        .arg("--min-interval=1")
         .arg("--start-commit=v0.2.0")
         .arg("--filter")
         .arg(".rs")
@@ -53,13 +53,13 @@ fn own_git_repo_1_day_interval() {
 2021-01-19	66	0
 ",
         )
-        .stderr("");
+        .stderr(predicates::str::contains("Copy and paste the above output into your favourite spreadsheet software and make a graph."));
 }
 
 #[test]
-fn own_git_repo_7_day_interval() {
+fn own_git_repo_7_day_min_interval() {
     git_repo_language_trends_bin()
-        .arg("--interval=7")
+        .arg("--min-interval=7")
         .arg("--start-commit=v0.2.0")
         .arg("--filter")
         .arg(".rs")
@@ -71,13 +71,13 @@ fn own_git_repo_7_day_interval() {
 2021-01-24	196	4
 ",
         )
-        .stderr("");
+        .stderr(predicates::str::contains("Copy and paste the above output into your favourite spreadsheet software and make a graph."));
 }
 
 #[test]
-fn negative_interval() {
+fn negative_min_interval() {
     git_repo_language_trends_bin()
-        .arg("--interval")
+        .arg("--min-interval")
         .arg("-1")
         .arg("--filter")
         .arg(".rs")
@@ -92,11 +92,11 @@ fn negative_interval() {
 /// Regression test for a bug where the "last printed row date" was updated for
 /// every commit, and not only printed commits. This resulted in not printing
 /// commits that were part of a long stream of regular commits each day, even if
-/// the that stream of commits went on for longer than the current --interval.
+/// the that stream of commits went on for longer than the current --min-interval.
 #[test]
 fn interval_calculated_for_last_printed_commit_only() {
     git_repo_language_trends_bin()
-        .arg("--interval=2")
+        .arg("--min-interval=2")
         .arg("--start-commit=v0.2.0")
         .arg("--filter")
         .arg(".rs")
@@ -109,13 +109,13 @@ fn interval_calculated_for_last_printed_commit_only() {
 2021-01-19	66
 ",
         )
-        .stderr("");
+        .stderr(predicates::str::contains("Copy and paste the above output into your favourite spreadsheet software and make a graph."));
 }
 
 #[test]
 fn own_git_repo_max_rows_5() {
     git_repo_language_trends_bin()
-        .arg("--interval=0")
+        .arg("--min-interval=0")
         .arg("--max-rows=5")
         .arg("--start-commit=v0.1.2")
         .arg("--filter")
@@ -132,7 +132,7 @@ fn own_git_repo_max_rows_5() {
 2021-01-23	22	121
 ",
         )
-        .stderr("");
+        .stderr(predicates::str::contains("Copy and paste the above output into your favourite spreadsheet software and make a graph."));
 }
 
 #[test]
@@ -149,27 +149,27 @@ fn own_git_repo_max_rows_0() {
             "          	.yml	.rs
 ",
         )
-        .stderr("");
+        .stderr(predicates::str::contains("Copy and paste the above output into your favourite spreadsheet software and make a graph."));
 }
 
 #[test]
 fn benchmark() {
     git_repo_language_trends_bin()
         .arg("--benchmark")
-        .arg("--interval=0")
+        .arg("--min-interval=0")
         .arg("--filter")
         .arg(".yml")
         .assert()
         .success()
         .stdout(predicates::str::contains("lines/second"))
-        .stderr("");
+        .stderr(predicates::str::contains("Copy and paste the above output into your favourite spreadsheet software and make a graph."));
 }
 
 #[test]
 fn all_parents() {
     git_repo_language_trends_bin()
         .arg("--all-parents")
-        .arg("--interval=0")
+        .arg("--min-interval=0")
         .arg("--max-rows=10")
         .arg("--start-commit=v0.2.0")
         .arg("--filter")
@@ -190,21 +190,24 @@ fn all_parents() {
 2021-01-24	172
 ",
         )
-        .stderr("");
+        .stderr(predicates::str::contains("Copy and paste the above output into your favourite spreadsheet software and make a graph."));
 }
 
 #[test]
 fn no_filter() {
     git_repo_language_trends_bin()
         .arg("--start-commit=v0.2.0")
-        .arg("--interval=2")
+        .arg("--min-interval=2")
         .assert()
         .success()
-        .stdout("          	.a	.md	.rs	.toml	.yml
+        .stdout(
+            "          	.a	.md	.rs	.toml	.yml
 2021-01-24	4	40	196	17	68
 2021-01-22	0	2	107	5	0
 2021-01-19	0	2	66	9	0
 ",
         )
-        .stderr("INFO: Pass `--filter .ext1 .ext2 ...` to select which file extensions to count lines for.\n");
+        .stderr(predicates::str::contains(
+            "git-repo-language-trends --filter .ext1 .ext2 ...",
+        ));
 }
