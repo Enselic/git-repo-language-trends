@@ -10,6 +10,7 @@ fn own_git_repo_0_day_interval() {
         .arg("--interval=0")
         .arg("--start-commit")
         .arg("v0.1.2")
+        .arg("--filter")
         .arg(".yml")
         .arg(".rs")
         .assert()
@@ -39,6 +40,7 @@ fn own_git_repo_1_day_interval() {
     git_repo_language_trends_bin()
         .arg("--interval=1")
         .arg("--start-commit=v0.2.0")
+        .arg("--filter")
         .arg(".rs")
         .arg(".a")
         .assert()
@@ -59,6 +61,7 @@ fn own_git_repo_7_day_interval() {
     git_repo_language_trends_bin()
         .arg("--interval=7")
         .arg("--start-commit=v0.2.0")
+        .arg("--filter")
         .arg(".rs")
         .arg(".a")
         .assert()
@@ -76,6 +79,7 @@ fn negative_interval() {
     git_repo_language_trends_bin()
         .arg("--interval")
         .arg("-1")
+        .arg("--filter")
         .arg(".rs")
         .assert()
         .failure()
@@ -94,6 +98,7 @@ fn interval_calculated_for_last_printed_commit_only() {
     git_repo_language_trends_bin()
         .arg("--interval=2")
         .arg("--start-commit=v0.2.0")
+        .arg("--filter")
         .arg(".rs")
         .assert()
         .success()
@@ -113,6 +118,7 @@ fn own_git_repo_max_rows_5() {
         .arg("--interval=0")
         .arg("--max-rows=5")
         .arg("--start-commit=v0.1.2")
+        .arg("--filter")
         .arg(".yml")
         .arg(".rs")
         .assert()
@@ -134,6 +140,7 @@ fn own_git_repo_max_rows_0() {
     git_repo_language_trends_bin()
         .arg("--max-rows=0")
         .arg("--start-commit=v0.1.2")
+        .arg("--filter")
         .arg(".yml")
         .arg(".rs")
         .assert()
@@ -147,6 +154,7 @@ fn benchmark() {
     git_repo_language_trends_bin()
         .arg("--benchmark")
         .arg("--interval=0")
+        .arg("--filter")
         .arg(".yml")
         .assert()
         .success()
@@ -161,6 +169,7 @@ fn all_parents() {
         .arg("--interval=0")
         .arg("--max-rows=10")
         .arg("--start-commit=v0.2.0")
+        .arg("--filter")
         .arg(".rs")
         .assert()
         .success()
@@ -179,4 +188,20 @@ fn all_parents() {
 ",
         )
         .stderr("");
+}
+
+#[test]
+fn no_filter() {
+    git_repo_language_trends_bin()
+        .arg("--start-commit=v0.2.0")
+        .arg("--interval=2")
+        .assert()
+        .success()
+        .stdout("          	.a	.md	.rs	.toml	.yml
+2021-01-24	4	40	196	17	68
+2021-01-22	0	2	107	5	0
+2021-01-19	0	2	66	9	0
+",
+        )
+        .stderr("INFO: Pass `--filter .ext1 .ext2 ...` to select which file extensions to count lines for.\n");
 }

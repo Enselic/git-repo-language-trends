@@ -1,11 +1,6 @@
-// Features missing:
-//  * Auto-detect extensions using first commit
-//  * Auto-convert file extension to name, e.g. .rs <-> Rust
-//  * get rid of dependence of git binary by using git2-rs instead of git log
-//  * output a graph by default with https://crates.io/crates/plotters
-
 use chrono::NaiveDate;
 use std::collections::HashMap;
+use std::collections::HashSet;
 use std::process;
 use structopt::StructOpt;
 
@@ -46,13 +41,14 @@ struct Args {
     /// (Advanced.) By default, --first-parent is passed to the internal git log
     /// command. This ensures that the data in each row comes from a source code
     /// tree that is an ancestor to the row above it. If you prefer data for as
-    /// many commits as possible, even though the data can become "jumpy",
-    /// enable this flag.
+    /// many commits as possible, even though the data can become inconsistent
+    /// ("jumpy"), enable this flag.
     #[structopt(long)]
     all_parents: bool,
 
-    #[structopt(name = "EXT1", required = true)]
-    file_extensions: Vec<String>,
+    /// Filter for what file extensions lines will be counted.
+    #[structopt(long, name = ".ext1 .ext2 ...")]
+    filter: Option<Vec<String>>,
 }
 
 struct PerformanceData {
@@ -62,17 +58,43 @@ struct PerformanceData {
 }
 
 fn run(args: &Args) -> Result<(), git2::Error> {
-    let extensions: Vec<&str> = args
-        .file_extensions
-        .iter()
-        .map(std::ops::Deref::deref)
-        .collect();
-
     let repo = git2::Repository::open(std::env::var("GIT_DIR").unwrap_or_else(|_| ".".to_owned()))?;
+    let start_commit = &args.start_commit;
+
+    let extensions: Vec<String> = match &args.filter {
+        Some(filter) => filter.clone(),
+        None => {
+            eprintln!("INFO: Pass `--filter .ext1 .ext2 ...` to select which file extensions to count lines for.");
+            let blobs = get_blobs_in_commit(&repo, start_commit)?;
+            let exts: HashSet<String> = blobs.into_iter().map(|e| e.1).collect();
+            // TODO: Unit test this method
+            let mut result: Vec<String> = exts
+                .into_iter()
+                .filter(|e| {
+                    let mime = mime_guess::from_path(format!("temp{}", e))
+                        .first_or_text_plain()
+                        .essence_str()
+                        .to_owned();
+                    if args.debug {
+                        eprintln!("Mapped {} to {}", e, mime);
+                    }
+                    !(mime.starts_with("image")
+                        || mime.starts_with("video")
+                        || mime.starts_with("audio")
+                        || mime.contains("archive")
+                        || mime.contains("cert")
+                        || (mime == "application/octet-stream" && e != ".java")
+                        || e.starts_with(".git")
+                        || ".json" == e
+                        || ".lock" == e)
+                })
+                .collect();
+            result.sort();
+            result
+        }
+    };
 
     // Print rows
-    // Use --no-merges --first-parent to get a continous history
-    // Otherwise there can be confusing bumps in the graph
     // git log is much easier than libgit2, and the top level loop
     // is not performance critical, so use a plain git log child process
     let parent_flag = if args.all_parents {
@@ -179,7 +201,7 @@ fn process_and_print_row(
     repo: &git2::Repository,
     date: &str,
     commit: &str,
-    extensions: &[&str],
+    extensions: &[String],
     performance_data: &mut Option<PerformanceData>,
 ) -> Result<(), git2::Error> {
     let data = process_commit(repo, date, commit, extensions, performance_data)?;
@@ -190,6 +212,19 @@ fn process_and_print_row(
     println!();
 
     Ok(())
+}
+
+fn get_blobs_in_commit(
+    repo: &git2::Repository,
+    commit: &str,
+) -> Result<Vec<(git2::Oid, String)>, git2::Error> {
+    let commito = repo.revparse_single(commit)?;
+    let treeo = commito.peel(git2::ObjectType::Tree)?;
+    let tree = treeo
+        .as_tree()
+        .ok_or_else(|| git2::Error::from_str("tree not a tree"))?;
+
+    get_blobs_in_tree(&tree)
 }
 
 fn get_blobs_in_tree(tree: &git2::Tree) -> Result<Vec<(git2::Oid, String)>, git2::Error> {
@@ -208,22 +243,14 @@ fn get_blobs_in_tree(tree: &git2::Tree) -> Result<Vec<(git2::Oid, String)>, git2
     Ok(blobs)
 }
 
-fn process_commit<'a>(
+fn process_commit(
     repo: &git2::Repository,
     date: &str,
     commit: &str,
-    extensions: &'a [&str],
+    extensions: &[String],
     performance_data: &mut Option<PerformanceData>,
-) -> Result<HashMap<&'a str, usize>, git2::Error> {
-    let mut ext_to_total_lines = HashMap::new();
-    let commito = repo.revparse_single(commit)?;
-    let treeo = commito.peel(git2::ObjectType::Tree)?;
-    let tree = treeo
-        .as_tree()
-        .ok_or_else(|| git2::Error::from_str("tree not a tree"))?;
-
-    let blobs = get_blobs_in_tree(&tree)?;
-
+) -> Result<HashMap<String, usize>, git2::Error> {
+    let blobs = get_blobs_in_commit(repo, commit)?;
     // TODO: Allow disalbe to optimze for speed
     use indicatif::{ProgressBar, ProgressStyle};
     let pb = ProgressBar::new(blobs.len() as u64);
@@ -232,23 +259,21 @@ fn process_commit<'a>(
     pb.set_style(
         ProgressStyle::default_bar().template("{prefix} {wide_bar} {pos}/{len} commit {msg}"),
     );
-
+    let mut ext_to_total_lines: HashMap<String, usize> = HashMap::new();
     for (index, blob) in blobs.iter().enumerate() {
         pb.set_position(index as u64);
 
-        for extension in extensions {
-            if *extension == blob.1 {
-                if let Ok(lines) = get_lines_in_blob(repo, &blob.0) {
-                    let total_lines = ext_to_total_lines.entry(*extension).or_insert(0);
-                    *total_lines += lines;
+        if extensions.contains(&blob.1) {
+            if let Ok(lines) = get_lines_in_blob(repo, &blob.0) {
+                let total_lines = ext_to_total_lines.entry(blob.1.clone()).or_insert(0);
+                *total_lines += lines;
 
-                    if let Some(performance_data) = performance_data {
-                        performance_data.total_files_processed += 1;
-                        performance_data.total_lines_counted += lines;
-                    }
-                } else {
-                    // TODO: Propagate error
+                if let Some(performance_data) = performance_data {
+                    performance_data.total_files_processed += 1;
+                    performance_data.total_lines_counted += lines;
                 }
+            } else {
+                // TODO: Propagate error
             }
         }
     }
