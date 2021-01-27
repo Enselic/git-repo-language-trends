@@ -21,6 +21,10 @@ EXAMPLES
     git-repo-language-trend --filter .m    .swift          # Objective-C vs Swift
 ")]
 pub struct Args {
+    /// Filter for what file extensions lines will be counted.
+    #[structopt(long, name = ".ext1 .ext2 ...")]
+    filter: Option<Vec<String>>,
+
     /// Optional. The mimimum interval in days between data points.
     #[structopt(long, default_value = "7")]
     interval: u32,
@@ -37,9 +41,16 @@ pub struct Args {
     #[structopt(long)]
     benchmark: bool,
 
-    // Prints debug information during processing.
+    /// Prints debug information during processing.
     #[structopt(long)]
     debug: bool,
+
+    /// (Advanced.) The progress bar is nice to have, but it slows down
+    /// performance by about half. This flag enables you to disable the progress
+    /// bar for faster processing. Optionally use --benchmark too to see the
+    /// difference for your system.
+    #[structopt(long)]
+    disable_progress_bar: bool,
 
     /// (Advanced.) By default, --first-parent is passed to the internal git log
     /// command. This ensures that the data in each row comes from a source code
@@ -48,10 +59,6 @@ pub struct Args {
     /// ("jumpy"), enable this flag.
     #[structopt(long)]
     all_parents: bool,
-
-    /// Filter for what file extensions lines will be counted.
-    #[structopt(long, name = ".ext1 .ext2 ...")]
-    filter: Option<Vec<String>>,
 }
 
 fn run(args: &Args) -> Result<(), git2::Error> {
@@ -90,7 +97,14 @@ fn run(args: &Args) -> Result<(), git2::Error> {
             None => true,
         };
         if min_interval_days_passed {
-            process_and_print_row(&repo, &date, &commit, &extensions, &mut benchmark_data)?;
+            process_and_print_row(
+                &repo,
+                &date,
+                &commit,
+                &extensions,
+                &mut benchmark_data,
+                &args,
+            )?;
             date_of_last_row = Some(current_date);
             rows_left -= 1;
         }
@@ -109,8 +123,9 @@ fn process_and_print_row(
     commit: &str,
     extensions: &[String],
     benchmark_data: &mut Option<BenchmarkData>,
+    args: &Args,
 ) -> Result<(), git2::Error> {
-    let data = process_commit(repo, date, commit, extensions, benchmark_data)?;
+    let data = process_commit(repo, date, commit, extensions, benchmark_data, args)?;
     print!("{}", date);
     for ext in extensions {
         print!("\t{}", data.get(ext).unwrap_or(&0));
@@ -126,19 +141,28 @@ fn process_commit(
     commit: &str,
     extensions: &[String],
     benchmark_data: &mut Option<BenchmarkData>,
+    args: &Args,
 ) -> Result<HashMap<String, usize>, git2::Error> {
     let blobs = repo.get_blobs_in_commit(commit)?;
-    // TODO: Allow disalbe to optimze for speed
+
     use indicatif::{ProgressBar, ProgressStyle};
-    let pb = ProgressBar::new(blobs.len() as u64);
-    pb.set_prefix(date);
-    pb.set_message(commit);
-    pb.set_style(
-        ProgressStyle::default_bar().template("{prefix} {wide_bar} {pos}/{len} commit {msg}"),
-    );
+    let progress_bar = if !args.disable_progress_bar {
+        let pb = ProgressBar::new(blobs.len() as u64);
+        pb.set_prefix(date);
+        pb.set_message(commit);
+        pb.set_style(
+            ProgressStyle::default_bar().template("{prefix} {wide_bar} {pos}/{len} files"),
+        );
+        Some(pb)
+    } else {
+        None
+    };
+
     let mut ext_to_total_lines: HashMap<String, usize> = HashMap::new();
     for (index, blob) in blobs.iter().enumerate() {
-        pb.set_position(index as u64);
+        if let Some(progress_bar) = &progress_bar {
+            progress_bar.set_position(index as u64);
+        }
 
         if extensions.contains(&blob.1) {
             let lines = repo.get_lines_in_blob(&blob.0)?;
@@ -152,7 +176,9 @@ fn process_commit(
         }
     }
 
-    pb.finish_and_clear();
+    if let Some(progress_bar) = &progress_bar {
+        progress_bar.finish_and_clear();
+    }
 
     Ok(ext_to_total_lines)
 }
