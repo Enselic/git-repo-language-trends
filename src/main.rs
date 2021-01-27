@@ -16,6 +16,7 @@ Copy-paste the output into your favourite spreadsheet software to easily make a 
 Stacked area chart is recommended.
 
 EXAMPLES
+    cd ~/src/your-repo                                     # Go to any git repository
     git-repo-language-trend --filter .cpp  .rs             # C++ vs Rust
     git-repo-language-trend --filter .java .kt             # Java vs Kotlin
     git-repo-language-trend --filter .m    .swift          # Objective-C vs Swift
@@ -27,7 +28,7 @@ pub struct Args {
 
     /// Optional. The mimimum interval in days between data points.
     #[structopt(long, default_value = "7")]
-    interval: u32,
+    min_interval: u32,
 
     /// Optional. Maximum number of data rows to print.
     #[structopt(long, default_value = "18446744073709551615")]
@@ -82,7 +83,7 @@ fn run(args: &Args) -> Result<(), git2::Error> {
         }
 
         if args.debug {
-            eprint!("-> Looking at {} {} ...", date, commit);
+            eprintln!("-> Looking at {} {} ...", date, commit);
         }
 
         let current_date = NaiveDate::parse_from_str(&date, "%Y-%m-%d").unwrap();
@@ -92,7 +93,7 @@ fn run(args: &Args) -> Result<(), git2::Error> {
                     .signed_duration_since(current_date)
                     .num_days();
 
-                days_passed >= args.interval as i64
+                days_passed >= args.min_interval as i64
             }
             None => true,
         };
@@ -113,6 +114,8 @@ fn run(args: &Args) -> Result<(), git2::Error> {
     if let Some(benchmark_data) = benchmark_data {
         benchmark_data.report();
     }
+
+    eprintln!("\nCopy and paste the above output into your favourite spreadsheet software and make a graph.");
 
     Ok(())
 }
@@ -191,7 +194,7 @@ fn get_reasonable_set_of_extensions(repo: &Repo, args: &Args) -> Result<Vec<Stri
         // Calculate a reasonable set of extension to count lines for using the
         // file extensions present in the first commit
         None => {
-            eprintln!("INFO: Pass `--filter .ext1 .ext2 ...` to select which file extensions to count lines for.");
+            eprintln!("INFO: Run\n\n  git-repo-language-trends --filter .ext1 .ext2 ...\n\nto select which file extensions to count lines for.\n");
             let blobs = repo.get_blobs_in_commit(&args.start_commit)?;
             let exts: HashSet<String> = blobs.into_iter().map(|e| e.1).collect();
             // TODO: Unit test this code
