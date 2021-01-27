@@ -145,7 +145,10 @@ fn own_git_repo_max_rows_0() {
         .arg(".rs")
         .assert()
         .success()
-        .stdout("")
+        .stdout(
+            "          	.yml	.rs
+",
+        )
         .stderr("");
 }
 
