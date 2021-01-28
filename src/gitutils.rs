@@ -1,8 +1,10 @@
+use chrono::DateTime;
+use chrono::TimeZone;
+use chrono::Utc;
 use std::path::Path;
-use std::process;
 
 pub struct Repo {
-    repo: git2::Repository,
+    pub repo: git2::Repository,
 }
 
 impl Repo {
@@ -11,49 +13,39 @@ impl Repo {
         Ok(Repo { repo })
     }
 
-    pub fn git_log(&self, args: &super::Args) -> Vec<(String, String)> {
-        // git log is much easier than libgit2, and the top level loop
-        // is not performance critical, so use a plain git log child process
+    pub fn git_log(
+        &self,
+        args: &super::Args,
+    ) -> Result<Vec<(DateTime<Utc>, git2::Commit)>, git2::Error> {
+        let mut revwalk: git2::Revwalk = self.repo.revwalk()?;
+        let rev = self.repo.revparse_single(&args.start_commit)?;
+        revwalk.push(rev.id())?;
 
-        let parent_flag = if !args.all_parents {
-            "--first-parent"
-        } else {
-            ""
-        };
+        if !args.all_parents {
+            revwalk.simplify_first_parent()?;
+        }
 
-        let git_log = format!(
-            "git log --format=%cd:%h --date=format:%Y-%m-%d --no-merges {parent_flag} {start_commit}",
-            parent_flag = parent_flag,
-            start_commit = args.start_commit,
-        );
-
-        command_stdout_as_lines(git_log)
+        Ok(revwalk
             .into_iter()
-            .map(|line| {
-                let mut split = line.split(':'); // e.g. "2021-01-14:979f8d74e9"
-                let date = split.next().unwrap(); // e.g. "2021-01-14"
-                let commit = split.next().unwrap(); // e.g. "979f8d74e9"
-                (date.to_owned(), commit.to_owned())
+            .filter_map(|item| {
+                let commit: git2::Commit = self.repo.find_commit(item.unwrap()).unwrap();
+                if commit.parent_count() > 1 {
+                    None // ignore merge commits
+                } else {
+                    let commit_time = commit.committer().when().seconds();
+                    let ts = chrono::Utc.timestamp(commit_time, 0);
+
+                    Some((ts, commit))
+                }
             })
-            .collect()
+            .collect())
     }
 
     pub fn get_blobs_in_commit(
         &self,
-        commit: &str,
+        commit: &git2::Commit,
     ) -> Result<Vec<(git2::Oid, String)>, git2::Error> {
-        let commito = self.repo.revparse_single(commit)?;
-        let treeo = commito.peel(git2::ObjectType::Tree)?;
-        let tree = treeo
-            .as_tree()
-            .ok_or_else(|| git2::Error::from_str("tree not a tree"))?;
-        self.get_blobs_in_tree(&tree)
-    }
-
-    fn get_blobs_in_tree(
-        &self,
-        tree: &git2::Tree,
-    ) -> Result<Vec<(git2::Oid, String)>, git2::Error> {
+        let tree = commit.tree()?;
         let mut blobs = vec![];
         tree.walk(git2::TreeWalkMode::PostOrder, |_, entry| {
             if Some(git2::ObjectType::Blob) == entry.kind() {
@@ -92,24 +84,4 @@ fn extension_for_raw_name(raw_name: &[u8]) -> Option<&str> {
         }
         None => None,
     }
-}
-
-fn command_stdout_as_lines<T: AsRef<str>>(command: T) -> Vec<String> {
-    let stdout = command_stdout(command);
-    String::from_utf8(stdout)
-        .unwrap()
-        .lines()
-        .map(String::from)
-        .collect()
-}
-
-fn command_stdout<T: AsRef<str>>(command: T) -> Vec<u8> {
-    let mut args = command.as_ref().split_ascii_whitespace();
-
-    process::Command::new(args.next().unwrap())
-        .args(args)
-        .stderr(process::Stdio::inherit())
-        .output()
-        .unwrap()
-        .stdout
 }
