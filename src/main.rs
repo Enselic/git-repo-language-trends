@@ -7,8 +7,10 @@ use structopt::StructOpt;
 
 mod benchmark;
 use benchmark::BenchmarkData;
-mod gitutils;
-use gitutils::Repo;
+mod progressbar;
+use progressbar::ProgressBar;
+mod repoutils;
+use repoutils::Repo;
 
 #[derive(Debug, StructOpt)]
 #[structopt(about = "\
@@ -132,7 +134,14 @@ fn process_and_print_row(
     benchmark_data: &mut Option<BenchmarkData>,
     args: &Args,
 ) -> Result<(), git2::Error> {
-    let data = process_commit(repo, date, commit, extensions, benchmark_data, args)?;
+    let data = process_commit(
+        repo,
+        date,
+        commit,
+        extensions,
+        !args.disable_progress_bar,
+        benchmark_data,
+    )?;
     print!("{}", date);
     for ext in extensions {
         print!("\t{}", data.get(ext).unwrap_or(&0));
@@ -147,41 +156,33 @@ fn process_commit(
     date: &str,
     commit: &git2::Commit,
     extensions: &[String],
+    with_progress_bar: bool,
     benchmark_data: &mut Option<BenchmarkData>,
-    args: &Args,
 ) -> Result<HashMap<String, usize>, git2::Error> {
     let blobs = repo.get_blobs_in_commit(commit)?;
 
-    const MIN_TIME_IN_NANOS: u32 = 250_000_000;
-    use indicatif::{ProgressBar, ProgressStyle};
-    use std::time::Instant;
-    let mut last_update = Instant::now();
-    let progress_bar = if !args.disable_progress_bar {
-        let pb = ProgressBar::new(blobs.len() as u64);
-        pb.set_prefix(date);
-        pb.set_style(
-            ProgressStyle::default_bar().template("{prefix} {wide_bar} {pos}/{len} files"),
-        );
-        Some(pb)
+    // Setup progress bar
+    let mut progress_bar = if with_progress_bar {
+        Some(ProgressBar::setup(blobs.len(), date))
     } else {
         None
     };
 
+    // Loop through all blobs in the commit tree
     let mut ext_to_total_lines: HashMap<String, usize> = HashMap::new();
     for (index, blob) in blobs.iter().enumerate() {
-        if let Some(progress_bar) = &progress_bar {
-            let now = Instant::now();
-            if now.duration_since(last_update).subsec_nanos() > MIN_TIME_IN_NANOS {
-                last_update = now;
-                progress_bar.set_position(index as u64);
-            }
+        // Update progress bar if present
+        if let Some(progress_bar) = &mut progress_bar {
+            progress_bar.set_position_rate_limited(index);
         }
 
+        // If the blob has an extension we care about, count the lines!
         if extensions.contains(&blob.1) {
             let lines = repo.get_lines_in_blob(&blob.0)?;
             let total_lines = ext_to_total_lines.entry(blob.1.clone()).or_insert(0);
             *total_lines += lines;
 
+            // If we are benchmarking, now is the time to update that data
             if let Some(benchmark_data) = benchmark_data {
                 benchmark_data.total_files_processed += 1;
                 benchmark_data.total_lines_counted += lines;
@@ -189,6 +190,7 @@ fn process_commit(
         }
     }
 
+    // Clear progress bar if present
     if let Some(progress_bar) = &progress_bar {
         progress_bar.finish_and_clear();
     }
