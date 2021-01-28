@@ -6,14 +6,14 @@ Copy-paste the output into your favourite spreadsheet software to easily make a
 graph. Stacked area chart is recommended.
 
 # Example
-Simply pass the file extensions of the languages you want the trend for to `--filter`.
+Simply pass the file extensions of the languages you want the trend for.
 ```
 % cd ~/src/your-project
-% git-repo-language-trends --filter .cpp .rs
-           .cpp    .rs
-2021-01-23 121     0
-2021-01-22 107     0
-2021-01-19 66      0
+% git-repo-language-trends .cpp .rs
+                .cpp    .rs
+2021-01-23      0       121
+2021-01-22      120     107
+2021-01-19      243     66
 ```
 Then copy-paste the output into your favourite spreadsheet software and make a
 graph.

@@ -10,7 +10,6 @@ fn own_git_repo_0_day_min_interval() {
         .arg("--min-interval=0")
         .arg("--start-commit")
         .arg("v0.1.2")
-        .arg("--filter")
         .arg(".yml")
         .arg(".rs")
         .assert()
@@ -40,7 +39,6 @@ fn own_git_repo_1_day_min_interval() {
     git_repo_language_trends_bin()
         .arg("--min-interval=1")
         .arg("--start-commit=v0.3.0")
-        .arg("--filter")
         .arg(".rs")
         .arg(".a")
         .assert()
@@ -62,7 +60,6 @@ fn own_git_repo_7_day_min_interval() {
     git_repo_language_trends_bin()
         .arg("--min-interval=7")
         .arg("--start-commit=v0.2.0")
-        .arg("--filter")
         .arg(".rs")
         .arg(".a")
         .assert()
@@ -80,7 +77,6 @@ fn negative_min_interval() {
     git_repo_language_trends_bin()
         .arg("--min-interval")
         .arg("-1")
-        .arg("--filter")
         .arg(".rs")
         .assert()
         .failure()
@@ -99,7 +95,6 @@ fn interval_calculated_for_last_printed_commit_only() {
     git_repo_language_trends_bin()
         .arg("--min-interval=2")
         .arg("--start-commit=v0.3.0")
-        .arg("--filter")
         .arg(".rs")
         .assert()
         .success()
@@ -119,7 +114,6 @@ fn own_git_repo_max_rows_5() {
         .arg("--min-interval=0")
         .arg("--max-rows=5")
         .arg("--start-commit=v0.1.2")
-        .arg("--filter")
         .arg(".yml")
         .arg(".rs")
         .assert()
@@ -141,7 +135,6 @@ fn own_git_repo_max_rows_0() {
     git_repo_language_trends_bin()
         .arg("--max-rows=0")
         .arg("--start-commit=v0.1.2")
-        .arg("--filter")
         .arg(".yml")
         .arg(".rs")
         .assert()
@@ -158,7 +151,6 @@ fn benchmark() {
     git_repo_language_trends_bin()
         .arg("--benchmark")
         .arg("--min-interval=0")
-        .arg("--filter")
         .arg(".yml")
         .assert()
         .success()
@@ -173,7 +165,6 @@ fn all_parents() {
         .arg("--min-interval=0")
         .arg("--max-rows=10")
         .arg("--start-commit=v0.2.0")
-        .arg("--filter")
         .arg(".rs")
         .assert()
         .success()
@@ -208,6 +199,6 @@ fn no_filter() {
 ",
         )
         .stderr(predicates::str::contains(
-            "git-repo-language-trends --filter .ext1 .ext2 ...",
+            "git-repo-language-trends .ext1 .ext2 ...",
         ));
 }

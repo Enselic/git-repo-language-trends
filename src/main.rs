@@ -18,15 +18,15 @@ Copy-paste the output into your favourite spreadsheet software to easily make a 
 Stacked area chart is recommended.
 
 EXAMPLES
-    cd ~/src/your-repo                                     # Go to any git repository
-    git-repo-language-trend --filter .cpp  .rs             # C++ vs Rust
-    git-repo-language-trend --filter .java .kt             # Java vs Kotlin
-    git-repo-language-trend --filter .m    .swift          # Objective-C vs Swift
+    cd ~/src/your-repo                            # Go to any git repository
+    git-repo-language-trend .cpp  .rs             # C++ vs Rust
+    git-repo-language-trend .java .kt             # Java vs Kotlin
+    git-repo-language-trend .m    .swift          # Objective-C vs Swift
 ")]
 pub struct Args {
-    /// Filter for what file extensions lines will be counted.
-    #[structopt(long, name = ".ext1 .ext2 ...")]
-    filter: Option<Vec<String>>,
+    /// For what file extensions lines will be counted.
+    #[structopt(name = ".ext1 .ext2 ...")]
+    filter: Vec<String>,
 
     /// Optional. The mimimum interval in days between data points.
     #[structopt(long, default_value = "7")]
@@ -197,42 +197,40 @@ fn process_commit(
 }
 
 fn get_reasonable_set_of_extensions(repo: &Repo, args: &Args) -> Result<Vec<String>, git2::Error> {
-    Ok(match &args.filter {
+    Ok(if !args.filter.is_empty() {
         // Easy, just use what the user wishes
-        Some(filter) => filter.clone(),
-
+        args.filter.clone()
+    } else {
         // Calculate a reasonable set of extension to count lines for using the
         // file extensions present in the first commit
-        None => {
-            eprintln!("INFO: Run\n\n  git-repo-language-trends --filter .ext1 .ext2 ...\n\nto select which file extensions to count lines for.\n");
-            let commit = repo.repo.revparse_single(&args.start_commit)?;
-            let blobs = repo.get_blobs_in_commit(&commit.peel_to_commit().unwrap())?;
-            let exts: HashSet<String> = blobs.into_iter().map(|e| e.1).collect();
-            // TODO: Unit test this code
-            let mut result: Vec<String> = exts
-                .into_iter()
-                .filter(|e| {
-                    let mime = mime_guess::from_path(format!("temp{}", e))
-                        .first_or_text_plain()
-                        .essence_str()
-                        .to_owned();
-                    if args.debug {
-                        eprintln!("Mapped {} to {}", e, mime);
-                    }
-                    !(mime.starts_with("image")
-                        || mime.starts_with("video")
-                        || mime.starts_with("audio")
-                        || mime.contains("archive")
-                        || mime.contains("cert")
-                        || (mime == "application/octet-stream" && e != ".java")
-                        || e.starts_with(".git")
-                        || ".json" == e
-                        || ".lock" == e)
-                })
-                .collect();
-            result.sort();
-            result
-        }
+        eprintln!("INFO: Run\n\n  git-repo-language-trends .ext1 .ext2 ...\n\nto select which file extensions to count lines for.\n");
+        let commit = repo.repo.revparse_single(&args.start_commit)?;
+        let blobs = repo.get_blobs_in_commit(&commit.peel_to_commit().unwrap())?;
+        let exts: HashSet<String> = blobs.into_iter().map(|e| e.1).collect();
+        // TODO: Unit test this code
+        let mut result: Vec<String> = exts
+            .into_iter()
+            .filter(|e| {
+                let mime = mime_guess::from_path(format!("temp{}", e))
+                    .first_or_text_plain()
+                    .essence_str()
+                    .to_owned();
+                if args.debug {
+                    eprintln!("Mapped {} to {}", e, mime);
+                }
+                !(mime.starts_with("image")
+                    || mime.starts_with("video")
+                    || mime.starts_with("audio")
+                    || mime.contains("archive")
+                    || mime.contains("cert")
+                    || (mime == "application/octet-stream" && e != ".java")
+                    || e.starts_with(".git")
+                    || ".json" == e
+                    || ".lock" == e)
+            })
+            .collect();
+        result.sort();
+        result
     })
 }
 
