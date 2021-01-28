@@ -48,10 +48,9 @@ pub struct Args {
     #[structopt(long)]
     debug: bool,
 
-    /// (Advanced.) The progress bar is nice to have, but it slows down
-    /// performance by about half. This flag enables you to disable the progress
-    /// bar for faster processing. Optionally use --benchmark too to see the
-    /// difference for your system.
+    /// (Advanced.) The progress bar slows down performance slightly. Enable
+    /// this flag to maximize performance. You can use --benchmark to measure if
+    /// there is an actual difference.
     #[structopt(long)]
     disable_progress_bar: bool,
 
@@ -153,11 +152,16 @@ fn process_commit(
 ) -> Result<HashMap<String, usize>, git2::Error> {
     let blobs = repo.get_blobs_in_commit(commit)?;
 
+    const MIN_TIME_IN_NANOS: u32 = 250_000_000;
     use indicatif::{ProgressBar, ProgressStyle};
+    use std::time::Instant;
+    let mut last_update = Instant::now();
     let progress_bar = if !args.disable_progress_bar {
         let pb = ProgressBar::new(blobs.len() as u64);
         pb.set_prefix(date);
-        pb.set_style(ProgressStyle::default_bar().template("{prefix}	{wide_bar} {pos}/{len} files"));
+        pb.set_style(
+            ProgressStyle::default_bar().template("{prefix} {wide_bar} {pos}/{len} files"),
+        );
         Some(pb)
     } else {
         None
@@ -166,7 +170,11 @@ fn process_commit(
     let mut ext_to_total_lines: HashMap<String, usize> = HashMap::new();
     for (index, blob) in blobs.iter().enumerate() {
         if let Some(progress_bar) = &progress_bar {
-            progress_bar.set_position(index as u64);
+            let now = Instant::now();
+            if now.duration_since(last_update).subsec_nanos() > MIN_TIME_IN_NANOS {
+                last_update = now;
+                progress_bar.set_position(index as u64);
+            }
         }
 
         if extensions.contains(&blob.1) {
