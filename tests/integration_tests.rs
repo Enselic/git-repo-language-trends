@@ -39,7 +39,7 @@ fn own_git_repo_0_day_min_interval() {
 fn own_git_repo_1_day_min_interval() {
     git_repo_language_trends_bin()
         .arg("--min-interval=1")
-        .arg("--start-commit=v0.2.0")
+        .arg("--start-commit=v0.3.0")
         .arg("--filter")
         .arg(".rs")
         .arg(".a")
@@ -47,9 +47,10 @@ fn own_git_repo_1_day_min_interval() {
         .success()
         .stdout(
             "          	.rs	.a
+2021-01-27	602	4
+2021-01-25	461	4
 2021-01-24	196	4
-2021-01-23	121	0
-2021-01-22	107	0
+2021-01-23	107	0
 2021-01-19	66	0
 ",
         )
@@ -97,15 +98,15 @@ fn negative_min_interval() {
 fn interval_calculated_for_last_printed_commit_only() {
     git_repo_language_trends_bin()
         .arg("--min-interval=2")
-        .arg("--start-commit=v0.2.0")
+        .arg("--start-commit=v0.3.0")
         .arg("--filter")
         .arg(".rs")
         .assert()
         .success()
         .stdout(
             "          	.rs
+2021-01-27	602
 2021-01-24	196
-2021-01-22	107
 2021-01-19	66
 ",
         )
@@ -203,7 +204,6 @@ fn no_filter() {
         .stdout(
             "          	.a	.md	.rs	.toml	.yml
 2021-01-24	4	40	196	17	68
-2021-01-22	0	2	107	5	0
 2021-01-19	0	2	66	9	0
 ",
         )

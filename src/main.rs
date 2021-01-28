@@ -1,4 +1,6 @@
-use chrono::NaiveDate;
+use chrono::DateTime;
+use chrono::Utc;
+
 use std::collections::HashMap;
 use std::collections::HashSet;
 use structopt::StructOpt;
@@ -76,31 +78,34 @@ fn run(args: &Args) -> Result<(), git2::Error> {
     // Print rows
     let mut benchmark_data = BenchmarkData::start_if_activated(args);
     let mut rows_left = args.max_rows;
-    let mut date_of_last_row: Option<NaiveDate> = None;
-    for (date, commit) in repo.git_log(&args) {
+    let mut date_of_last_row: Option<DateTime<Utc>> = None;
+    for (current_date, commit) in repo.git_log(&args)? {
         if rows_left == 0 {
             break;
         }
 
         if args.debug {
-            eprintln!("-> Looking at {} {} ...", date, commit);
+            eprintln!("-> Looking at {} {:?} ...", current_date, commit);
         }
 
-        let current_date = NaiveDate::parse_from_str(&date, "%Y-%m-%d").unwrap();
         let min_interval_days_passed = match date_of_last_row {
             Some(date_of_last_row) => {
-                let days_passed = date_of_last_row
-                    .signed_duration_since(current_date)
-                    .num_days();
+                let time_passed = date_of_last_row.signed_duration_since(current_date);
 
-                days_passed >= args.min_interval as i64
+                if args.debug {
+                    eprintln!("time_passed={:?}", time_passed);
+                }
+
+                // NOTE: Takes hour of the day into account; date day
+                // can be different without a full day having passed
+                time_passed.num_days() >= args.min_interval as i64
             }
             None => true,
         };
         if min_interval_days_passed {
             process_and_print_row(
                 &repo,
-                &date,
+                &format!("{}", current_date.format("%Y-%m-%d")),
                 &commit,
                 &extensions,
                 &mut benchmark_data,
@@ -123,7 +128,7 @@ fn run(args: &Args) -> Result<(), git2::Error> {
 fn process_and_print_row(
     repo: &Repo,
     date: &str,
-    commit: &str,
+    commit: &git2::Commit,
     extensions: &[String],
     benchmark_data: &mut Option<BenchmarkData>,
     args: &Args,
@@ -141,7 +146,7 @@ fn process_and_print_row(
 fn process_commit(
     repo: &Repo,
     date: &str,
-    commit: &str,
+    commit: &git2::Commit,
     extensions: &[String],
     benchmark_data: &mut Option<BenchmarkData>,
     args: &Args,
@@ -152,10 +157,7 @@ fn process_commit(
     let progress_bar = if !args.disable_progress_bar {
         let pb = ProgressBar::new(blobs.len() as u64);
         pb.set_prefix(date);
-        pb.set_message(commit);
-        pb.set_style(
-            ProgressStyle::default_bar().template("{prefix} {wide_bar} {pos}/{len} files"),
-        );
+        pb.set_style(ProgressStyle::default_bar().template("{prefix}	{wide_bar} {pos}/{len} files"));
         Some(pb)
     } else {
         None
@@ -195,7 +197,8 @@ fn get_reasonable_set_of_extensions(repo: &Repo, args: &Args) -> Result<Vec<Stri
         // file extensions present in the first commit
         None => {
             eprintln!("INFO: Run\n\n  git-repo-language-trends --filter .ext1 .ext2 ...\n\nto select which file extensions to count lines for.\n");
-            let blobs = repo.get_blobs_in_commit(&args.start_commit)?;
+            let commit = repo.repo.revparse_single(&args.start_commit)?;
+            let blobs = repo.get_blobs_in_commit(&commit.peel_to_commit().unwrap())?;
             let exts: HashSet<String> = blobs.into_iter().map(|e| e.1).collect();
             // TODO: Unit test this code
             let mut result: Vec<String> = exts
