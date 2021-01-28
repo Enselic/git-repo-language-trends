@@ -203,7 +203,15 @@ fn get_reasonable_set_of_extensions(repo: &Repo, args: &Args) -> Result<Vec<Stri
     } else {
         // Calculate a reasonable set of extension to count lines for using the
         // file extensions present in the first commit
-        eprintln!("INFO: Run\n\n  git-repo-language-trends .ext1 .ext2 ...\n\nto select which file extensions to count lines for.\n");
+        eprintln!(
+            "\
+INFO: Run
+
+    git-repo-language-trends .ext1 .ext2 ...
+
+to select which file extensions to count lines for.
+"
+        );
         let commit = repo.repo.revparse_single(&args.start_commit)?;
         let blobs = repo.get_blobs_in_commit(&commit.peel_to_commit().unwrap())?;
         let exts: HashSet<String> = blobs.into_iter().map(|e| e.1).collect();

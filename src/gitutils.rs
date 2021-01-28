@@ -28,14 +28,22 @@ impl Repo {
         Ok(revwalk
             .into_iter()
             .filter_map(|item| {
-                let commit: git2::Commit = self.repo.find_commit(item.unwrap()).unwrap();
-                if commit.parent_count() > 1 {
-                    None // ignore merge commits
+                // TODO: Figure out a nicer syntax ...
+                // TODO: Figure out why there is an Err in https://github.com/torvalds/linux.git @ e1ae4b0be1
+                if let Ok(oid) = item {
+                    if let Ok(commit) = self.repo.find_commit(oid) {
+                        if commit.parent_count() > 1 {
+                            None // ignore merge commits
+                        } else {
+                            let commit_time = commit.committer().when().seconds();
+                            let ts = chrono::Utc.timestamp(commit_time, 0);
+                            Some((ts, commit))
+                        }
+                    } else {
+                        None
+                    }
                 } else {
-                    let commit_time = commit.committer().when().seconds();
-                    let ts = chrono::Utc.timestamp(commit_time, 0);
-
-                    Some((ts, commit))
+                    None
                 }
             })
             .collect())
