@@ -100,17 +100,7 @@ fn run(args: &Args) -> Result<(), git2::Error> {
             break;
         }
 
-        let min_interval_days_passed = match date_of_last_row {
-            Some(date_of_last_row) => {
-                let time_passed = date_of_last_row.signed_duration_since(current_date);
-
-                // NOTE: Takes hour of the day into account; date day
-                // can be different without a full day having passed
-                time_passed.num_days() >= args.min_interval as i64
-            }
-            None => true,
-        };
-        if min_interval_days_passed {
+        if min_interval_days_passed(&args, date_of_last_row, current_date) {
             process_and_print_row(
                 &repo,
                 &format!("{}", current_date.format("%Y-%m-%d")),
@@ -206,6 +196,23 @@ fn process_commit(
     }
 
     Ok(ext_to_total_lines)
+}
+
+fn min_interval_days_passed(
+    args: &Args,
+    date_of_last_row: Option<DateTime<Utc>>,
+    current_date: DateTime<Utc>,
+) -> bool {
+    match date_of_last_row {
+        Some(date_of_last_row) => {
+            let time_passed = date_of_last_row.signed_duration_since(current_date);
+
+            // NOTE: Takes hour of the day into account; day (%d) of date can be
+            // different without a full day having passed
+            time_passed.num_days() >= args.min_interval as i64
+        }
+        None => true,
+    }
 }
 
 fn get_data_for_start_commit(
