@@ -50,10 +50,6 @@ pub struct Args {
     #[structopt(long)]
     list: bool,
 
-    /// Prints debug information during processing.
-    #[structopt(long)]
-    debug: bool,
-
     /// (Advanced.) The progress bar slows down performance slightly. Enable
     /// this flag to maximize performance. You can use --benchmark to measure if
     /// there is an actual difference.
@@ -104,17 +100,9 @@ fn run(args: &Args) -> Result<(), git2::Error> {
             break;
         }
 
-        if args.debug {
-            eprintln!("-> Looking at {} {:?} ...", current_date, commit);
-        }
-
         let min_interval_days_passed = match date_of_last_row {
             Some(date_of_last_row) => {
                 let time_passed = date_of_last_row.signed_duration_since(current_date);
-
-                if args.debug {
-                    eprintln!("time_passed={:?}", time_passed);
-                }
 
                 // NOTE: Takes hour of the day into account; date day
                 // can be different without a full day having passed
