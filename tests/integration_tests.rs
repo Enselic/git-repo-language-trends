@@ -193,12 +193,12 @@ fn no_filter() {
         .assert()
         .success()
         .stdout(
-            "          	.a	.md	.rs	.toml	.yml
-2021-01-24	4	40	196	17	68
-2021-01-19	0	2	66	9	0
+            "          	.rs	.yml	.md
+2021-01-24	196	68	40
+2021-01-19	66	0	2
 ",
         )
         .stderr(predicates::str::contains(
-            "git-repo-language-trends .ext1 .ext2 ...",
+            "git-repo-language-trends .rs .yml .md",
         ));
 }

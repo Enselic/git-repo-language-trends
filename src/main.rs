@@ -2,7 +2,6 @@ use chrono::DateTime;
 use chrono::Utc;
 
 use std::collections::HashMap;
-use std::collections::HashSet;
 use structopt::StructOpt;
 
 mod benchmark;
@@ -11,6 +10,7 @@ mod progressbar;
 use progressbar::ProgressBar;
 mod repoutils;
 use repoutils::Repo;
+mod utils;
 
 #[derive(Debug, StructOpt)]
 #[structopt(about = "\
@@ -68,6 +68,10 @@ pub struct Args {
 fn run(args: &Args) -> Result<(), git2::Error> {
     let repo = Repo::from_path(std::env::var("GIT_DIR").unwrap_or_else(|_| ".".to_owned()))?;
     let extensions = get_reasonable_set_of_extensions(&repo, &args)?;
+    if extensions.is_empty() {
+        eprintln!("Could not find any file extensions, try specifying them manually");
+        return Ok(());
+    }
 
     // Print headers
     print!("          "); // For "YYYY-MM-DD"
@@ -136,9 +140,9 @@ fn process_and_print_row(
 ) -> Result<(), git2::Error> {
     let data = process_commit(
         repo,
-        date,
+        Some(date),
         commit,
-        extensions,
+        Some(extensions),
         !args.disable_progress_bar,
         benchmark_data,
     )?;
@@ -153,9 +157,9 @@ fn process_and_print_row(
 
 fn process_commit(
     repo: &Repo,
-    date: &str,
+    date: Option<&str>,
     commit: &git2::Commit,
-    extensions: &[String],
+    extensions: Option<&[String]>,
     with_progress_bar: bool,
     benchmark_data: &mut Option<BenchmarkData>,
 ) -> Result<HashMap<String, usize>, git2::Error> {
@@ -163,7 +167,10 @@ fn process_commit(
 
     // Setup progress bar
     let mut progress_bar = if with_progress_bar {
-        Some(ProgressBar::setup(blobs.len(), date))
+        Some(ProgressBar::setup(
+            blobs.len(),
+            date.expect("present if progress bar"),
+        ))
     } else {
         None
     };
@@ -177,7 +184,7 @@ fn process_commit(
         }
 
         // If the blob has an extension we care about, count the lines!
-        if extensions.contains(&blob.1) {
+        if extensions.is_none() || extensions.unwrap().contains(&blob.1) {
             let lines = repo.get_lines_in_blob(&blob.0)?;
             let total_lines = ext_to_total_lines.entry(blob.1.clone()).or_insert(0);
             *total_lines += lines;
@@ -205,42 +212,25 @@ fn get_reasonable_set_of_extensions(repo: &Repo, args: &Args) -> Result<Vec<Stri
     } else {
         // Calculate a reasonable set of extension to count lines for using the
         // file extensions present in the first commit
+        let commit = repo
+            .repo
+            .revparse_single(&args.start_commit)?
+            .peel_to_commit()?;
+        let data = process_commit(repo, None, &commit, None, false, &mut None)?;
+        let top_three_extensions = utils::get_top_three_extensions(&data);
         eprintln!(
             "\
-INFO: Run
+INFO: Continuing as if run with the arguments {} like this:
 
-    git-repo-language-trends .ext1 .ext2 ...
+    git-repo-language-trends {}
 
-to select which file extensions to count lines for.
-"
+You can manually pass other file extensions as arguments if you want other data.
+
+",
+            top_three_extensions.join(" "),
+            top_three_extensions.join(" "),
         );
-        let commit = repo.repo.revparse_single(&args.start_commit)?;
-        let blobs = repo.get_blobs_in_commit(&commit.peel_to_commit().unwrap())?;
-        let exts: HashSet<String> = blobs.into_iter().map(|e| e.1).collect();
-        // TODO: Unit test this code
-        let mut result: Vec<String> = exts
-            .into_iter()
-            .filter(|e| {
-                let mime = mime_guess::from_path(format!("temp{}", e))
-                    .first_or_text_plain()
-                    .essence_str()
-                    .to_owned();
-                if args.debug {
-                    eprintln!("Mapped {} to {}", e, mime);
-                }
-                !(mime.starts_with("image")
-                    || mime.starts_with("video")
-                    || mime.starts_with("audio")
-                    || mime.contains("archive")
-                    || mime.contains("cert")
-                    || (mime == "application/octet-stream" && e != ".java")
-                    || e.starts_with(".git")
-                    || ".json" == e
-                    || ".lock" == e)
-            })
-            .collect();
-        result.sort();
-        result
+        top_three_extensions
     })
 }
 
