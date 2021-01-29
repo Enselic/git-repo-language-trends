@@ -7,6 +7,11 @@ pub struct Repo {
     pub repo: git2::Repository,
 }
 
+pub struct Blob {
+    pub id: git2::Oid,
+    pub ext: String,
+}
+
 impl Repo {
     pub fn from_path<P: AsRef<Path>>(path: P) -> Result<Repo, git2::Error> {
         let repo = git2::Repository::open(path)?;
@@ -49,16 +54,16 @@ impl Repo {
             .collect())
     }
 
-    pub fn get_blobs_in_commit(
-        &self,
-        commit: &git2::Commit,
-    ) -> Result<Vec<(git2::Oid, String)>, git2::Error> {
+    pub fn get_blobs_in_commit(&self, commit: &git2::Commit) -> Result<Vec<Blob>, git2::Error> {
         let tree = commit.tree()?;
         let mut blobs = vec![];
         tree.walk(git2::TreeWalkMode::PostOrder, |_, entry| {
             if Some(git2::ObjectType::Blob) == entry.kind() {
                 if let Some(ext) = extension_for_raw_name(entry.name_bytes()) {
-                    blobs.push((entry.id(), ext.to_owned()));
+                    blobs.push(Blob {
+                        id: entry.id(),
+                        ext: ext.to_owned(),
+                    });
                 }
             }
             git2::TreeWalkResult::Ok

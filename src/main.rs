@@ -21,9 +21,8 @@ Stacked area chart is recommended.
 
 EXAMPLES
     cd ~/src/your-repo                            # Go to any git repository
-    git-repo-language-trend .cpp  .rs             # C++ vs Rust
-    git-repo-language-trend .java .kt             # Java vs Kotlin
-    git-repo-language-trend .m    .swift          # Objective-C vs Swift
+    git-repo-language-trend .m+.h  .swift         # Objective-C vs Swift (with .m and .h files summed together)
+    git-repo-language-trend .java  .kt            # Java vs Kotlin
 ")]
 pub struct Args {
     /// For what file extensions lines will be counted.
@@ -67,15 +66,17 @@ pub struct Args {
 
 type ExtensionToLinesMap = HashMap<String, usize>;
 
+/// Type that maps e.g. the ".m" and ".h" extensions to the ".m+.h" bucket
+type ExtensionsSumMap = HashMap<String, String>;
+
 fn run(args: &Args) -> Result<(), git2::Error> {
     let repo = Repo::from_path(std::env::var("GIT_DIR").unwrap_or_else(|_| ".".to_owned()))?;
 
     if args.list {
         let data = get_data_for_start_commit(&repo, &args)?;
-        let exts = utils::get_extensions_sorted_by_popularity(&data);
         println!(
             "Available extensions (in first commit):\n{}",
-            exts.join(" ")
+            utils::get_extensions_sorted_by_popularity(&data).join(" ")
         );
         return Ok(());
     }
@@ -85,6 +86,7 @@ fn run(args: &Args) -> Result<(), git2::Error> {
         eprintln!("Could not find any file extensions, try specifying them manually");
         return Ok(());
     }
+    let map = generate_extensions_sum_map(&extensions);
 
     // Print headers
     print!("          "); // For "YYYY-MM-DD"
@@ -108,6 +110,7 @@ fn run(args: &Args) -> Result<(), git2::Error> {
                 &format!("{}", current_date.format("%Y-%m-%d")),
                 &commit,
                 &extensions,
+                &map,
                 &mut benchmark_data,
                 &args,
             )?;
@@ -130,6 +133,7 @@ fn process_and_print_row(
     date: &str,
     commit: &git2::Commit,
     extensions: &[String],
+    map: &ExtensionsSumMap,
     benchmark_data: &mut Option<BenchmarkData>,
     args: &Args,
 ) -> Result<(), git2::Error> {
@@ -137,7 +141,7 @@ fn process_and_print_row(
         repo,
         Some(date),
         commit,
-        Some(extensions),
+        Some(map),
         !args.disable_progress_bar,
         benchmark_data,
     )?;
@@ -154,7 +158,7 @@ fn process_commit(
     repo: &Repo,
     date: Option<&str>,
     commit: &git2::Commit,
-    extensions: Option<&[String]>,
+    map: Option<&ExtensionsSumMap>,
     with_progress_bar: bool,
     benchmark_data: &mut Option<BenchmarkData>,
 ) -> Result<ExtensionToLinesMap, git2::Error> {
@@ -178,10 +182,17 @@ fn process_commit(
             progress_bar.set_position_rate_limited(index);
         }
 
+        let mut bucket = &blob.ext;
+        if let Some(map) = map {
+            if map.contains_key(&blob.ext) {
+                bucket = map.get(&blob.ext).unwrap();
+            }
+        }
+
         // If the blob has an extension we care about, count the lines!
-        if extensions.is_none() || extensions.unwrap().contains(&blob.1) {
-            let lines = repo.get_lines_in_blob(&blob.0)?;
-            let total_lines = ext_to_total_lines.entry(blob.1.clone()).or_insert(0);
+        if map.is_none() || map.unwrap().contains_key(&blob.ext) {
+            let lines = repo.get_lines_in_blob(&blob.id)?;
+            let total_lines = ext_to_total_lines.entry(bucket.to_owned()).or_insert(0);
             *total_lines += lines;
 
             // If we are benchmarking, now is the time to update that data
@@ -215,6 +226,24 @@ fn min_interval_days_passed(
         }
         None => true,
     }
+}
+
+/// Generates a map that taks a list such as [".c+.h", ".xml"] and creates a map
+/// that looks like this:
+///
+/// { ".c": ".c+.h", ".h": ".c+.h", ".xml": ".xml" }
+///
+/// It is used so that e.g. .c and .h can be summed together. Typilcally, if you
+/// e.g. count lines for the C language, you want to count both .c and .h files
+/// together.
+fn generate_extensions_sum_map(raw_extensions: &[String]) -> ExtensionsSumMap {
+    let mut map: ExtensionsSumMap = ExtensionsSumMap::new();
+    for raw_extension in raw_extensions {
+        for ext in raw_extension.split('+') {
+            map.insert(String::from(ext), String::from(raw_extension));
+        }
+    }
+    map
 }
 
 fn get_data_for_start_commit(repo: &Repo, args: &Args) -> Result<ExtensionToLinesMap, git2::Error> {

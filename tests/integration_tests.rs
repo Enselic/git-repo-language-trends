@@ -217,3 +217,20 @@ fn list() {
         )
         .stderr("");
 }
+
+#[test]
+fn auto_sum() {
+    git_repo_language_trends_bin()
+        .arg("--start-commit=v0.2.0")
+        .arg("--min-interval=2")
+        .arg(".rs+.yml")
+        .arg(".md")
+        .assert()
+        .stdout(
+            "          	.rs+.yml	.md
+2021-01-24	264	40
+2021-01-19	66	2
+",
+        )
+        .stderr(predicates::str::contains("Copy and paste the above output into your favourite spreadsheet software and make a graph."));
+}
