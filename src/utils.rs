@@ -1,11 +1,15 @@
 use std::collections::HashMap;
 
-pub fn get_top_three_extensions(data: &HashMap<String, usize>) -> Vec<String> {
+pub fn get_extensions_sorted_by_popularity(data: &HashMap<String, usize>) -> Vec<String> {
     let mut vec: Vec<(String, usize)> = data.clone().into_iter().collect();
     vec.sort_by(|a, b| b.1.cmp(&a.1));
-    let mut result: Vec<String> = vec
+    vec.into_iter().map(|i| i.0).collect()
+}
+
+/// Excludes some extensions very unlikely to be of interest, e.g. '.lock'
+pub fn get_top_three_extensions(data: &HashMap<String, usize>) -> Vec<String> {
+    let mut result: Vec<String> = get_extensions_sorted_by_popularity(data)
         .into_iter()
-        .map(|i| i.0)
         .filter(|ext| ".lock" != ext)
         .collect();
     result.truncate(3);
@@ -75,6 +79,23 @@ mod tests {
         data.insert(".lock".to_owned(), 1000);
         let top_three = super::get_top_three_extensions(&data);
         let empty: Vec<String> = vec![".rs".to_owned(), ".foo".to_owned(), ".md".to_owned()];
+        assert_eq!(top_three, empty);
+    }
+
+    #[test]
+    fn get_extensions_sorted_by_popularity() {
+        let mut data: HashMap<String, usize> = HashMap::new();
+        data.insert(".md".to_owned(), 5);
+        data.insert(".rs".to_owned(), 100);
+        data.insert(".foo".to_owned(), 10);
+        data.insert(".a".to_owned(), 1000);
+        let top_three = super::get_extensions_sorted_by_popularity(&data);
+        let empty: Vec<String> = vec![
+            ".a".to_owned(),
+            ".rs".to_owned(),
+            ".foo".to_owned(),
+            ".md".to_owned(),
+        ];
         assert_eq!(top_three, empty);
     }
 }

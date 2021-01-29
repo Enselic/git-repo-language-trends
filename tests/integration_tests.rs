@@ -202,3 +202,18 @@ fn no_filter() {
             "git-repo-language-trends .rs .yml .md",
         ));
 }
+
+#[test]
+fn list() {
+    git_repo_language_trends_bin()
+        .arg("--list")
+        .arg("--start-commit=v0.3.0")
+        .assert()
+        .success()
+        .stdout(
+            "Available extensions (in first commit):
+.lock .rs .yml .md .toml .json .gitignore .a
+",
+        )
+        .stderr("");
+}

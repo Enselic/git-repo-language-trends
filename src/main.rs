@@ -46,6 +46,10 @@ pub struct Args {
     #[structopt(long)]
     benchmark: bool,
 
+    /// Lists available file extensions (in the first commit).
+    #[structopt(long)]
+    list: bool,
+
     /// Prints debug information during processing.
     #[structopt(long)]
     debug: bool,
@@ -67,6 +71,17 @@ pub struct Args {
 
 fn run(args: &Args) -> Result<(), git2::Error> {
     let repo = Repo::from_path(std::env::var("GIT_DIR").unwrap_or_else(|_| ".".to_owned()))?;
+
+    if args.list {
+        let data = get_data_for_start_commit(&repo, &args)?;
+        let exts = utils::get_extensions_sorted_by_popularity(&data);
+        println!(
+            "Available extensions (in first commit):\n{}",
+            exts.join(" ")
+        );
+        return Ok(());
+    }
+
     let extensions = get_reasonable_set_of_extensions(&repo, &args)?;
     if extensions.is_empty() {
         eprintln!("Could not find any file extensions, try specifying them manually");
@@ -205,6 +220,17 @@ fn process_commit(
     Ok(ext_to_total_lines)
 }
 
+fn get_data_for_start_commit(
+    repo: &Repo,
+    args: &Args,
+) -> Result<HashMap<String, usize>, git2::Error> {
+    let commit = repo
+        .repo
+        .revparse_single(&args.start_commit)?
+        .peel_to_commit()?;
+    process_commit(repo, None, &commit, None, false, &mut None)
+}
+
 fn get_reasonable_set_of_extensions(repo: &Repo, args: &Args) -> Result<Vec<String>, git2::Error> {
     Ok(if !args.filter.is_empty() {
         // Easy, just use what the user wishes
@@ -212,12 +238,9 @@ fn get_reasonable_set_of_extensions(repo: &Repo, args: &Args) -> Result<Vec<Stri
     } else {
         // Calculate a reasonable set of extension to count lines for using the
         // file extensions present in the first commit
-        let commit = repo
-            .repo
-            .revparse_single(&args.start_commit)?
-            .peel_to_commit()?;
-        let data = process_commit(repo, None, &commit, None, false, &mut None)?;
+        let data = get_data_for_start_commit(repo, args)?;
         let top_three_extensions = utils::get_top_three_extensions(&data);
+        let top_three_str = top_three_extensions.join(" ");
         eprintln!(
             "\
 INFO: Continuing as if run with the arguments {} like this:
@@ -227,8 +250,7 @@ INFO: Continuing as if run with the arguments {} like this:
 You can manually pass other file extensions as arguments if you want other data.
 
 ",
-            top_three_extensions.join(" "),
-            top_three_extensions.join(" "),
+            top_three_str, top_three_str,
         );
         top_three_extensions
     })
