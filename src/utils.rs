@@ -1,13 +1,13 @@
-use std::collections::HashMap;
+use super::ExtensionToLinesMap;
 
-pub fn get_extensions_sorted_by_popularity(data: &HashMap<String, usize>) -> Vec<String> {
+pub fn get_extensions_sorted_by_popularity(data: &ExtensionToLinesMap) -> Vec<String> {
     let mut vec: Vec<(String, usize)> = data.clone().into_iter().collect();
     vec.sort_by(|a, b| b.1.cmp(&a.1));
     vec.into_iter().map(|i| i.0).collect()
 }
 
 /// Excludes some extensions very unlikely to be of interest, e.g. '.lock'
-pub fn get_top_three_extensions(data: &HashMap<String, usize>) -> Vec<String> {
+pub fn get_top_three_extensions(data: &ExtensionToLinesMap) -> Vec<String> {
     let mut result: Vec<String> = get_extensions_sorted_by_popularity(data)
         .into_iter()
         .filter(|ext| ".lock" != ext)
@@ -18,84 +18,89 @@ pub fn get_top_three_extensions(data: &HashMap<String, usize>) -> Vec<String> {
 
 #[cfg(test)]
 mod tests {
+    use super::super::ExtensionToLinesMap;
     use std::collections::HashMap;
 
     #[test]
     fn get_top_three_extensions_from_0() {
-        let data: HashMap<String, usize> = HashMap::new();
-        let top_three = super::get_top_three_extensions(&data);
-        let empty: Vec<String> = vec![];
-        assert_eq!(top_three, empty);
+        test_map_to_array(vec![], super::get_top_three_extensions, vec![]);
     }
 
     #[test]
     fn get_top_three_extensions_from_1() {
-        let mut data: HashMap<String, usize> = HashMap::new();
-        data.insert(".rs".to_owned(), 10);
-        let top_three = super::get_top_three_extensions(&data);
-        let empty: Vec<String> = vec![".rs".to_owned()];
-        assert_eq!(top_three, empty);
+        test_map_to_array(
+            vec![(".rs", 10)],
+            super::get_top_three_extensions,
+            vec![".rs"],
+        );
     }
 
     #[test]
     fn get_top_three_extensions_from_2() {
-        let mut data: HashMap<String, usize> = HashMap::new();
-        data.insert(".rs".to_owned(), 10);
-        data.insert(".foo".to_owned(), 100);
-        let top_three = super::get_top_three_extensions(&data);
-        let empty: Vec<String> = vec![".foo".to_owned(), ".rs".to_owned()];
-        assert_eq!(top_three, empty);
+        test_map_to_array(
+            vec![(".rs", 10), (".foo", 100)],
+            super::get_top_three_extensions,
+            vec![".foo", ".rs"],
+        );
     }
 
     #[test]
     fn get_top_three_extensions_from_3() {
-        let mut data: HashMap<String, usize> = HashMap::new();
-        data.insert(".rs".to_owned(), 100);
-        data.insert(".foo".to_owned(), 10);
-        data.insert(".a".to_owned(), 1000);
-        let top_three = super::get_top_three_extensions(&data);
-        let empty: Vec<String> = vec![".a".to_owned(), ".rs".to_owned(), ".foo".to_owned()];
-        assert_eq!(top_three, empty);
+        test_map_to_array(
+            vec![(".rs", 100), (".foo", 10), (".a", 1000)],
+            super::get_top_three_extensions,
+            vec![".a", ".rs", ".foo"],
+        );
     }
 
     #[test]
     fn get_top_three_extensions_from_4() {
-        let mut data: HashMap<String, usize> = HashMap::new();
-        data.insert(".md".to_owned(), 5);
-        data.insert(".rs".to_owned(), 100);
-        data.insert(".foo".to_owned(), 10);
-        data.insert(".a".to_owned(), 1000);
-        let top_three = super::get_top_three_extensions(&data);
-        let empty: Vec<String> = vec![".a".to_owned(), ".rs".to_owned(), ".foo".to_owned()];
-        assert_eq!(top_three, empty);
+        test_map_to_array(
+            vec![(".md", 5), (".rs", 100), (".foo", 10), (".a", 1000)],
+            super::get_top_three_extensions,
+            vec![".a", ".rs", ".foo"],
+        );
     }
 
     #[test]
     fn get_top_three_extensions_but_lock_ext_is_ignored() {
-        let mut data: HashMap<String, usize> = HashMap::new();
-        data.insert(".md".to_owned(), 5);
-        data.insert(".rs".to_owned(), 100);
-        data.insert(".foo".to_owned(), 10);
-        data.insert(".lock".to_owned(), 1000);
-        let top_three = super::get_top_three_extensions(&data);
-        let empty: Vec<String> = vec![".rs".to_owned(), ".foo".to_owned(), ".md".to_owned()];
-        assert_eq!(top_three, empty);
+        test_map_to_array(
+            vec![(".md", 5), (".rs", 100), (".foo", 10), (".lock", 1000)],
+            super::get_top_three_extensions,
+            vec![".rs", ".foo", ".md"],
+        );
     }
 
     #[test]
     fn get_extensions_sorted_by_popularity() {
-        let mut data: HashMap<String, usize> = HashMap::new();
-        data.insert(".md".to_owned(), 5);
-        data.insert(".rs".to_owned(), 100);
-        data.insert(".foo".to_owned(), 10);
-        data.insert(".a".to_owned(), 1000);
-        let top_three = super::get_extensions_sorted_by_popularity(&data);
-        let empty: Vec<String> = vec![
-            ".a".to_owned(),
-            ".rs".to_owned(),
-            ".foo".to_owned(),
-            ".md".to_owned(),
-        ];
-        assert_eq!(top_three, empty);
+        test_map_to_array(
+            vec![(".md", 5), (".rs", 100), (".foo", 10), (".a", 1000)],
+            super::get_extensions_sorted_by_popularity,
+            vec![".a", ".rs", ".foo", ".md"],
+        );
+    }
+
+    /// Helper function that tests that input hash map entries are transformed
+    /// to the expected result
+    fn test_map_to_array(
+        input_map_entries: Vec<(&str, usize)>,
+        transformer: fn(&ExtensionToLinesMap) -> Vec<String>,
+        expected_output_entries: Vec<&str>,
+    ) {
+        let data = generate_test_data(input_map_entries);
+        let result = transformer(&data);
+        let expected: Vec<String> = expected_output_entries
+            .into_iter()
+            .map(String::from)
+            .collect();
+        assert_eq!(result, expected);
+    }
+
+    fn generate_test_data(entries: Vec<(&str, usize)>) -> ExtensionToLinesMap {
+        let mut data: ExtensionToLinesMap = HashMap::new();
+        for entry in entries {
+            data.insert(String::from(entry.0), entry.1);
+        }
+        data
     }
 }

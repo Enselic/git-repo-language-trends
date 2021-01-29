@@ -65,6 +65,8 @@ pub struct Args {
     all_parents: bool,
 }
 
+type ExtensionToLinesMap = HashMap<String, usize>;
+
 fn run(args: &Args) -> Result<(), git2::Error> {
     let repo = Repo::from_path(std::env::var("GIT_DIR").unwrap_or_else(|_| ".".to_owned()))?;
 
@@ -155,7 +157,7 @@ fn process_commit(
     extensions: Option<&[String]>,
     with_progress_bar: bool,
     benchmark_data: &mut Option<BenchmarkData>,
-) -> Result<HashMap<String, usize>, git2::Error> {
+) -> Result<ExtensionToLinesMap, git2::Error> {
     let blobs = repo.get_blobs_in_commit(commit)?;
 
     // Setup progress bar
@@ -169,7 +171,7 @@ fn process_commit(
     };
 
     // Loop through all blobs in the commit tree
-    let mut ext_to_total_lines: HashMap<String, usize> = HashMap::new();
+    let mut ext_to_total_lines: ExtensionToLinesMap = HashMap::new();
     for (index, blob) in blobs.iter().enumerate() {
         // Update progress bar if present
         if let Some(progress_bar) = &mut progress_bar {
@@ -215,10 +217,7 @@ fn min_interval_days_passed(
     }
 }
 
-fn get_data_for_start_commit(
-    repo: &Repo,
-    args: &Args,
-) -> Result<HashMap<String, usize>, git2::Error> {
+fn get_data_for_start_commit(repo: &Repo, args: &Args) -> Result<ExtensionToLinesMap, git2::Error> {
     let commit = repo
         .repo
         .revparse_single(&args.start_commit)?
