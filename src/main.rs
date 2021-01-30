@@ -91,16 +91,41 @@ type ExtensionToColumnMap = HashMap<Extension, Column>;
 fn run(args: &Args) -> Result<(), git2::Error> {
     let repo = Repo::from_path(std::env::var("GIT_DIR").unwrap_or_else(|_| ".".to_owned()))?;
 
+    let mut benchmark_data = BenchmarkData::start_if_activated(args);
+
     if args.list {
-        let data = get_data_for_start_commit(&repo, &args)?;
-        println!(
-            "Available extensions (in first commit):\n{}",
-            utils::get_extensions_sorted_by_popularity(&data).join(" ")
-        );
-        return Ok(());
+        list_file_extensions(&repo, &args, &mut benchmark_data)?;
+    } else {
+        process_commits_and_print_rows(&repo, &args, &mut benchmark_data)?;
     }
 
-    let columns = get_reasonable_set_of_columns(&repo, &args)?;
+    if let Some(benchmark_data) = benchmark_data {
+        benchmark_data.report();
+    }
+
+    Ok(())
+}
+
+fn list_file_extensions(
+    repo: &Repo,
+    args: &Args,
+    benchmark_data: &mut Option<BenchmarkData>,
+) -> Result<(), git2::Error> {
+    let data = get_data_for_start_commit(&repo, &args, benchmark_data)?;
+    println!(
+        "Available extensions (in first commit):\n{}",
+        utils::get_extensions_sorted_by_popularity(&data).join(" ")
+    );
+
+    Ok(())
+}
+
+fn process_commits_and_print_rows(
+    repo: &Repo,
+    args: &Args,
+    benchmark_data: &mut Option<BenchmarkData>,
+) -> Result<(), git2::Error> {
+    let columns = get_reasonable_set_of_columns(&repo, &args, benchmark_data)?;
     if columns.is_empty() {
         eprintln!("Could not find any file extensions, try specifying them manually");
         return Ok(());
@@ -115,7 +140,6 @@ fn run(args: &Args) -> Result<(), git2::Error> {
     println!();
 
     // Print rows
-    let mut benchmark_data = BenchmarkData::start_if_activated(args);
     let mut rows_left = args.max_rows;
     let mut date_of_last_row: Option<DateTime<Utc>> = None;
     for (current_date, commit) in repo.git_log(&args)? {
@@ -133,15 +157,11 @@ fn run(args: &Args) -> Result<(), git2::Error> {
                 &commit,
                 &columns,
                 &ext_to_column,
-                &mut benchmark_data,
+                benchmark_data,
                 &args,
             )?;
             rows_left -= 1;
         }
-    }
-
-    if let Some(benchmark_data) = benchmark_data {
-        benchmark_data.report();
     }
 
     eprintln!("\nCopy and paste the above output into your favourite spreadsheet software and make a graph.");
@@ -268,7 +288,11 @@ fn generate_extension_to_column_map(raw_extensions: &[String]) -> ExtensionToCol
     map
 }
 
-fn get_data_for_start_commit(repo: &Repo, args: &Args) -> Result<ColumnToLinesMap, git2::Error> {
+fn get_data_for_start_commit(
+    repo: &Repo,
+    args: &Args,
+    benchmark_data: &mut Option<BenchmarkData>,
+) -> Result<ColumnToLinesMap, git2::Error> {
     let commit = repo
         .repo
         .revparse_single(&args.start_commit)?
@@ -279,18 +303,22 @@ fn get_data_for_start_commit(repo: &Repo, args: &Args) -> Result<ColumnToLinesMa
         None,
         args,
         "finding extensions and their line count",
-        &mut None,
+        benchmark_data,
     )
 }
 
-fn get_reasonable_set_of_columns(repo: &Repo, args: &Args) -> Result<Vec<Column>, git2::Error> {
+fn get_reasonable_set_of_columns(
+    repo: &Repo,
+    args: &Args,
+    benchmark_data: &mut Option<BenchmarkData>,
+) -> Result<Vec<Column>, git2::Error> {
     Ok(if !args.columns.is_empty() {
         // Easy, just use what the user wishes
         args.columns.clone()
     } else {
         // Calculate a reasonable set of extension to count lines for using the
         // file extensions present in the first commit
-        let data = get_data_for_start_commit(repo, args)?;
+        let data = get_data_for_start_commit(repo, args, benchmark_data)?;
         let top_three_extensions = utils::get_top_three_extensions(&data);
         let top_three_str = top_three_extensions.join(" ");
         eprintln!(

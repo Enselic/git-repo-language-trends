@@ -25,10 +25,11 @@ impl BenchmarkData {
         let files_per_second = self.total_files_processed as f64 / seconds;
         let lines_per_file = self.total_lines_counted as f64 / self.total_files_processed as f64;
         println!(
-            "Counted {} lines in {} files in {:.3} seconds. On average:
-            {} lines/second
-            {} files/second
-            {} lines/file",
+            "
+Counted {} lines in {} files in {:.3} seconds. On average:
+{} lines/second
+{} files/second
+{} lines/file",
             self.total_lines_counted,
             self.total_files_processed,
             seconds,
