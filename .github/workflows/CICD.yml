@@ -40,7 +40,7 @@ jobs:
       - name: Build release
         id: release
         run: |
-          cargo build --release --locked
+          PROJECT_VERSION=$(git describe --dirty) cargo build --release --locked
           echo ::set-output name=BIN_PATH::./target/release/git-repo-language-trends${{ matrix.os.bin-suffix }}
       - name: Strip release build
         run: |
