@@ -49,6 +49,11 @@ pub struct Args {
     #[structopt(long)]
     list: bool,
 
+    /// (Advanced.) Ignore merge commits. By default, merge commits are not
+    /// ignored.
+    #[structopt(long)]
+    ignore_merge_commits: bool,
+
     /// (Advanced.) The progress bar slows down performance slightly. Enable
     /// this flag to maximize performance. You can use --benchmark to measure if
     /// there is an actual difference for your system.

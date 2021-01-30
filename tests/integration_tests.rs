@@ -159,9 +159,10 @@ fn benchmark() {
 }
 
 #[test]
-fn all_parents() {
+fn all_parents_but_ignore_merge_commits() {
     git_repo_language_trends_bin()
         .arg("--all-parents")
+        .arg("--ignore-merge-commits")
         .arg("--min-interval=0")
         .arg("--max-rows=10")
         .arg("--start-commit=v0.2.0")
@@ -180,6 +181,33 @@ fn all_parents() {
 2021-01-24	185
 2021-01-24	166
 2021-01-24	172
+",
+        )
+        .stderr(predicates::str::contains("Copy and paste the above output into your favourite spreadsheet software and make a graph."));
+}
+
+#[test]
+fn all_parents() {
+    git_repo_language_trends_bin()
+        .arg("--all-parents")
+        .arg("--min-interval=0")
+        .arg("--max-rows=10")
+        .arg("--start-commit=v0.2.0")
+        .arg(".rs")
+        .assert()
+        .success()
+        .stdout(
+            "          	.rs
+2021-01-24	196
+2021-01-24	196
+2021-01-24	196
+2021-01-24	196
+2021-01-24	196
+2021-01-24	192
+2021-01-24	192
+2021-01-24	192
+2021-01-24	185
+2021-01-24	166
 ",
         )
         .stderr(predicates::str::contains("Copy and paste the above output into your favourite spreadsheet software and make a graph."));
@@ -230,6 +258,33 @@ fn auto_sum() {
             "          	.rs+.yml	.md
 2021-01-24	264	40
 2021-01-19	66	2
+",
+        )
+        .stderr(predicates::str::contains("Copy and paste the above output into your favourite spreadsheet software and make a graph."));
+}
+
+#[test]
+fn ignore_merge_commits() {
+    git_repo_language_trends_bin()
+        .arg("--ignore-merge-commits")
+        .arg("--min-interval=0")
+        .arg("--max-rows=10")
+        .arg("--start-commit=v0.2.0")
+        .arg(".rs")
+        .assert()
+        .success()
+        .stdout(
+            "          	.rs
+2021-01-24	196
+2021-01-24	196
+2021-01-24	192
+2021-01-24	185
+2021-01-24	166
+2021-01-24	172
+2021-01-23	121
+2021-01-23	121
+2021-01-23	121
+2021-01-23	121
 ",
         )
         .stderr(predicates::str::contains("Copy and paste the above output into your favourite spreadsheet software and make a graph."));

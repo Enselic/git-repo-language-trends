@@ -37,7 +37,7 @@ impl Repo {
                 // encounter object IDs that do not exist
                 if let Ok(commit) = rev.and_then(|oid| self.repo.find_commit(oid)) {
                     // ignore merge commits
-                    if commit.parent_count() <= 1 {
+                    if !args.ignore_merge_commits || commit.parent_count() <= 1 {
                         let commit_time = commit.committer().when().seconds();
                         let ts = chrono::Utc.timestamp(commit_time, 0);
                         Some((ts, commit))
