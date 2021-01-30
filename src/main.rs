@@ -300,7 +300,8 @@ You can manually pass other file extensions as arguments if you want other data.
 }
 
 fn main() {
-    let args = Args::from_args();
+    let version = option_env!("PROJECT_VERSION").unwrap_or(env!("CARGO_PKG_VERSION"));
+    let args = Args::from_clap(&Args::clap().version(version).get_matches());
     match run(&args) {
         Ok(()) => {}
         Err(e) => eprintln!("Error: {}", e),
