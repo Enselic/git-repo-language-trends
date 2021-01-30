@@ -20,14 +20,14 @@ Copy-paste the output into your favourite spreadsheet software to easily make a 
 Stacked area chart is recommended.
 
 EXAMPLES
-    cd ~/src/your-repo                            # Go to any git repository
-    git-repo-language-trend .m+.h  .swift         # Objective-C vs Swift (with .m and .h files summed together)
-    git-repo-language-trend .java  .kt            # Java vs Kotlin
+    cd ~/src/your-repo                       # Go to any git repository
+    git-repo-language-trend .m+.h .swift     # Objective-C vs Swift (with .m and .h files summed together)
+    git-repo-language-trend .java .kt        # Java vs Kotlin
 ")]
 pub struct Args {
     /// For what file extensions lines will be counted.
-    #[structopt(name = ".ext1 .ext2 ...")]
-    filter: Vec<String>,
+    #[structopt(name = ".ext1 .ext2+.ext3 .ext4  ... ")]
+    columns: Vec<String>,
 
     /// Optional. The mimimum interval in days between data points.
     #[structopt(long, default_value = "7")]
@@ -51,23 +51,37 @@ pub struct Args {
 
     /// (Advanced.) The progress bar slows down performance slightly. Enable
     /// this flag to maximize performance. You can use --benchmark to measure if
-    /// there is an actual difference.
+    /// there is an actual difference for your system.
     #[structopt(long)]
     disable_progress_bar: bool,
 
     /// (Advanced.) By default, --first-parent is passed to the internal git log
-    /// command. This ensures that the data in each row comes from a source code
-    /// tree that is an ancestor to the row above it. If you prefer data for as
-    /// many commits as possible, even though the data can become inconsistent
-    /// ("jumpy"), enable this flag.
+    /// command (or libgit2 Rust binding code rather). This ensures that the
+    /// data in each row comes from a source code tree that is an ancestor to
+    /// the row above it. If you prefer data for as many commits as possible,
+    /// even though the data can become inconsistent (a.k.a. "jumpy"), enable
+    /// this flag.
     #[structopt(long)]
     all_parents: bool,
 }
 
-type ExtensionToLinesMap = HashMap<String, usize>;
+/// Represents a column in the tabulated output (and command line argument
+/// input). Examples values: ".h+.c" for auto-summation of C header and source
+/// files. But more commonly just e.g. ".rs" or ".kt" or ".swift"
+type Column = String;
 
-/// Type that maps e.g. the ".m" and ".h" extensions to the ".m+.h" bucket
-type ExtensionsSumMap = HashMap<String, String>;
+/// Represents a file extension, such as ".rs" or ".kt" or ".swift"
+type Extension = String;
+
+/// Maps a column to the total number of lines in files that belong to that
+/// column. Usually a column is just for one file extension, but we also support
+/// auto-summation, in which case a column is e.g. ".c+.h".
+type ColumnToLinesMap = HashMap<Column, usize>;
+
+/// Type that maps e.g. the ".c" and ".h" extensions of C files to the the
+/// ".c+.h" column when auto-summation is used. But more commonly this is just a
+/// map to self. e.g. ".rs" to ".rs".
+type ExtensionToColumnMap = HashMap<Extension, Column>;
 
 fn run(args: &Args) -> Result<(), git2::Error> {
     let repo = Repo::from_path(std::env::var("GIT_DIR").unwrap_or_else(|_| ".".to_owned()))?;
@@ -81,16 +95,16 @@ fn run(args: &Args) -> Result<(), git2::Error> {
         return Ok(());
     }
 
-    let extensions = get_reasonable_set_of_extensions(&repo, &args)?;
-    if extensions.is_empty() {
+    let columns = get_reasonable_set_of_columns(&repo, &args)?;
+    if columns.is_empty() {
         eprintln!("Could not find any file extensions, try specifying them manually");
         return Ok(());
     }
-    let map = generate_extensions_sum_map(&extensions);
+    let ext_to_column = generate_extension_to_column_map(&columns);
 
     // Print headers
     print!("          "); // For "YYYY-MM-DD"
-    for ext in &extensions {
+    for ext in &columns {
         print!("\t{}", ext);
     }
     println!();
@@ -104,17 +118,19 @@ fn run(args: &Args) -> Result<(), git2::Error> {
             break;
         }
 
-        if min_interval_days_passed(&args, date_of_last_row, current_date) {
+        // Make sure --min-interval days has passed since last printed commit before
+        // processing and printing the data for another commit
+        if enough_days_passed(&args, date_of_last_row, current_date) {
+            date_of_last_row = Some(current_date);
             process_and_print_row(
                 &repo,
-                &format!("{}", current_date.format("%Y-%m-%d")),
+                &current_date.format("%Y-%m-%d").to_string(),
                 &commit,
-                &extensions,
-                &map,
+                &columns,
+                &ext_to_column,
                 &mut benchmark_data,
                 &args,
             )?;
-            date_of_last_row = Some(current_date);
             rows_left -= 1;
         }
     }
@@ -132,8 +148,8 @@ fn process_and_print_row(
     repo: &Repo,
     date: &str,
     commit: &git2::Commit,
-    extensions: &[String],
-    map: &ExtensionsSumMap,
+    columns: &[Column],
+    ext_to_column: &ExtensionToColumnMap,
     benchmark_data: &mut Option<BenchmarkData>,
     args: &Args,
 ) -> Result<(), git2::Error> {
@@ -141,13 +157,13 @@ fn process_and_print_row(
         repo,
         Some(date),
         commit,
-        Some(map),
+        Some(ext_to_column),
         !args.disable_progress_bar,
         benchmark_data,
     )?;
     print!("{}", date);
-    for ext in extensions {
-        print!("\t{}", data.get(ext).unwrap_or(&0));
+    for column in columns {
+        print!("\t{}", data.get(column).unwrap_or(&0));
     }
     println!();
 
@@ -158,10 +174,10 @@ fn process_commit(
     repo: &Repo,
     date: Option<&str>,
     commit: &git2::Commit,
-    map: Option<&ExtensionsSumMap>,
+    ext_to_column: Option<&ExtensionToColumnMap>,
     with_progress_bar: bool,
     benchmark_data: &mut Option<BenchmarkData>,
-) -> Result<ExtensionToLinesMap, git2::Error> {
+) -> Result<ColumnToLinesMap, git2::Error> {
     let blobs = repo.get_blobs_in_commit(commit)?;
 
     // Setup progress bar
@@ -175,24 +191,28 @@ fn process_commit(
     };
 
     // Loop through all blobs in the commit tree
-    let mut ext_to_total_lines: ExtensionToLinesMap = HashMap::new();
+    let mut column_to_lines: ColumnToLinesMap = HashMap::new();
     for (index, blob) in blobs.iter().enumerate() {
         // Update progress bar if present
         if let Some(progress_bar) = &mut progress_bar {
             progress_bar.set_position_rate_limited(index);
         }
 
-        let mut bucket = &blob.ext;
-        if let Some(map) = map {
-            if map.contains_key(&blob.ext) {
-                bucket = map.get(&blob.ext).unwrap();
-            }
-        }
+        // Figure out if we should count the lines for the file extension this
+        // blob has, by figuring out what column the lines should be added to,
+        // if any
+        let column = match ext_to_column {
+            Some(ext_to_column) => ext_to_column.get(&blob.ext),
+
+            // If no specific columns are requested, we are probably invoked
+            // with --list, so count the lines for all extensions
+            None => Some(&blob.ext),
+        };
 
         // If the blob has an extension we care about, count the lines!
-        if map.is_none() || map.unwrap().contains_key(&blob.ext) {
+        if let Some(column) = column {
             let lines = repo.get_lines_in_blob(&blob.id)?;
-            let total_lines = ext_to_total_lines.entry(bucket.to_owned()).or_insert(0);
+            let total_lines = column_to_lines.entry(column.to_owned()).or_insert(0);
             *total_lines += lines;
 
             // If we are benchmarking, now is the time to update that data
@@ -208,10 +228,10 @@ fn process_commit(
         progress_bar.finish_and_clear();
     }
 
-    Ok(ext_to_total_lines)
+    Ok(column_to_lines)
 }
 
-fn min_interval_days_passed(
+fn enough_days_passed(
     args: &Args,
     date_of_last_row: Option<DateTime<Utc>>,
     current_date: DateTime<Utc>,
@@ -233,11 +253,11 @@ fn min_interval_days_passed(
 ///
 /// { ".c": ".c+.h", ".h": ".c+.h", ".xml": ".xml" }
 ///
-/// It is used so that e.g. .c and .h can be summed together. Typilcally, if you
+/// It is used so that e.g. .c and .h can be summed together. Typically, if you
 /// e.g. count lines for the C language, you want to count both .c and .h files
 /// together.
-fn generate_extensions_sum_map(raw_extensions: &[String]) -> ExtensionsSumMap {
-    let mut map: ExtensionsSumMap = ExtensionsSumMap::new();
+fn generate_extension_to_column_map(raw_extensions: &[String]) -> ExtensionToColumnMap {
+    let mut map: ExtensionToColumnMap = ExtensionToColumnMap::new();
     for raw_extension in raw_extensions {
         for ext in raw_extension.split('+') {
             map.insert(String::from(ext), String::from(raw_extension));
@@ -246,7 +266,7 @@ fn generate_extensions_sum_map(raw_extensions: &[String]) -> ExtensionsSumMap {
     map
 }
 
-fn get_data_for_start_commit(repo: &Repo, args: &Args) -> Result<ExtensionToLinesMap, git2::Error> {
+fn get_data_for_start_commit(repo: &Repo, args: &Args) -> Result<ColumnToLinesMap, git2::Error> {
     let commit = repo
         .repo
         .revparse_single(&args.start_commit)?
@@ -254,10 +274,10 @@ fn get_data_for_start_commit(repo: &Repo, args: &Args) -> Result<ExtensionToLine
     process_commit(repo, None, &commit, None, false, &mut None)
 }
 
-fn get_reasonable_set_of_extensions(repo: &Repo, args: &Args) -> Result<Vec<String>, git2::Error> {
-    Ok(if !args.filter.is_empty() {
+fn get_reasonable_set_of_columns(repo: &Repo, args: &Args) -> Result<Vec<Column>, git2::Error> {
+    Ok(if !args.columns.is_empty() {
         // Easy, just use what the user wishes
-        args.filter.clone()
+        args.columns.clone()
     } else {
         // Calculate a reasonable set of extension to count lines for using the
         // file extensions present in the first commit

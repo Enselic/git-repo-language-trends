@@ -1,13 +1,13 @@
-use super::ExtensionToLinesMap;
+use super::ColumnToLinesMap;
 
-pub fn get_extensions_sorted_by_popularity(data: &ExtensionToLinesMap) -> Vec<String> {
+pub fn get_extensions_sorted_by_popularity(data: &ColumnToLinesMap) -> Vec<String> {
     let mut vec: Vec<(String, usize)> = data.clone().into_iter().collect();
     vec.sort_by(|a, b| b.1.cmp(&a.1));
     vec.into_iter().map(|i| i.0).collect()
 }
 
 /// Excludes some extensions very unlikely to be of interest, e.g. '.lock'
-pub fn get_top_three_extensions(data: &ExtensionToLinesMap) -> Vec<String> {
+pub fn get_top_three_extensions(data: &ColumnToLinesMap) -> Vec<String> {
     let mut result: Vec<String> = get_extensions_sorted_by_popularity(data)
         .into_iter()
         .filter(|ext| ".lock" != ext)
@@ -18,7 +18,7 @@ pub fn get_top_three_extensions(data: &ExtensionToLinesMap) -> Vec<String> {
 
 #[cfg(test)]
 mod tests {
-    use super::super::ExtensionToLinesMap;
+    use super::super::ColumnToLinesMap;
     use std::collections::HashMap;
 
     #[test]
@@ -84,7 +84,7 @@ mod tests {
     /// to the expected result
     fn test_map_to_array(
         input_map_entries: Vec<(&str, usize)>,
-        transformer: fn(&ExtensionToLinesMap) -> Vec<String>,
+        transformer: fn(&ColumnToLinesMap) -> Vec<String>,
         expected_output_entries: Vec<&str>,
     ) {
         let data = generate_test_data(input_map_entries);
@@ -96,8 +96,8 @@ mod tests {
         assert_eq!(result, expected);
     }
 
-    fn generate_test_data(entries: Vec<(&str, usize)>) -> ExtensionToLinesMap {
-        let mut data: ExtensionToLinesMap = HashMap::new();
+    fn generate_test_data(entries: Vec<(&str, usize)>) -> ColumnToLinesMap {
+        let mut data: ColumnToLinesMap = HashMap::new();
         for entry in entries {
             data.insert(String::from(entry.0), entry.1);
         }

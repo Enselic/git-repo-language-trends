@@ -24,6 +24,8 @@ impl ProgressBar {
         }
     }
 
+    // Performance suffers if the progress bar is updated too frequently, so
+    // rate-limit it
     pub fn set_position_rate_limited(&mut self, pos: usize) {
         let now = Instant::now();
         if now.duration_since(self.last_updated).subsec_nanos() > MIN_DURATION_NS {
