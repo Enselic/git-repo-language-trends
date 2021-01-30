@@ -22,7 +22,7 @@ impl Repo {
         &self,
         args: &super::Args,
     ) -> Result<Vec<(DateTime<Utc>, git2::Commit)>, git2::Error> {
-        let mut revwalk: git2::Revwalk = self.repo.revwalk()?;
+        let mut revwalk = self.repo.revwalk()?;
         let rev = self.repo.revparse_single(&args.start_commit)?;
         revwalk.push(rev.id())?;
 
@@ -32,18 +32,15 @@ impl Repo {
 
         Ok(revwalk
             .into_iter()
-            .filter_map(|item| {
-                // TODO: Figure out a nicer syntax ...
-                // TODO: Figure out why there is an Err in https://github.com/torvalds/linux.git @ e1ae4b0be1
-                if let Ok(oid) = item {
-                    if let Ok(commit) = self.repo.find_commit(oid) {
-                        if commit.parent_count() > 1 {
-                            None // ignore merge commits
-                        } else {
-                            let commit_time = commit.committer().when().seconds();
-                            let ts = chrono::Utc.timestamp(commit_time, 0);
-                            Some((ts, commit))
-                        }
+            .filter_map(|rev| {
+                // Note that if we are analyzing shallow git clones, we can
+                // encounter object IDs that do not exist
+                if let Ok(commit) = rev.and_then(|oid| self.repo.find_commit(oid)) {
+                    // ignore merge commits
+                    if commit.parent_count() <= 1 {
+                        let commit_time = commit.committer().when().seconds();
+                        let ts = chrono::Utc.timestamp(commit_time, 0);
+                        Some((ts, commit))
                     } else {
                         None
                     }
