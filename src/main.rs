@@ -155,10 +155,10 @@ fn process_and_print_row(
 ) -> Result<(), git2::Error> {
     let data = process_commit(
         repo,
-        Some(date),
         commit,
         Some(ext_to_column),
-        !args.disable_progress_bar,
+        args,
+        date,
         benchmark_data,
     )?;
     print!("{}", date);
@@ -172,20 +172,17 @@ fn process_and_print_row(
 
 fn process_commit(
     repo: &Repo,
-    date: Option<&str>,
     commit: &git2::Commit,
     ext_to_column: Option<&ExtensionToColumnMap>,
-    with_progress_bar: bool,
+    args: &Args,
+    progress_bar_prefix: &str,
     benchmark_data: &mut Option<BenchmarkData>,
 ) -> Result<ColumnToLinesMap, git2::Error> {
     let blobs = repo.get_blobs_in_commit(commit)?;
 
     // Setup progress bar
-    let mut progress_bar = if with_progress_bar {
-        Some(ProgressBar::setup(
-            blobs.len(),
-            date.expect("present if progress bar"),
-        ))
+    let mut progress_bar = if !args.disable_progress_bar {
+        Some(ProgressBar::setup(blobs.len(), progress_bar_prefix))
     } else {
         None
     };
@@ -271,7 +268,14 @@ fn get_data_for_start_commit(repo: &Repo, args: &Args) -> Result<ColumnToLinesMa
         .repo
         .revparse_single(&args.start_commit)?
         .peel_to_commit()?;
-    process_commit(repo, None, &commit, None, false, &mut None)
+    process_commit(
+        repo,
+        &commit,
+        None,
+        args,
+        "finding extensions and their line count",
+        &mut None,
+    )
 }
 
 fn get_reasonable_set_of_columns(repo: &Repo, args: &Args) -> Result<Vec<Column>, git2::Error> {
