@@ -164,6 +164,8 @@ fn process_commits_and_print_rows(
     Ok(())
 }
 
+/// Counts lines for files with the given file extensions in a given commit, and
+/// then prints the result in one row of tabulated data.
 fn process_and_print_row(
     repo: &Repo,
     date: &str,
@@ -190,6 +192,8 @@ fn process_and_print_row(
     Ok(())
 }
 
+/// Counts lines for files with the given file extensions in a given commit.
+/// Shows a progress bar on stderr if stderr is a tty.
 fn process_commit(
     repo: &Repo,
     commit: &git2::Commit,
@@ -248,6 +252,8 @@ fn process_commit(
     Ok(column_to_lines)
 }
 
+/// Checks if enough days according to --min-interval has passed, i.e. if it is
+/// time to process and print another commit.
 fn enough_days_passed(
     args: &Args,
     date_of_last_row: Option<DateTime<Utc>>,
@@ -283,6 +289,7 @@ fn generate_extension_to_column_map(raw_extensions: &[String]) -> ExtensionToCol
     map
 }
 
+/// Calls process_commit for the first commit (possibly from --start-commit)
 fn get_data_for_start_commit(
     repo: &Repo,
     args: &Args,
@@ -302,6 +309,7 @@ fn get_data_for_start_commit(
     )
 }
 
+/// Figure out for what extensions to calculate lines for.
 fn get_reasonable_set_of_columns(
     repo: &Repo,
     args: &Args,
@@ -332,7 +340,9 @@ You can manually pass other file extensions as arguments if you want other data.
 }
 
 fn main() {
+    // To include git SHA1 of the build in --version
     let version = option_env!("PROJECT_VERSION").unwrap_or(env!("CARGO_PKG_VERSION"));
+
     let args = Args::from_clap(&Args::clap().version(version).get_matches());
     match run(&args) {
         Ok(()) => {}
