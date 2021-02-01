@@ -48,7 +48,7 @@ jobs:
       - name: Package release build
         id: package
         run: |
-          VERSION=$(sed -n 's/version = "\([^"]*\)"/\1/p' Cargo.toml)
+          VERSION=$(sed -n 's/^version = "\([^"]*\)"/\1/p' Cargo.toml)
           TRIPLET=$(rustup show active-toolchain | sed -n 's/stable-\([^ ]*\) .*/\1/p')
           PACKAGE_NAME=git-repo-language-trends_${VERSION}_${TRIPLET}.zip
           7z a $PACKAGE_NAME ${{ steps.release.outputs.BIN_PATH }}
