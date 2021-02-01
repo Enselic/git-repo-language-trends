@@ -7,7 +7,7 @@ homepage = "https://github.com/Enselic/git-repo-language-trends"
 license = "MIT"
 name = "git-repo-language-trends"
 repository = "https://github.com/Enselic/git-repo-language-trends"
-version = "0.3.0"
+version = "0.4.0"
 
 [dependencies]
 chrono = {version = "0.4", default-features = false, features = ["alloc"]}
