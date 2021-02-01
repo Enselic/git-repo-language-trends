@@ -20,12 +20,16 @@ Copy-paste the output into your favourite spreadsheet software to easily make a 
 Stacked area chart is recommended.
 
 EXAMPLES
-    cd ~/src/your-repo                       # Go to any git repository
-    git-repo-language-trend .m+.h .swift     # Objective-C vs Swift (with .m and .h files summed together)
-    git-repo-language-trend .java .kt        # Java vs Kotlin
+    cd ~/src/any-git-repository                # Go to any git repository
+    git-repo-language-trend  .m+.h  .swift     # Objective-C vs Swift (with .m and .h files summed together)
+    git-repo-language-trend  .java  .kt        # Java vs Kotlin
 ")]
 pub struct Args {
-    /// For what file extensions lines will be counted.
+    /// For what file extensions lines will be counted. Can be specified
+    /// multiple times. Use '.ext' for regular line counting. Use .'ext1+.ext2'
+    /// syntax for auto-summation into a single column. If you specify no file
+    /// extensions, the top three extensions in the repository will be used,
+    /// based on the number of lines in files with the extensions.
     #[structopt(name = ".ext1 .ext2+.ext3 .ext4  ... ")]
     columns: Vec<String>,
 
