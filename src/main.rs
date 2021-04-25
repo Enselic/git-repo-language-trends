@@ -2,14 +2,24 @@ use chrono::DateTime;
 use chrono::Utc;
 
 use std::collections::HashMap;
+use std::error::Error;
 use structopt::StructOpt;
 
 mod benchmark;
 use benchmark::BenchmarkData;
+
+mod output;
+use output::Output;
+
+mod tsv_output;
+use tsv_output::TabSeparatedValuesOutput;
+
 mod progressbar;
 use progressbar::ProgressBar;
+
 mod repoutils;
 use repoutils::Repo;
+
 mod utils;
 
 #[derive(Debug, StructOpt)]
@@ -87,7 +97,7 @@ type ColumnToLinesMap = HashMap<Column, usize>;
 /// map to self. e.g. ".rs" to ".rs".
 type ExtensionToColumnMap = HashMap<Extension, Column>;
 
-fn run(args: &Args) -> Result<(), git2::Error> {
+fn run(args: &Args) -> Result<(), Box<dyn Error>> {
     let repo = Repo::from_path(std::env::var("GIT_DIR").unwrap_or_else(|_| ".".to_owned()))?;
 
     let mut benchmark_data = BenchmarkData::start_if_activated(args);
@@ -123,7 +133,7 @@ fn process_commits_and_print_rows(
     repo: &Repo,
     args: &Args,
     benchmark_data: &mut Option<BenchmarkData>,
-) -> Result<(), git2::Error> {
+) -> Result<(), Box<dyn Error>> {
     let columns = get_reasonable_set_of_columns(&repo, &args, benchmark_data)?;
     if columns.is_empty() {
         eprintln!("Could not find any file extensions, try specifying them manually");
@@ -131,12 +141,13 @@ fn process_commits_and_print_rows(
     }
     let ext_to_column = generate_extension_to_column_map(&columns);
 
+    let mut stdout = TabSeparatedValuesOutput::new(std::io::stdout());
+    let mut outputs: Vec<&mut dyn Output> = vec![&mut stdout];
+
     // Print headers
-    print!("          "); // For "YYYY-MM-DD"
-    for ext in &columns {
-        print!("\t{}", ext);
+    for output in &mut outputs {
+        output.start(&columns)?;
     }
-    println!();
 
     // Print rows
     let mut rows_left = args.max_rows;
@@ -154,8 +165,8 @@ fn process_commits_and_print_rows(
                 &repo,
                 &current_date.format("%Y-%m-%d").to_string(),
                 &commit,
-                &columns,
                 &ext_to_column,
+                &mut outputs,
                 benchmark_data,
                 &args,
             )?;
@@ -163,7 +174,10 @@ fn process_commits_and_print_rows(
         }
     }
 
-    eprintln!("\nCopy and paste the above output into your favourite spreadsheet software and make a graph.");
+    // Give outputs a chance to wrap things up
+    for output in &mut outputs {
+        output.finish()?;
+    }
 
     Ok(())
 }
@@ -174,11 +188,11 @@ fn process_and_print_row(
     repo: &Repo,
     date: &str,
     commit: &git2::Commit,
-    columns: &[Column],
     ext_to_column: &ExtensionToColumnMap,
+    outputs: &mut [&mut dyn Output],
     benchmark_data: &mut Option<BenchmarkData>,
     args: &Args,
-) -> Result<(), git2::Error> {
+) -> Result<(), Box<dyn Error>> {
     let data = process_commit(
         repo,
         commit,
@@ -187,11 +201,10 @@ fn process_and_print_row(
         date,
         benchmark_data,
     )?;
-    print!("{}", date);
-    for column in columns {
-        print!("\t{}", data.get(column).unwrap_or(&0));
+
+    for outputer in outputs {
+        outputer.add_row(date, &data)?;
     }
-    println!();
 
     Ok(())
 }
