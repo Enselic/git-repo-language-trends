@@ -24,16 +24,11 @@ impl<D: std::io::Write> Output for TabSeparatedValuesOutput<D> {
     fn start(&mut self, columns: &[Column]) -> io::Result<()> {
         self.columns.extend_from_slice(columns);
 
-        Ok(write_header_row(&mut self.dest, columns)?)
+        write_header_row(&mut self.dest, columns)
     }
 
     fn add_row(&mut self, date: &str, column_to_lines_map: &ColumnToLinesMap) -> io::Result<()> {
-        Ok(write_row(
-            &mut self.dest,
-            date,
-            &self.columns,
-            column_to_lines_map,
-        )?)
+        write_row(&mut self.dest, date, &self.columns, column_to_lines_map)
     }
 
     fn finish(&mut self) -> io::Result<()> {
