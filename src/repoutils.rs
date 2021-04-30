@@ -46,7 +46,10 @@ impl Repo {
             .collect())
     }
 
-    pub fn get_blobs_in_commit(&self, commit: &git2::Commit) -> Result<Vec<Blob>, git2::Error> {
+    pub fn get_blobs_in_commit(
+        &self,
+        commit: &git2::Commit,
+    ) -> Result<Vec<Blob>, git2::Error> {
         let tree = commit.tree()?;
         let mut blobs = vec![];
         tree.walk(git2::TreeWalkMode::PostOrder, |_, entry| {
@@ -63,7 +66,10 @@ impl Repo {
         Ok(blobs)
     }
 
-    pub fn get_lines_in_blob(&self, blobid: &git2::Oid) -> Result<usize, git2::Error> {
+    pub fn get_lines_in_blob(
+        &self,
+        blobid: &git2::Oid,
+    ) -> Result<usize, git2::Error> {
         let blobo = self
             .repo
             .find_object(*blobid, Some(git2::ObjectType::Blob))?;
