@@ -1,8 +1,6 @@
 use std::io;
 
-use crate::output::Output;
-use crate::Column;
-use crate::ColumnToLinesMap;
+use crate::*;
 
 /// Supports writing tab-separated value output to any writer.
 /// Typically the output will go to stdout or to a file.
@@ -21,27 +19,24 @@ impl<D: io::Write> TabSeparatedValuesOutput<D> {
 }
 
 impl<D: std::io::Write> Output for TabSeparatedValuesOutput<D> {
-    fn start(&mut self, columns: &[Column]) -> io::Result<()> {
+    fn start(&mut self, columns: &[Column]) -> Result<()> {
         self.columns.extend_from_slice(columns);
 
         write_header_row(&mut self.dest, columns)
     }
 
-    fn add_row(&mut self, date: &str, column_to_lines_map: &ColumnToLinesMap) -> io::Result<()> {
+    fn add_row(&mut self, date: &str, column_to_lines_map: &ColumnToLinesMap) -> Result<()> {
         write_row(&mut self.dest, date, &self.columns, column_to_lines_map)
     }
 
-    fn finish(&mut self) -> io::Result<()> {
+    fn finish(&mut self) -> Result<()> {
         eprintln!("\nCopy and paste the above output into your favourite spreadsheet software and make a graph.");
 
         Ok(())
     }
 }
 
-fn write_header_row(
-    write: &mut dyn std::io::Write,
-    columns: &[crate::Column],
-) -> std::io::Result<()> {
+fn write_header_row(write: &mut dyn std::io::Write, columns: &[crate::Column]) -> Result<()> {
     // To get correct tab alignment, pad with spaces in place of a date
     // on the first row
     write!(write, "{}", " ".repeat("YYYY-MM-DD".len()))?;
@@ -62,7 +57,7 @@ fn write_row(
     date: &str,
     columns: &[crate::Column],
     column_to_lines_map: &crate::ColumnToLinesMap,
-) -> std::io::Result<()> {
+) -> Result<()> {
     // Date
     write!(write, "{}", date)?;
 

@@ -2,14 +2,13 @@ use chrono::DateTime;
 use chrono::Utc;
 
 use std::collections::HashMap;
-use std::error::Error;
 use structopt::StructOpt;
 
 mod benchmark;
 use benchmark::BenchmarkData;
 
 mod output;
-use output::Output;
+pub use output::Output;
 
 mod tsv_output;
 use tsv_output::TabSeparatedValuesOutput;
@@ -97,7 +96,10 @@ type ColumnToLinesMap = HashMap<Column, usize>;
 /// map to self. e.g. ".rs" to ".rs".
 type ExtensionToColumnMap = HashMap<Extension, Column>;
 
-fn run(args: &Args) -> Result<(), Box<dyn Error>> {
+// Crate convenience
+type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
+
+fn run(args: &Args) -> Result<()> {
     let repo = Repo::from_path(std::env::var("GIT_DIR").unwrap_or_else(|_| ".".to_owned()))?;
 
     let mut benchmark_data = BenchmarkData::start_if_activated(args);
@@ -119,7 +121,7 @@ fn list_file_extensions(
     repo: &Repo,
     args: &Args,
     benchmark_data: &mut Option<BenchmarkData>,
-) -> Result<(), git2::Error> {
+) -> Result<()> {
     let data = get_data_for_start_commit(&repo, &args, benchmark_data)?;
     println!(
         "Available extensions (in first commit):\n{}",
@@ -133,7 +135,7 @@ fn process_commits_and_print_rows(
     repo: &Repo,
     args: &Args,
     benchmark_data: &mut Option<BenchmarkData>,
-) -> Result<(), Box<dyn Error>> {
+) -> Result<()> {
     let columns = get_reasonable_set_of_columns(&repo, &args, benchmark_data)?;
     if columns.is_empty() {
         eprintln!("Could not find any file extensions, try specifying them manually");
@@ -192,7 +194,7 @@ fn process_and_print_row(
     outputs: &mut [&mut dyn Output],
     benchmark_data: &mut Option<BenchmarkData>,
     args: &Args,
-) -> Result<(), Box<dyn Error>> {
+) -> Result<()> {
     let data = process_commit(
         repo,
         commit,
@@ -218,7 +220,7 @@ fn process_commit(
     args: &Args,
     progress_bar_prefix: &str,
     benchmark_data: &mut Option<BenchmarkData>,
-) -> Result<ColumnToLinesMap, git2::Error> {
+) -> Result<ColumnToLinesMap> {
     let blobs = repo.get_blobs_in_commit(commit)?;
 
     // Setup progress bar
@@ -311,7 +313,7 @@ fn get_data_for_start_commit(
     repo: &Repo,
     args: &Args,
     benchmark_data: &mut Option<BenchmarkData>,
-) -> Result<ColumnToLinesMap, git2::Error> {
+) -> Result<ColumnToLinesMap> {
     let commit = repo
         .repo
         .revparse_single(&args.start_commit)?
@@ -331,7 +333,7 @@ fn get_reasonable_set_of_columns(
     repo: &Repo,
     args: &Args,
     benchmark_data: &mut Option<BenchmarkData>,
-) -> Result<Vec<Column>, git2::Error> {
+) -> Result<Vec<Column>> {
     Ok(if !args.columns.is_empty() {
         // Easy, just use what the user wishes
         args.columns.clone()
