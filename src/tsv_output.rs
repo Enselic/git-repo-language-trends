@@ -19,13 +19,20 @@ impl<D: io::Write> TabSeparatedValuesOutput<D> {
 }
 
 impl<D: std::io::Write> Output for TabSeparatedValuesOutput<D> {
-    fn start(&mut self, columns: &[Column]) -> Result<()> {
+    fn start(
+        &mut self,
+        columns: &[Column],
+    ) -> Result<()> {
         self.columns.extend_from_slice(columns);
 
         write_header_row(&mut self.dest, columns)
     }
 
-    fn add_row(&mut self, date: &str, column_to_lines_map: &ColumnToLinesMap) -> Result<()> {
+    fn add_row(
+        &mut self,
+        date: &str,
+        column_to_lines_map: &ColumnToLinesMap,
+    ) -> Result<()> {
         write_row(&mut self.dest, date, &self.columns, column_to_lines_map)
     }
 
@@ -36,7 +43,10 @@ impl<D: std::io::Write> Output for TabSeparatedValuesOutput<D> {
     }
 }
 
-fn write_header_row(write: &mut dyn std::io::Write, columns: &[crate::Column]) -> Result<()> {
+fn write_header_row(
+    write: &mut dyn std::io::Write,
+    columns: &[crate::Column],
+) -> Result<()> {
     // To get correct tab alignment, pad with spaces in place of a date
     // on the first row
     write!(write, "{}", " ".repeat("YYYY-MM-DD".len()))?;
