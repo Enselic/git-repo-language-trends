@@ -35,7 +35,7 @@ EXAMPLES
 ")]
 pub struct Args {
     /// For what file extensions lines will be counted. Can be specified
-    /// multiple times. Use '.ext' for regular line counting. Use .'ext1+.ext2'
+    /// multiple times. Use '.ext' for regular line counting. Use '.ext1+.ext2'
     /// syntax for auto-summation into a single column. If you specify no file
     /// extensions, the top three extensions in the repository will be used,
     /// based on the number of lines in files with the extensions.
@@ -146,7 +146,7 @@ fn process_commits_and_print_rows(
     let mut stdout = TabSeparatedValuesOutput::new(std::io::stdout());
     let mut outputs: Vec<&mut dyn Output> = vec![&mut stdout];
 
-    // Print headers
+    // Print column headers
     for output in &mut outputs {
         output.start(&columns)?;
     }
@@ -204,8 +204,8 @@ fn process_and_print_row(
         benchmark_data,
     )?;
 
-    for outputer in outputs {
-        outputer.add_row(date, &data)?;
+    for output in outputs {
+        output.add_row(date, &data)?;
     }
 
     Ok(())
@@ -298,11 +298,11 @@ fn enough_days_passed(
 /// It is used so that e.g. .c and .h can be summed together. Typically, if you
 /// e.g. count lines for the C language, you want to count both .c and .h files
 /// together.
-fn generate_extension_to_column_map(raw_extensions: &[String]) -> ExtensionToColumnMap {
+fn generate_extension_to_column_map(columns: &[String]) -> ExtensionToColumnMap {
     let mut map: ExtensionToColumnMap = ExtensionToColumnMap::new();
-    for raw_extension in raw_extensions {
-        for ext in raw_extension.split('+') {
-            map.insert(String::from(ext), String::from(raw_extension));
+    for column in columns {
+        for ext in column.split('+') {
+            map.insert(String::from(ext), String::from(column));
         }
     }
     map

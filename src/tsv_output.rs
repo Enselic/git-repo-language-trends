@@ -52,8 +52,8 @@ fn write_header_row(
     write!(write, "{}", " ".repeat("YYYY-MM-DD".len()))?;
 
     // Now write the columns
-    for ext in columns {
-        write!(write, "\t{}", ext)?;
+    for column in columns {
+        write!(write, "\t{}", column)?;
     }
 
     // ... and finish with a newline
