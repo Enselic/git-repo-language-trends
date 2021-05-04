@@ -1,9 +1,6 @@
 # git-repo-language-trends
-Prints tabulated data about programming language usage over time in a git
-repository.
-
-Copy-paste the output into your favourite spreadsheet software to easily make a
-graph. Stacked area chart is recommended.
+Programming language usage over time in a git repository is plotted to an SVG
+file, based on total line count for given file extensions.
 
 # Example
 Simply pass the file extensions of the languages you want the trend for.
@@ -15,29 +12,16 @@ Simply pass the file extensions of the languages you want the trend for.
 2021-01-22      120     107
 2021-01-19      243     66
 ```
-Then copy-paste the output into your favourite spreadsheet software and make a
-graph.
+Then open `output.svg`.
 
 # Installation
-## Pre-built binaries
-You can download pre-built binaries for **Linux**, **Mac** and **Windows** for the latest release [here](https://github.com/Enselic/git-repo-language-trends/releases).
 
-## cargo install
-If you have Rust and Cargo installed, all you need to do to fetch, build and
-install the self-contained `git-repo-language-trends` crate is:
+Simply do
 ```
-cargo install git-repo-language-trends
+python3 -m pip install git-repo-language-trends
 ```
-
-## From source
-You can of course also clone this repo and then simply `cargo build` it if you have Rust and Cargo installed on your system.
 
 # Performance
-This program is fast. It counts ~5 000 000 lines / second on a high-end 2018
-laptop on a large repository (with `--disable-progress-bar`). (For smaller
-repositories, the number is lower.)
-
-This is because the inner loop uses the Rust `libgit2`
-[bindings](https://github.com/rust-lang/git2-rs). A regular shell script on a
-fast 2018 laptop that uses `git show $COMMIT:$FILE` in the inner loop counts
-only ~20 000 lines / second.
+This program is pretty fast, because it uses the pygit2 wrapper for the C
+library libgit2. On a low end computer (with an **Intel(R) Celeron(R) J4005 CPU
+@ 2.00GHz**) it counts ~400 000 lines per qsecond.
