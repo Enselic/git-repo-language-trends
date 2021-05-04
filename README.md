@@ -24,4 +24,4 @@ python3 -m pip install git-repo-language-trends
 # Performance
 This program is pretty fast, because it uses the pygit2 wrapper for the C
 library libgit2. On a low end computer (with an **Intel(R) Celeron(R) J4005 CPU
-@ 2.00GHz**) it counts ~400 000 lines per qsecond.
+@ 2.00GHz**) it counts ~400 000 lines per second.
