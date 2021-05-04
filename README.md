@@ -1,3 +1,8 @@
+# THIS IS AN OLD IMPLEMENTATION OF THIS TOOL BASED ON RUST
+
+I started using Rust but am now using Python. Please use the 'main' branch
+instead.
+
 # git-repo-language-trends
 Prints tabulated data about programming language usage over time in a git
 repository.
