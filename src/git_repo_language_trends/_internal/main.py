@@ -43,21 +43,21 @@ def get_args():
     )
 
     parser.add_argument(
-        "--min-interval",
+        "--min-interval-days",
         type=int,
         default=7,
-        help="Optional. The mimimum interval in days between data points.",
+        help="Optional. The mimimum interval in days between commits to analyze.",
     )
 
     parser.add_argument(
-        "--max-rows",
+        "--max-commits",
         type=int,
         default=sys.maxsize,
-        help="Optional. Maximum number of data rows to print."
+        help="Optional. Maximum number of commits to process."
     )
 
     parser.add_argument(
-        "--start_commit",
+        "--start-commit",
         default="HEAD",
         help="Optional. The commit to start parsing from."
     )
@@ -169,7 +169,7 @@ def get_commits_to_process(args):
 
     commits_to_process = []
 
-    rows_left = args.max_rows
+    rows_left = args.max_commits
 
     date_of_last_row = None
     for commit in get_git_log_walker(args):
@@ -282,7 +282,7 @@ def enough_days_passed(args, date_of_last_row, current_date):
 
     if date_of_last_row:
         days = ((date_of_last_row - current_date) / 60 / 60 / 24)
-        return days > args.min_interval
+        return days > args.min_interval_days
     return True
 
 
