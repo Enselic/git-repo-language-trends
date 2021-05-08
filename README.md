@@ -72,6 +72,7 @@ library libgit2. On a low-end computer (with an **Intel(R) Celeron(R) J4005 CPU
 @ 2.00GHz**) it counts ~400 000 lines per second.
 
 # TODO
+* Fix CI to use Python 3.6 for app
 * print info when auto caclulating extensions to use
 * Print output file path
 * Support tsv and csv
