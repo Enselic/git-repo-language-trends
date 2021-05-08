@@ -30,7 +30,7 @@ class Result:
         assert self.result.stdout == stdout
 
     def stderr(self, stderr):
-        assert self.result.stderr == stdout
+        assert self.result.stderr == stderr
 
 
 def git_repo_language_trends_bin(args):
@@ -217,7 +217,7 @@ def test_list():
     result.stdout(b"""Available extensions (in first commit):
 .lock .rs .yml .md .toml .json .a
 """)
-    result.stderr("")
+    result.stderr(b"")
 
 
 def test_auto_sum():

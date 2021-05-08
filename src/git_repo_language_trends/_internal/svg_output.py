@@ -1,10 +1,10 @@
-import sys
 import os
 
 import matplotlib.pyplot as plt
 import numpy as np
 
 from .output import Output
+
 
 class SvgOutput(Output):
     columns = None
@@ -30,7 +30,8 @@ class SvgOutput(Output):
 
         line_counts = []
         for column in self.columns:
-            line_count = list(map(lambda row: row[1].get(column, 0), self.rows))
+            line_count = list(
+                map(lambda row: row[1].get(column, 0), self.rows))
             line_counts.append(line_count)
 
         s = np.vstack(line_counts)
