@@ -2,146 +2,65 @@
 
 # pylint: disable=C0116
 
-# TODO: Shallow repo crashes
-
-"""
-This is a limited re-implementation of git-repo-language-trends
-in Python using pygit2. The main purpose of this re-implementation
-is to compare performance of Rust vs Python. The Rust version is about
-7 times faster than the Python version. Which is a shame, because the
-Python version code is much simpler. But since performance has high priority
-for this tool, the main and full implementation is in Rust.
-"""
-
 import sys
 
 from datetime import datetime
-import argparse
 import os
 import os.path
 import pygit2
 
+from .args import get_args
 from .tsv_output import TabSeparatedValuesStdoutOutput
-
 from .svg_output import SvgOutput
-
-
-def get_args():
-    """
-    Gets parsed program arguments.
-    """
-    parser = argparse.ArgumentParser()
-
-    parser.add_argument(
-        "columns",
-        nargs='*',
-        help="""For what file extensions lines will be counted. Can be specified
-        multiple times. Use '.ext' for regular line counting. Use '.ext1+.ext2'
-        syntax for auto-summation into a single column. If you specify no file
-        extensions, the top three extensions in the repository will be used,
-        based on the number of lines in files with the extensions.""",
-    )
-
-    parser.add_argument(
-        "--min-interval-days",
-        type=int,
-        default=7,
-        help="Optional. The mimimum interval in days between commits to analyze.",
-    )
-
-    parser.add_argument(
-        "--max-commits",
-        type=int,
-        default=sys.maxsize,
-        help="Optional. Maximum number of commits to process."
-    )
-
-    parser.add_argument(
-        "--start-commit",
-        default="HEAD",
-        help="Optional. The commit to start parsing from."
-    )
-
-    parser.add_argument(
-        "--all-parents",
-        action='store_true',
-        help="""(Advanced.) By default, --first-parent is passed to the internal
-        git log command (or libgit2 Rust binding code rather). This ensures that
-        the data in each row comes from a source code tree that is an ancestor
-        to the row above it. If you prefer data for as many commits as possible,
-        even though the data can become inconsistent (a.k.a. 'jumpy'), enable
-        this flag.""",
-    )
-
-    svg_group = parser.add_argument_group(
-        "Scalable Vector Graphics (.svg) output",
-    )
-
-    svg_group.add_argument(
-        "--disable-svg-output",
-        action='store_true',
-        help="Disable SVG file output. Enabled by default.",
-    )
-
-    svg_group.add_argument(
-        "--svg-style",
-        default="dark_background",
-        help="""Set to 'default' for white background. You can set to any of
-        the styles listed here:
-        https://matplotlib.org/stable/gallery/style_sheets/style_sheets_reference.html""",
-    )
-
-    svg_group.add_argument(
-        "--svg-width-inches",
-        default=11.75,
-        help="Width in inches of SVG diagram.",
-    )
-
-    svg_group.add_argument(
-        "--svg-height-inches",
-        default=8.25,
-        help="Height in inches of SVG diagram.",
-    )
-
-    tsv_group = parser.add_argument_group(
-        "Tab-separated values (.tsv) output",
-    )
-
-    tsv_group.add_argument(
-        "--enable-tsv-stdout-output",
-        action='store_false',
-        help="Enable .tsv (tab separated values) stdout output.",
-    )
-
-    tsv_group.add_argument(
-        "--enable-tsv-file-output",
-        action='store_false',
-        help="Enable .tsv (tab separated values) file output.",
-    )
-
-    return parser.parse_args()
+from .utils import get_extensions_sorted_by_popularity, get_top_three_extensions
 
 
 def main():
     args = get_args()
     outputs = get_outputs(args)
-    process_commits(args, outputs)
+    if args.list:
+        list_available_file_extensions(args)
+    else:
+        process_commits(args, outputs)
+
+
+def list_available_file_extensions(args):
+    data = get_data_for_first_commit(args)
+    pop = get_extensions_sorted_by_popularity(data)
+    foo = " ".join(pop)
+    print(f"Available extensions (in first commit):\n{foo}")
+
+
+# Calls process_commit for the first commit (possibly from --start-commit)
+def get_data_for_first_commit(args):
+    repo = get_repo()
+    rev = repo.revparse_single(args.first_commit)
+    return process_commit(rev.peel(pygit2.Commit), None)
 
 
 def get_outputs(args):
     outputs = []
 
-    if args.enable_tsv_stdout_output:
-        outputs.append(TabSeparatedValuesStdoutOutput())
+    name, ext = os.path.splitext(args.output)
 
-    if not args.disable_svg_output:
+    if ext == ".svg":
         outputs.append(SvgOutput(args))
+
+    # TODO: Document stdout is -
+    if name == "-" and ext == ".tsv":
+        outputs.append(TabSeparatedValuesStdoutOutput())
 
     return outputs
 
 
 def process_commits(args, outputs):
     columns = args.columns
+    if len(columns) == 0:
+        data = get_data_for_first_commit(args)
+        columns = get_top_three_extensions(data)
+
+    if len(columns) == 0:
+        sys.exit("No extensions to count lines for")
 
     ext_to_column = generate_ext_to_column_dict(args.columns)
 
@@ -261,12 +180,16 @@ def get_lines_in_blob(blob):
     return lines
 
 
+def get_repo():
+    return pygit2.Repository(os.environ.get('GIT_DIR', '.'))
+
+
 def get_git_log_walker(args):
-    repo = pygit2.Repository(os.environ.get('GIT_DIR', '.'))
+    repo = get_repo()
 
-    rev = repo.revparse_single(args.start_commit)
+    rev = repo.revparse_single(args.first_commit)
 
-    walker = repo.walk(rev.oid)
+    walker = repo.walk(rev.peel(pygit2.Commit).oid)
 
     if not args.all_parents:
         walker.simplify_first_parent()
@@ -296,7 +219,3 @@ def generate_ext_to_column_dict(columns):
 
 def get_commit_date(commit):
     return datetime.utcfromtimestamp(commit.commit_time).strftime('%Y-%m-%d')
-
-
-if __name__ == '__main__':
-    main()

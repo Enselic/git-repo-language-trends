@@ -1,14 +1,13 @@
 # git-repo-language-trends
 
-Plots programming language usage over time in a git repository to an SVG
-file.
+Analyze programming language usage over time in a git repository and produce a
+graphical or textual representation of the result.
 
-Available output file formats are:
-* `.svg` - Scalable Vector Graphics
-* `.png` - Portable Graphics Format (coming soon)
-* `.csv` - Comma-separated values (coming soon)
-* `.tsv` - Tab-separated values (coming soon)
-
+Several output file formats are available:
+* .svg - Scalable Vector Graphics
+* .png - Portable Graphics Format (coming soon)
+* .csv - Comma-separated values (coming soon)
+* .tsv - Tab-separated values (coming soon)
 
 Example command and its SVG output:
 
@@ -73,12 +72,10 @@ library libgit2. On a low-end computer (with an **Intel(R) Celeron(R) J4005 CPU
 @ 2.00GHz**) it counts ~400 000 lines per second.
 
 # TODO
-* port integration tests
+* print info when auto caclulating extensions to use
 * Print output file path
 * Support tsv and csv
-* Use top 3 extension when invoked without arguments
-* Add --list
-* --version output with git hash
+* --version output
 * handle shallow clones
 * png output
 * limit size of cache
