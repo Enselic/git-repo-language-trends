@@ -2,6 +2,9 @@ import sys
 import subprocess
 import os
 
+# This is OK to import as we do not consider it an implementation detail
+from git_repo_language_trends import __version__
+
 
 class Cli:
 
@@ -238,6 +241,16 @@ def test_auto_sum():
     result.assert_stdout(s("""          	.rs+.yml	.md
 2021-01-19	66	2
 2021-01-24	264	40
+"""))
+
+
+def test_version():
+    result = git_repo_language_trends_bin([
+        "--version",
+    ]).run()
+
+    result.assert_success()
+    result.assert_stdout(s(f"""git-repo-language-trends {__version__}
 """))
 
 
