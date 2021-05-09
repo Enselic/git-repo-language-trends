@@ -11,7 +11,7 @@ import pygit2
 
 from .args import get_args
 from .tsv_output import TabSeparatedValuesStdoutOutput
-from .svg_output import SvgOutput
+from .matplotlib_output import MatplotlibOutput
 from .utils import get_extensions_sorted_by_popularity, get_top_three_extensions
 
 
@@ -43,8 +43,8 @@ def get_outputs(args):
 
     name, ext = os.path.splitext(args.output)
 
-    if ext == ".svg":
-        outputs.append(SvgOutput(args))
+    if ext == ".svg" or ext == ".png":
+        outputs.append(MatplotlibOutput(args))
 
     if name == ".tsv" and ext == "":
         outputs.append(TabSeparatedValuesStdoutOutput())

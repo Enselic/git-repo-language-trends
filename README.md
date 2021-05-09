@@ -5,7 +5,7 @@ graphical or textual representation of the result.
 
 Several output file formats are available:
 * .svg - Scalable Vector Graphics
-* .png - Portable Graphics Format (coming soon)
+* .png - Portable Graphics Format
 * .csv - Comma-separated values (coming soon)
 * .tsv - Tab-separated values (coming soon)
 
@@ -91,9 +91,9 @@ flake8 && pytest -vv
 # TODO
 * Fix CI to use Python 3.6 for app
 * print info when auto caclulating extensions to use
-* Print output file path
 * Support tsv and csv
 * --version output
 * handle shallow clones
-* png output
 * limit size of cache
+* better default output name
+* test_cli.py with PNG and SVG tests
