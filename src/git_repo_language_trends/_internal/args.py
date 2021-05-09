@@ -10,7 +10,7 @@ graphical or textual representation of the result.
 
 Several output file formats are available:
 * .svg - Scalable Vector Graphics
-* .png - Portable Graphics Format (coming soon)
+* .png - Portable Graphics Format
 * .csv - Comma-separated values (coming soon)
 * .tsv - Tab-separated values (coming soon)
 
@@ -117,7 +117,7 @@ def get_args():
         "--output",
         metavar="<filename.ext>",
         default="output.svg",
-        help="""output filename and format via extension: .svg .png .csv or .tsv
+        help="""output filename (omit for stdout) and format (via extension .svg .png .csv or .tsv)
         (default: %(default)s)""",
     )
 

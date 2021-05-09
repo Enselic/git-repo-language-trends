@@ -4,8 +4,6 @@ class Output:
     Example output formats could be stdout printouts, a .tsv file, or a .png file with a graph.
     """
 
-    args = None
-
     def __init__(self, args):
         self.args = args
 

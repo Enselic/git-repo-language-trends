@@ -1,4 +1,5 @@
 import os
+import sys
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -6,12 +7,11 @@ import numpy as np
 from .output import Output
 
 
-class SvgOutput(Output):
-    columns = None
-    rows = []
-
+class MatplotlibOutput(Output):
     def __init__(self, args):
         super().__init__(args)
+        self.columns = None
+        self.rows = []
 
     # Called in the beginning of processing,
     # to announce what columns to use in the output.
@@ -55,4 +55,5 @@ class SvgOutput(Output):
         plt.tick_params(axis='x', labelrotation=45)
         plt.tight_layout()
 
-        plt.savefig("output.svg")
+        plt.savefig(self.args.output)
+        print(f"Wrote {self.args.output}", file=sys.stderr)

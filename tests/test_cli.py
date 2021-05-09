@@ -46,10 +46,9 @@ def git_repo_language_trends_bin(args):
 
 def test_own_git_repo_0_day_min_interval():
     result = git_repo_language_trends_bin([
-        "--output=-.tsv",
+        "--output=.tsv",
         "--min-interval-days=0",
-        "--first-commit",
-        "v0.1.2",
+        "--first-commit=v0.1.2",
         ".yml",
         ".rs",
     ]).run()
@@ -74,7 +73,7 @@ def test_own_git_repo_0_day_min_interval():
 
 def test_own_git_repo_1_day_min_interval():
     result = git_repo_language_trends_bin([
-        "--output=-.tsv",
+        "--output=.tsv",
         "--min-interval-days=1",
         "--first-commit=v0.3.0",
         ".rs",
@@ -93,7 +92,7 @@ def test_own_git_repo_1_day_min_interval():
 
 def test_own_git_repo_7_day_min_interval():
     result = git_repo_language_trends_bin([
-        "--output=-.tsv",
+        "--output=.tsv",
         "--min-interval-days=7",
         "--first-commit=v0.2.0",
         ".rs",
@@ -108,7 +107,7 @@ def test_own_git_repo_7_day_min_interval():
 
 def test_negative_min_interval():
     result = git_repo_language_trends_bin([
-        "--output=-.tsv",
+        "--output=.tsv",
         "--min-interval-days",
         "-1",
         ".rs",
@@ -123,7 +122,7 @@ def test_negative_min_interval():
 # the that stream of commits went on for longer than the current --min-interval-days.
 def test_interval_calculated_for_last_printed_commit_only():
     result = git_repo_language_trends_bin([
-        "--output=-.tsv",
+        "--output=.tsv",
         "--min-interval-days=2",
         "--first-commit=v0.3.0",
         ".rs",
@@ -139,7 +138,7 @@ def test_interval_calculated_for_last_printed_commit_only():
 
 def test_own_git_repo_max_rows_5():
     result = git_repo_language_trends_bin([
-        "--output=-.tsv",
+        "--output=.tsv",
         "--min-interval-days=0",
         "--max-commits=5",
         "--first-commit=v0.1.2",
@@ -159,7 +158,7 @@ def test_own_git_repo_max_rows_5():
 
 def test_own_git_repo_max_rows_0():
     result = git_repo_language_trends_bin([
-        "--output=-.tsv",
+        "--output=.tsv",
         "--max-commits=0",
         "--first-commit=v0.1.2",
         ".yml",
@@ -173,7 +172,7 @@ def test_own_git_repo_max_rows_0():
 
 def test_all_parents():
     result = git_repo_language_trends_bin([
-        "--output=-.tsv",
+        "--output=.tsv",
         "--all-parents",
         "--min-interval-days=0",
         "--max-commits=10",
@@ -198,7 +197,7 @@ def test_all_parents():
 
 def test_no_filter():
     result = git_repo_language_trends_bin([
-        "--output=-.tsv",
+        "--output=.tsv",
         "--first-commit=v0.2.0",
         "--min-interval-days=2",
     ]).run()
@@ -215,7 +214,7 @@ def test_no_filter():
 
 def test_list():
     result = git_repo_language_trends_bin([
-        "--output=-.tsv",
+        "--output=.tsv",
         "--list",
         "--first-commit=v0.3.0",
     ]).run()
@@ -229,7 +228,7 @@ def test_list():
 
 def test_auto_sum():
     result = git_repo_language_trends_bin([
-        "--output=-.tsv",
+        "--output=.tsv",
         "--first-commit=v0.2.0",
         "--min-interval-days=2",
         ".rs+.yml",
