@@ -121,7 +121,7 @@ def get_args():
     )
 
     parser.add_argument(
-        "--output",
+        "-o", "--output",
         metavar="<filename.ext>",
         default="output.svg",
         help="""output filename (omit for stdout) and format (via extension .svg .png .csv or .tsv)
