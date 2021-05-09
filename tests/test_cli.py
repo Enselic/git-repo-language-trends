@@ -20,16 +20,16 @@ class Result:
     def __init__(self, result):
         self.result = result
 
-    def success(self):
+    def assert_success(self):
         assert self.result.returncode == 0
 
-    def failure(self):
+    def assert_failure(self):
         assert self.result.returncode != 0
 
-    def stdout(self, stdout):
+    def assert_stdout(self, stdout):
         assert self.result.stdout == stdout
 
-    def stderr(self, stderr):
+    def assert_stderr(self, stderr):
         assert self.result.stderr == stderr
 
 
@@ -47,8 +47,8 @@ def test_own_git_repo_0_day_min_interval():
         ".rs",
     ]).run()
 
-    result.success()
-    result.stdout(b"""          	.yml	.rs
+    result.assert_success()
+    result.assert_stdout(b"""          	.yml	.rs
 2021-01-19	0	0
 2021-01-19	0	0
 2021-01-19	0	66
@@ -74,8 +74,8 @@ def test_own_git_repo_1_day_min_interval():
         ".a",
     ]).run()
 
-    result.success()
-    result.stdout(b"""          	.rs	.a
+    result.assert_success()
+    result.assert_stdout(b"""          	.rs	.a
 2021-01-19	66	0
 2021-01-23	107	0
 2021-01-24	196	4
@@ -93,8 +93,8 @@ def test_own_git_repo_7_day_min_interval():
         ".a",
     ]).run()
 
-    result.success()
-    result.stdout(b"""          	.rs	.a
+    result.assert_success()
+    result.assert_stdout(b"""          	.rs	.a
 2021-01-24	196	4
 """)
 
@@ -107,7 +107,7 @@ def test_negative_min_interval():
         ".rs",
     ]).run()
 
-    result.failure()
+    result.assert_failure()
 
 
 # Regression test for a bug where the "last printed row date" was updated for
@@ -122,8 +122,8 @@ def test_interval_calculated_for_last_printed_commit_only():
         ".rs",
     ]).run()
 
-    result.success()
-    result.stdout(b"""          	.rs
+    result.assert_success()
+    result.assert_stdout(b"""          	.rs
 2021-01-19	66
 2021-01-24	196
 2021-01-27	602
@@ -140,8 +140,8 @@ def test_own_git_repo_max_rows_5():
         ".rs",
     ]).run()
 
-    result.success()
-    result.stdout(b"""          	.yml	.rs
+    result.assert_success()
+    result.assert_stdout(b"""          	.yml	.rs
 2021-01-23	22	121
 2021-01-23	57	121
 2021-01-23	78	121
@@ -159,8 +159,8 @@ def test_own_git_repo_max_rows_0():
         ".rs",
     ]).run()
 
-    result.success()
-    result.stdout(b"""          	.yml	.rs
+    result.assert_success()
+    result.assert_stdout(b"""          	.yml	.rs
 """)
 
 
@@ -174,8 +174,8 @@ def test_all_parents():
         ".rs",
     ]).run()
 
-    result.success()
-    result.stdout(b"""          	.rs
+    result.assert_success()
+    result.assert_stdout(b"""          	.rs
 2021-01-24	166
 2021-01-24	185
 2021-01-24	192
@@ -196,8 +196,8 @@ def test_no_filter():
         "--min-interval-days=2",
     ]).run()
 
-    result.success()
-    result.stdout(b"""          	.rs	.yml	.md
+    result.assert_success()
+    result.assert_stdout(b"""          	.rs	.yml	.md
 2021-01-19	66	0	2
 2021-01-24	196	68	40
 """)
@@ -213,11 +213,11 @@ def test_list():
         "--first-commit=v0.3.0",
     ]).run()
 
-    result.success()
-    result.stdout(b"""Available extensions (in first commit):
+    result.assert_success()
+    result.assert_stdout(b"""Available extensions (in first commit):
 .lock .rs .yml .md .toml .json .a
 """)
-    result.stderr(b"")
+    result.assert_stderr(b"")
 
 
 def test_auto_sum():
@@ -229,8 +229,8 @@ def test_auto_sum():
         ".md",
     ]).run()
 
-    result.stdout(b"""          	.rs+.yml	.md
+    result.assert_stdout(b"""          	.rs+.yml	.md
 2021-01-19	66	2
 2021-01-24	264	40
 """,
-                  )
+                         )
