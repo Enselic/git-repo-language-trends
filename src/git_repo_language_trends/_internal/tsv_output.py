@@ -1,5 +1,6 @@
 import sys
 
+
 def write_header_row(writer, columns):
     # To get correct tab alignment, pad with spaces in place of a date
     # on the first row

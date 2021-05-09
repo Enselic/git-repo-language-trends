@@ -1,10 +1,10 @@
-import sys
 import os
 
 import matplotlib.pyplot as plt
 import numpy as np
 
 from .output import Output
+
 
 class SvgOutput(Output):
     columns = None
@@ -30,13 +30,24 @@ class SvgOutput(Output):
 
         line_counts = []
         for column in self.columns:
-            line_count = list(map(lambda row: row[1].get(column, 0), self.rows))
+            line_count = list(
+                map(lambda row: row[1].get(column, 0), self.rows))
             line_counts.append(line_count)
 
         s = np.vstack(line_counts)
 
-        plt.style.use(self.args.svg_style)
-        plt.figure(figsize=(self.args.svg_width_inches, self.args.svg_height_inches))
+        # See https://matplotlib.org/stable/gallery/style_sheets/style_sheets_reference.html
+        matplotlib_style = "dark_background"
+        if self.args.style == "light":
+            matplotlib_style = "default"
+
+        # TODO: Validate arg earlier
+        width_inches, height_inches = self.args.size_inches.split(':')
+        width_inches = float(width_inches)
+        height_inches = float(width_inches)
+
+        plt.style.use(matplotlib_style)
+        plt.figure(figsize=(width_inches, height_inches))
         plt.stackplot(dates, s, labels=self.columns)
         plt.legend(loc='upper left')
         plt.ylabel("Total (stacked) line count")

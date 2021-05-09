@@ -1,14 +1,13 @@
 # git-repo-language-trends
 
-Plots programming language usage over time in a git repository to an SVG
-file.
+Analyze programming language usage over time in a git repository and produce a
+graphical or textual representation of the result.
 
-Available output file formats are:
-* `.svg` - Scalable Vector Graphics
-* `.png` - Portable Graphics Format (coming soon)
-* `.csv` - Comma-separated values (coming soon)
-* `.tsv` - Tab-separated values (coming soon)
-
+Several output file formats are available:
+* .svg - Scalable Vector Graphics
+* .png - Portable Graphics Format (coming soon)
+* .csv - Comma-separated values (coming soon)
+* .tsv - Tab-separated values (coming soon)
 
 Example command and its SVG output:
 
@@ -68,17 +67,33 @@ in files with a given file extension.
 TODO
 
 # Performance
+
 This program is pretty fast, because it uses the pygit2 wrapper for the C
 library libgit2. On a low-end computer (with an **Intel(R) Celeron(R) J4005 CPU
 @ 2.00GHz**) it counts ~400 000 lines per second.
 
+# Development
+
+First clone this repo:
+```
+git clone https://github.com/Enselic/git-repo-language-trends.git
+```
+then make an editable install:
+```
+python3 -m pip install -e .
+```
+then make your changes. When done, lint and test:
+```
+flake8 && pytest -vv
+```
+
+
 # TODO
-* port integration tests
+* Fix CI to use Python 3.6 for app
+* print info when auto caclulating extensions to use
 * Print output file path
 * Support tsv and csv
-* Use top 3 extension when invoked without arguments
-* Add --list
-* --version output with git hash
+* --version output
 * handle shallow clones
 * png output
 * limit size of cache

@@ -7,9 +7,6 @@ on:
   pull_request:
     branches: [main]
 
-env:
-  CARGO_TERM_COLOR: always
-
 jobs:
   cicd:
     name: CI/CD
@@ -28,15 +25,22 @@ jobs:
       - uses: actions/checkout@v2
         with:
           fetch-depth: 0
-      - name: Lint
+      - uses: actions/setup-python@v2
+        with:
+          python-version: 3.7 # for test, 3.6 for app, TODO: Solve this better
+      - name: Install
         run: |
-          echo TODO
-      - name: Build
+          # "We recommend you use --use-feature=in-tree-build to test your packages with this new behavior before it becomes the default."
+          pip install --use-feature=in-tree-build .
+      - name: Install dev dependencies
         run: |
-          echo TODO
-      - name: Test
+          pip install flake8 pytest
+      - name: Lint with flake8
         run: |
-          echo TODO
+          flake8
+      - name: Test with pytest
+        run: |
+          pytest -vv
       - name: Build release
         id: release
         run: |
