@@ -1,5 +1,6 @@
 import sys
 import argparse
+import git_repo_language_trends
 
 desc = """
 Description:
@@ -79,6 +80,12 @@ def get_args():
         If you specify no file extensions, the top three extensions in the
         repository will be used, based on the number of lines in files with the
         extensions.""",
+    )
+
+    parser.add_argument(
+        '--version',
+        action='version',
+        version=f"%(prog)s {git_repo_language_trends.__version__}",
     )
 
     parser.add_argument(
