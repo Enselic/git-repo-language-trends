@@ -10,7 +10,7 @@ import os.path
 import pygit2
 
 from .args import get_args
-from .tsv_output import TabSeparatedValuesStdoutOutput
+from .separated_values_output import SeparatedValuesStdoutOutput
 from .matplotlib_output import MatplotlibOutput
 from .utils import get_extensions_sorted_by_popularity, get_top_three_extensions
 
@@ -43,11 +43,21 @@ def get_outputs(args):
 
     name, ext = os.path.splitext(args.output)
 
+    # If args.output=".foo" then name == ".foo" and ext == ""
+    # but we want the following code to be generic, so swap
+    if len(name) > 0 and ext == "":
+        ext = name
+        name = ""
+
+    # TODO: CLI tests
     if ext == ".svg" or ext == ".png":
         outputs.append(MatplotlibOutput(args))
-
-    if name == ".tsv" and ext == "":
-        outputs.append(TabSeparatedValuesStdoutOutput())
+    elif ext == ".tsv":
+        outputs.append(SeparatedValuesStdoutOutput(args, "\t"))
+    elif ext == ".csv":
+        outputs.append(SeparatedValuesStdoutOutput(args, ","))
+    else:
+        sys.exit(f"Output file format '{ext}' not supported")
 
     return outputs
 
