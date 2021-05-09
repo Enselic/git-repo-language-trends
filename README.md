@@ -6,8 +6,8 @@ graphical or textual representation of the result.
 Several output file formats are available:
 * .svg - Scalable Vector Graphics
 * .png - Portable Graphics Format
-* .csv - Comma-separated values (coming soon)
-* .tsv - Tab-separated values (coming soon)
+* .csv - Comma-separated values
+* .tsv - Tab-separated values
 
 Example command and its SVG output:
 
@@ -91,7 +91,7 @@ flake8 && pytest -vv
 # TODO
 * Fix CI to use Python 3.6 for app
 * print info when auto caclulating extensions to use
-* Support tsv and csv
+* Add .tsv and .csv and .png and .svg CLI test cases
 * handle shallow clones
 * limit size of cache
 * better default output name

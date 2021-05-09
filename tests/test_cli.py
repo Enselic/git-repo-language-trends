@@ -244,6 +244,21 @@ def test_auto_sum():
 """))
 
 
+def test_auto_sum_csv():
+    result = git_repo_language_trends_bin([
+        "--o", ".csv",
+        "--first-commit=v0.2.0",
+        "--min-interval-days=2",
+        ".rs+.yml",
+        ".md",
+    ]).run()
+
+    result.assert_stdout(s("""          ,.rs+.yml,.md
+2021-01-19,66,2
+2021-01-24,264,40
+"""))
+
+
 def test_version():
     result = git_repo_language_trends_bin([
         "--version",
@@ -251,6 +266,16 @@ def test_version():
 
     result.assert_success()
     result.assert_stdout(s(f"""git-repo-language-trends {__version__}
+"""))
+
+
+def test_invalid_file_format():
+    result = git_repo_language_trends_bin([
+        "-o", "file.foo",
+    ]).run()
+
+    result.assert_failure()
+    result.assert_stderr(s("""Output file format '.foo' not supported
 """))
 
 

@@ -1,3 +1,4 @@
+import os
 import sys
 import argparse
 import git_repo_language_trends
@@ -12,8 +13,8 @@ graphical or textual representation of the result.
 Several output file formats are available:
 * .svg - Scalable Vector Graphics
 * .png - Portable Graphics Format
-* .csv - Comma-separated values (coming soon)
-* .tsv - Tab-separated values (coming soon)
+* .csv - Comma-separated values
+* .tsv - Tab-separated values
 
 Examples:
 =========
@@ -121,7 +122,7 @@ def get_args():
     )
 
     parser.add_argument(
-        "--output",
+        "-o", "--output",
         metavar="<filename.ext>",
         default="output.svg",
         help="""output filename (omit for stdout) and format (via extension .svg .png .csv or .tsv)
@@ -156,4 +157,16 @@ def get_args():
         (default: %(default)s)""",
     )
 
-    return parser.parse_args()
+    args = parser.parse_args()
+
+    # Figure out output file extension
+    # Without an extension, we treat the entire filename as the extension
+    name, ext = os.path.splitext(args.output)
+    if not ext:
+        ext = name
+        name = ""
+    args.output_ext = ext
+
+    args.output_stdout = name == ""
+
+    return args

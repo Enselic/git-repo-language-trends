@@ -10,7 +10,7 @@ import os.path
 import pygit2
 
 from .args import get_args
-from .tsv_output import TabSeparatedValuesStdoutOutput
+from .separated_values_output import SeparatedValuesOutput
 from .matplotlib_output import MatplotlibOutput
 from .utils import get_extensions_sorted_by_popularity, get_top_three_extensions
 
@@ -39,15 +39,18 @@ def get_data_for_first_commit(args):
 
 
 def get_outputs(args):
+    # TODO: Support multiple --output arguments
     outputs = []
 
-    name, ext = os.path.splitext(args.output)
-
-    if ext == ".svg" or ext == ".png":
+    # TODO: CLI tests
+    if args.output_ext == ".svg" or args.output_ext == ".png":
         outputs.append(MatplotlibOutput(args))
-
-    if name == ".tsv" and ext == "":
-        outputs.append(TabSeparatedValuesStdoutOutput())
+    elif args.output_ext == ".tsv":
+        outputs.append(SeparatedValuesOutput(args, "\t"))
+    elif args.output_ext == ".csv":
+        outputs.append(SeparatedValuesOutput(args, ","))
+    else:
+        sys.exit(f"Output file format '{args.output_ext}' not supported")
 
     return outputs
 
