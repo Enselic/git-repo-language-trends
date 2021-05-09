@@ -117,7 +117,7 @@ def get_args():
         "--output",
         metavar="<filename.ext>",
         default="output.svg",
-        help="""output filename and format via extension: .svg .png .csv or .tsv
+        help="""output filename (omit for stdout) and format (via extension .svg .png .csv or .tsv)
         (default: %(default)s)""",
     )
 

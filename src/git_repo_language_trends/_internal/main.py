@@ -46,8 +46,7 @@ def get_outputs(args):
     if ext == ".svg":
         outputs.append(SvgOutput(args))
 
-    # TODO: Document stdout is -
-    if name == "-" and ext == ".tsv":
+    if name == ".tsv" and ext == "":
         outputs.append(TabSeparatedValuesStdoutOutput())
 
     return outputs
