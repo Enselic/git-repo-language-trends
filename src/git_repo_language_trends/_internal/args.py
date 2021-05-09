@@ -124,7 +124,7 @@ def get_args():
     parser.add_argument(
         "-o", "--output",
         metavar="<filename.ext>",
-        default="output.svg",
+        default=get_default_output(),
         help="""output filename (omit for stdout) and format (via extension .svg .png .csv or .tsv)
         (default: %(default)s)""",
     )
@@ -170,3 +170,10 @@ def get_args():
     args.output_stdout = name == ""
 
     return args
+
+
+def get_default_output():
+    cwd = os.getcwd()
+    basename = os.path.basename(cwd)
+
+    return f"{basename}_language-trends.png"

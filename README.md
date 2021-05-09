@@ -94,5 +94,3 @@ flake8 && pytest -vv
 * Add .tsv and .csv and .png and .svg CLI test cases
 * handle shallow clones
 * limit size of cache
-* better default output name
-* test_cli.py with PNG and SVG tests
