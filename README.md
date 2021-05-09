@@ -5,7 +5,7 @@ graphical or textual representation of the result.
 
 Several output file formats are available:
 * .svg - Scalable Vector Graphics
-* .png - Portable Graphics Format
+* .png - Portable Network Graphics
 * .csv - Comma-separated values
 * .tsv - Tab-separated values
 
