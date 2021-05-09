@@ -44,7 +44,7 @@ class MatplotlibOutput(Output):
         # TODO: Validate arg earlier
         width_inches, height_inches = self.args.size_inches.split(':')
         width_inches = float(width_inches)
-        height_inches = float(width_inches)
+        height_inches = float(height_inches)
 
         plt.style.use(matplotlib_style)
         plt.figure(figsize=(width_inches, height_inches))
