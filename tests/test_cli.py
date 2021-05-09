@@ -5,15 +5,12 @@ import subprocess
 class Cli:
 
     def __init__(self, args):
-        self.env = {
-            "PYTHONPATH": "src"
-        }
-        self.args = ["python3", "-m", "git_repo_language_trends"]
+        self.args = ["git-repo-language-trends"]
         self.args.extend(args)
         self.result = None
 
     def run(self):
-        sresult = subprocess.run(self.args, capture_output=True, env=self.env)
+        sresult = subprocess.run(self.args, capture_output=True)
         # Convert to strings for more readable assert messages
         sresult.stdout = str(sresult.stdout, "utf-8")
         sresult.stderr = str(sresult.stderr, "utf-8")

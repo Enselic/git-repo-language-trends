@@ -67,9 +67,26 @@ in files with a given file extension.
 TODO
 
 # Performance
+
 This program is pretty fast, because it uses the pygit2 wrapper for the C
 library libgit2. On a low-end computer (with an **Intel(R) Celeron(R) J4005 CPU
 @ 2.00GHz**) it counts ~400 000 lines per second.
+
+# Development
+
+First clone this repo:
+```
+git clone https://github.com/Enselic/git-repo-language-trends.git
+```
+then make an editable install:
+```
+python3 -m pip install -e .
+```
+then make your changes. When done, lint and test:
+```
+flake8 && pytest -vv
+```
+
 
 # TODO
 * Fix CI to use Python 3.6 for app
