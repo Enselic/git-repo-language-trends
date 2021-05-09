@@ -1,6 +1,7 @@
 import sys
 
 from .output import Output
+from .utils import print_file_written
 
 """
 This module adds support for
@@ -58,4 +59,5 @@ class SeparatedValuesOutput(Output):
 
     def finish(self):
         if not self.args.output_stdout:
+            print_file_written(self.args.output)
             self.dest.close()

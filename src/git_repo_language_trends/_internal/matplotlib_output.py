@@ -1,10 +1,10 @@
 import os
-import sys
 
 import matplotlib.pyplot as plt
 import numpy as np
 
 from .output import Output
+from .utils import print_file_written
 
 
 class MatplotlibOutput(Output):
@@ -55,5 +55,6 @@ class MatplotlibOutput(Output):
         plt.tick_params(axis='x', labelrotation=45)
         plt.tight_layout()
 
+        # TODO: Support stdout output
         plt.savefig(self.args.output)
-        print(f"Wrote {self.args.output}", file=sys.stderr)
+        print_file_written(self.args.output)
