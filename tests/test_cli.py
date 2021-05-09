@@ -1,5 +1,6 @@
 import sys
 import subprocess
+import os
 
 
 class Cli:
@@ -54,7 +55,7 @@ def test_own_git_repo_0_day_min_interval():
     ]).run()
 
     result.assert_success()
-    result.assert_stdout("""          	.yml	.rs
+    result.assert_stdout(s("""          	.yml	.rs
 2021-01-19	0	0
 2021-01-19	0	0
 2021-01-19	0	66
@@ -68,7 +69,7 @@ def test_own_git_repo_0_day_min_interval():
 2021-01-23	78	121
 2021-01-23	67	121
 2021-01-23	66	121
-""")
+"""))
 
 
 def test_own_git_repo_1_day_min_interval():
@@ -81,13 +82,13 @@ def test_own_git_repo_1_day_min_interval():
     ]).run()
 
     result.assert_success()
-    result.assert_stdout("""          	.rs	.a
+    result.assert_stdout(s("""          	.rs	.a
 2021-01-19	66	0
 2021-01-23	107	0
 2021-01-24	196	4
 2021-01-25	461	4
 2021-01-27	602	4
-""")
+"""))
 
 
 def test_own_git_repo_7_day_min_interval():
@@ -100,9 +101,9 @@ def test_own_git_repo_7_day_min_interval():
     ]).run()
 
     result.assert_success()
-    result.assert_stdout("""          	.rs	.a
+    result.assert_stdout(s("""          	.rs	.a
 2021-01-24	196	4
-""")
+"""))
 
 
 def test_negative_min_interval():
@@ -129,11 +130,11 @@ def test_interval_calculated_for_last_printed_commit_only():
     ]).run()
 
     result.assert_success()
-    result.assert_stdout("""          	.rs
+    result.assert_stdout(s("""          	.rs
 2021-01-19	66
 2021-01-24	196
 2021-01-27	602
-""")
+"""))
 
 
 def test_own_git_repo_max_rows_5():
@@ -147,13 +148,13 @@ def test_own_git_repo_max_rows_5():
     ]).run()
 
     result.assert_success()
-    result.assert_stdout("""          	.yml	.rs
+    result.assert_stdout(s("""          	.yml	.rs
 2021-01-23	22	121
 2021-01-23	57	121
 2021-01-23	78	121
 2021-01-23	67	121
 2021-01-23	66	121
-""")
+"""))
 
 
 def test_own_git_repo_max_rows_0():
@@ -166,8 +167,8 @@ def test_own_git_repo_max_rows_0():
     ]).run()
 
     result.assert_success()
-    result.assert_stdout("""          	.yml	.rs
-""")
+    result.assert_stdout(s("""          	.yml	.rs
+"""))
 
 
 def test_all_parents():
@@ -181,7 +182,7 @@ def test_all_parents():
     ]).run()
 
     result.assert_success()
-    result.assert_stdout("""          	.rs
+    result.assert_stdout(s("""          	.rs
 2021-01-24	166
 2021-01-24	185
 2021-01-24	192
@@ -192,7 +193,7 @@ def test_all_parents():
 2021-01-24	196
 2021-01-24	196
 2021-01-24	196
-""")
+"""))
 
 
 def test_no_filter():
@@ -203,10 +204,10 @@ def test_no_filter():
     ]).run()
 
     result.assert_success()
-    result.assert_stdout("""          	.rs	.yml	.md
+    result.assert_stdout(s("""          	.rs	.yml	.md
 2021-01-19	66	0	2
 2021-01-24	196	68	40
-""")
+"""))
     # result.stderr(predicates:: str: : contains(
     #       "git-repo-language-trends .rs .yml .md",
     #  ));
@@ -220,9 +221,9 @@ def test_list():
     ]).run()
 
     result.assert_success()
-    result.assert_stdout("""Available extensions (in first commit):
+    result.assert_stdout(s("""Available extensions (in first commit):
 .lock .rs .yml .md .toml .json .a
-""")
+"""))
     result.assert_stderr("")
 
 
@@ -235,7 +236,14 @@ def test_auto_sum():
         ".md",
     ]).run()
 
-    result.assert_stdout("""          	.rs+.yml	.md
+    result.assert_stdout(s("""          	.rs+.yml	.md
 2021-01-19	66	2
 2021-01-24	264	40
-""")
+"""))
+
+
+# On Windows, command output will include CR.
+# This wrapper makes sure string asserts works on all
+# platforms.
+def s(s):
+    return s.replace('\n', os.linesep)
