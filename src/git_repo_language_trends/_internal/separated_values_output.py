@@ -40,17 +40,22 @@ def write_row(writer, separator, columns, date, column_to_lines_dict):
     writer.write("\n")
 
 
-class SeparatedValuesStdoutOutput(Output):
+class SeparatedValuesOutput(Output):
 
     def __init__(self, args, separator):
         super().__init__(args)
         self.separator = separator
+        if args.output_stdout:
+            self.dest = sys.stdout
+        else:
+            self.dest = open(args.output, 'w')
 
     def start(self, columns):
-        write_header_row(sys.stdout, self.separator, columns)
+        write_header_row(self.dest, self.separator, columns)
 
     def add_row(self, columns, date, column_to_lines_dict):
-        write_row(sys.stdout, self.separator, columns, date, column_to_lines_dict)
+        write_row(self.dest, self.separator, columns, date, column_to_lines_dict)
 
     def finish(self):
-        pass
+        if not self.args.output_stdout:
+            self.dest.close()

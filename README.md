@@ -91,7 +91,7 @@ flake8 && pytest -vv
 # TODO
 * Fix CI to use Python 3.6 for app
 * print info when auto caclulating extensions to use
-* Support tsv and csv
+* Add .tsv and .csv and .png and .svg CLI test cases
 * handle shallow clones
 * limit size of cache
 * better default output name

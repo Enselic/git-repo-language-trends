@@ -1,3 +1,4 @@
+import os
 import sys
 import argparse
 import git_repo_language_trends
@@ -156,4 +157,16 @@ def get_args():
         (default: %(default)s)""",
     )
 
-    return parser.parse_args()
+    args = parser.parse_args()
+
+    # Figure out output file extension
+    # Without an extension, we treat the entire filename as the extension
+    name, ext = os.path.splitext(args.output)
+    if not ext:
+        ext = name
+        name = ""
+    args.output_ext = ext
+
+    args.output_stdout = name == ""
+
+    return args
