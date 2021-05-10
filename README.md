@@ -3,11 +3,11 @@
 Analyze programming language usage over time in a git repository and produce a
 graphical or textual representation of the result.
 
-Several output file formats are available:
-* .svg - Scalable Vector Graphics
-* .png - Portable Network Graphics
-* .csv - Comma-separated values
-* .tsv - Tab-separated values
+Available output file formats:
+* **.svg** - Scalable Vector Graphics
+* **.png** - Portable Network Graphics
+* **.csv** - Comma-separated values
+* **.tsv** - Tab-separated values
 
 Example command and its SVG output:
 
@@ -23,48 +23,48 @@ Example command and its SVG output:
 
 # Installation
 
-Installation requires `pip>=19.0`. When in doubt, begin by upgrading `pip`:
-```
-python3 -m pip install --upgrade pip
-```
+Requirements:
+* **Python 3.6** or later
+* **pip 19.0** or later
 
-Then simply do
-```
-python3 -m pip install git-repo-language-trends
-```
+When in doubt, begin by upgrading `pip`:
+
+    python3 -m pip install --upgrade pip
+
+Then install with
+
+    python3 -m pip install git-repo-language-trends
+
 
 # Usage
 
 First go to the git repository for a project.
 
-```
-% cd ~/src/your-project
-```
+    cd ~/src/your-project
 
 Then run the tool, passing the file extensions for the languages you are
 interested in as positional arguments:
 
-```
-% git-repo-language-trends .java .kt
-```
 
-For language with multiple file extensions such as C, you can use the `+` syntax
-which will automatically summarize line counts from both file extensions. To
-compare C and Rust:
+    git-repo-language-trends .java .kt
 
-```
-% git-repo-language-trends .c+.h .rs
-```
+
+For languages with multiple file extensions such as C, you can use the `+`
+syntax which will automatically summarize line counts from both file extensions.
+To compare C and Rust:
+
+    git-repo-language-trends .c+.h .rs
+
+
+# Examples
+
+TODO
 
 # Method
 
-Programming langauge usage is determined by the total number of newlines
-in files with a given file extension.
+Programming langauge usage is determined by the total number of newline
+characters in files with a given file extension.
 
-
-# More examples
-
-TODO
 
 # Performance
 
@@ -74,21 +74,30 @@ library libgit2. On a low-end computer (with an **Intel(R) Celeron(R) J4005 CPU
 
 # Development
 
-First clone this repo:
-```
-git clone https://github.com/Enselic/git-repo-language-trends.git
-```
-then make an editable install:
-```
-python3 -m pip install -e .
-```
+Clone this repo:
+
+    git clone https://github.com/Enselic/git-repo-language-trends.git
+
+Create a venv:
+
+    python3 -m venv ~/venv-grlt
+    source ~/venv-grlt/bin/activate
+
+Install and update dev dependencies:
+
+    python3 -m pip install --upgrade pip flake8 pytest build twine
+
+Make an editable install:
+
+    python3 -m pip install -e .
+
 then make your changes. When done, lint and test:
-```
-flake8 && pytest -vv
-```
+
+    flake8 && pytest -vv
 
 
 # TODO
+* Progress bar
 * Fix CI to use Python 3.6 for app
 * print info when auto caclulating extensions to use
 * Add .tsv and .csv and .png and .svg CLI test cases
