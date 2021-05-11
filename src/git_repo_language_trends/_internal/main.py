@@ -10,32 +10,32 @@ import os.path
 import pygit2
 
 from .args import get_args
-from .separated_values_output import SeparatedValuesOutput
 from .matplotlib_output import MatplotlibOutput
+from .progress import Progress
+from .separated_values_output import SeparatedValuesOutput
 from .utils import get_extensions_sorted_by_popularity, get_top_three_extensions
 
 
 def main():
     args = get_args()
-    outputs = get_outputs(args)
     if args.list:
         list_available_file_extensions(args)
     else:
+        outputs = get_outputs(args)
         process_commits(args, outputs)
 
 
 def list_available_file_extensions(args):
     data = get_data_for_first_commit(args)
     pop = get_extensions_sorted_by_popularity(data)
-    foo = " ".join(pop)
-    print(f"Available extensions (in first commit):\n{foo}")
+    print(f"Available extensions in first commit:\n{' '.join(pop)}")
 
 
 # Calls process_commit for the first commit (possibly from --start-commit)
 def get_data_for_first_commit(args):
     repo = get_repo()
     rev = repo.revparse_single(args.first_commit)
-    return process_commit(rev.peel(pygit2.Commit), None)
+    return process_commit(rev.peel(pygit2.Commit), None, Progress(1))
 
 
 def get_outputs(args):
@@ -58,8 +58,10 @@ def get_outputs(args):
 def process_commits(args, outputs):
     columns = args.columns
     if len(columns) == 0:
+        print("No file extensions specified, will use top three.", file=sys.stderr)
         data = get_data_for_first_commit(args)
         columns = get_top_three_extensions(data)
+        print(f"Top three extensions were: {' '.join(columns)}", file=sys.stderr)
 
     if len(columns) == 0:
         sys.exit("No extensions to count lines for")
@@ -67,6 +69,7 @@ def process_commits(args, outputs):
     ext_to_column = generate_ext_to_column_dict(args.columns)
 
     commits_to_process = get_commits_to_process(args)
+    progress_state = Progress(len(commits_to_process))
 
     # Print column headers
     for output in outputs:
@@ -75,10 +78,12 @@ def process_commits(args, outputs):
     # Print rows
     for commit in commits_to_process:
         date = get_commit_date(commit)
-        column_to_lines_dict = process_commit(commit, ext_to_column)
+        column_to_lines_dict = process_commit(commit, ext_to_column, progress_state)
 
         for output in outputs:
             output.add_row(columns, date, column_to_lines_dict)
+
+        progress_state.commit_processed()
 
     # Wrap things up
     for output in outputs:
@@ -86,8 +91,6 @@ def process_commits(args, outputs):
 
 
 def get_commits_to_process(args):
-    print("Figuring out what commits to analyze ...", file=sys.stderr)
-
     commits_to_process = []
 
     rows_left = args.max_commits
@@ -111,12 +114,10 @@ def get_commits_to_process(args):
     # you want to have from oldest to newest, so reverse
     commits_to_process.reverse()
 
-    print(f"Will analyze {len(commits_to_process)} commits.", file=sys.stderr)
-
     return commits_to_process
 
 
-def process_commit(commit, ext_to_column):
+def process_commit(commit, ext_to_column, progress_state):
     """
     Counts lines for files with the given file extensions in a given commit.
     """
@@ -125,7 +126,8 @@ def process_commit(commit, ext_to_column):
 
     # Loop through all blobs in the commit tree
     column_to_lines = {}
-    for (blob, ext) in blobs:
+    for index, (blob, ext) in enumerate(blobs, start=1):
+        progress_state.print_state(index, len(blobs))
 
         # Figure out if we should count the lines for the file extension this
         # blob has, by figuring out what column the lines should be added to,

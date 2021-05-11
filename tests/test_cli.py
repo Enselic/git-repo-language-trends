@@ -223,10 +223,9 @@ def test_list():
     ]).run()
 
     result.assert_success()
-    result.assert_stdout(s("""Available extensions (in first commit):
+    result.assert_stdout(s("""Available extensions in first commit:
 .lock .rs .yml .md .toml .json .a
 """))
-    result.assert_stderr("")
 
 
 def test_auto_sum():

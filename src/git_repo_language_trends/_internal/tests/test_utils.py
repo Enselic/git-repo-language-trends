@@ -1,4 +1,4 @@
-from .utils import get_top_three_extensions, get_extensions_sorted_by_popularity
+from ..utils import get_top_three_extensions, get_extensions_sorted_by_popularity
 
 
 def get_top_three_extensions_from_0():
