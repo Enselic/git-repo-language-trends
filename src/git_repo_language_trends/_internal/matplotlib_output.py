@@ -1,10 +1,4 @@
-import os
-
-import matplotlib.pyplot as plt
-import numpy as np
-
 from .output import Output
-from .utils import print_file_written
 
 
 class MatplotlibOutput(Output):
@@ -26,6 +20,13 @@ class MatplotlibOutput(Output):
     # Called when the processing of commits is complete.
     # This is a good time to write output files to disk.
     def finish(self):
+        # Import right before needed to significantly
+        # improve startup time of this tool
+        import os
+        import matplotlib.pyplot as plt
+        import numpy as np
+        from .utils import print_file_written
+
         dates = list(map(lambda row: row[0], self.rows))
 
         line_counts = []

@@ -97,10 +97,12 @@ then make your changes. When done, lint and test:
 
 
 # TODO
+* Get rid of stdout support, always write to files
 * Progress bar
 * Fix CI to use Python 3.6 for app
-* print info when auto caclulating extensions to use
 * Add .tsv and .csv and .png and .svg CLI test cases
 * handle shallow clones
 * limit size of cache
 * stacked percentage chart
+* Format with black
+* Don't ship _internal/tests mod
