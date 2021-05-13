@@ -98,11 +98,19 @@ then make your changes. When done, lint and test:
 
 # TODO
 * Get rid of stdout support, always write to files
-* Progress bar
+* Remove --output, always use -o
+* add -l alias
+* consider using stdout output by default instead of stderr
 * Fix CI to use Python 3.6 for app
 * Add .tsv and .csv and .png and .svg CLI test cases
 * handle shallow clones
+* add line count to top 3 and --list
 * limit size of cache
 * stacked percentage chart
 * Format with black
-* Don't ship _internal/tests mod
+* test for short option variants
+* test for overwrite existing file
+* test for creating dir if not exist
+
+# Features not yet implemeneted
+* Support import of .tsv or .csv data to support generating e.g. a PNG without re-reunning analysis

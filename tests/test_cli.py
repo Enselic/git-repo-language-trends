@@ -1,63 +1,35 @@
-import sys
-import subprocess
-import os
+"""
+Contains end-to-end tests. In other words, tests the CLI
+without caring about implementation details.
+
+We run the tests against our own git repo. It is worth noting
+that initially this tool was implemented with rust, which
+explains why we expect to see e.g. .rs lines in the tests.
+The tests run against old git tags of the repo.
+"""
+
+
+from .utils import (
+    s,
+    run_git_repo_language_trends_output_test,
+    run_git_repo_language_trends_test,
+    run_git_repo_language_trends,
+)
 
 # This is OK to import as we do not consider it an implementation detail
 from git_repo_language_trends import __version__
 
-
-class Cli:
-
-    def __init__(self, args):
-        self.args = ["git-repo-language-trends"]
-        self.args.extend(args)
-        self.result = None
-
-    def run(self):
-        sresult = subprocess.run(self.args, capture_output=True)
-        # Convert to strings for more readable assert messages
-        sresult.stdout = str(sresult.stdout, "utf-8")
-        sresult.stderr = str(sresult.stderr, "utf-8")
-        print("In case this test fails, you might be interested in captured stdout:")
-        print(sresult.stdout)
-        print("and stderr:", file=sys.stderr)
-        print(sresult.stderr, file=sys.stderr)
-        return Result(sresult)
+from pathlib import Path
+import os
 
 
-class Result:
-
-    def __init__(self, result):
-        self.result = result
-
-    def assert_success(self):
-        assert self.result.returncode == 0
-
-    def assert_failure(self):
-        assert self.result.returncode != 0
-
-    def assert_stdout(self, stdout):
-        assert self.result.stdout == stdout
-
-    def assert_stderr(self, stderr):
-        assert self.result.stderr == stderr
-
-
-def git_repo_language_trends_bin(args):
-    return Cli(args)
-
-
-def test_own_git_repo_0_day_min_interval():
-    result = git_repo_language_trends_bin([
-        "--output=.tsv",
+def test_own_git_repo_0_day_min_interval(tsv_output_path):
+    run_git_repo_language_trends_output_test(tsv_output_path, [
         "--min-interval-days=0",
         "--first-commit=v0.1.2",
         ".yml",
         ".rs",
-    ]).run()
-
-    result.assert_success()
-    result.assert_stdout(s("""          	.yml	.rs
+    ], """          	.yml	.rs
 2021-01-19	0	0
 2021-01-19	0	0
 2021-01-19	0	66
@@ -71,120 +43,131 @@ def test_own_git_repo_0_day_min_interval():
 2021-01-23	78	121
 2021-01-23	67	121
 2021-01-23	66	121
-"""))
+""", f"""
+Wrote output to file:
+
+    {tsv_output_path}
+
+""")
 
 
-def test_own_git_repo_1_day_min_interval():
-    result = git_repo_language_trends_bin([
-        "--output=.tsv",
+def test_own_git_repo_1_day_min_interval(tsv_output_path):
+    run_git_repo_language_trends_output_test(tsv_output_path, [
         "--min-interval-days=1",
         "--first-commit=v0.3.0",
         ".rs",
         ".a",
-    ]).run()
-
-    result.assert_success()
-    result.assert_stdout(s("""          	.rs	.a
+    ], """          	.rs	.a
 2021-01-19	66	0
 2021-01-23	107	0
 2021-01-24	196	4
 2021-01-25	461	4
 2021-01-27	602	4
-"""))
+""", f"""
+Wrote output to file:
+
+    {tsv_output_path}
+
+""")
 
 
-def test_own_git_repo_7_day_min_interval():
-    result = git_repo_language_trends_bin([
-        "--output=.tsv",
+def test_own_git_repo_7_day_min_interval(tsv_output_path):
+    run_git_repo_language_trends_output_test(tsv_output_path, [
         "--min-interval-days=7",
         "--first-commit=v0.2.0",
         ".rs",
         ".a",
-    ]).run()
-
-    result.assert_success()
-    result.assert_stdout(s("""          	.rs	.a
+    ], """          	.rs	.a
 2021-01-24	196	4
-"""))
+""", f"""
+Wrote output to file:
+
+    {tsv_output_path}
+
+""")
 
 
-def test_negative_min_interval():
-    result = git_repo_language_trends_bin([
-        "--output=.tsv",
-        "--min-interval-days",
-        "-1",
+def test_negative_min_interval(tsv_output_path):
+    result = run_git_repo_language_trends([
+        "-o", tsv_output_path,
+        "--output=something.tsv",
+        "--min-interval-days=-1",
         ".rs",
-    ]).run()
+    ])
 
-    result.assert_failure()
+    assert result.returncode == 2
+    assert result.stdout == ""
+    assert "Must not be negative" in result.stderr
 
 
-# Regression test for a bug where the "last printed row date" was updated for
-# every commit, and not only printed commits. This resulted in not printing
-# commits that were part of a long stream of regular commits each day, even if
-# the that stream of commits went on for longer than the current --min-interval-days.
-def test_interval_calculated_for_last_printed_commit_only():
-    result = git_repo_language_trends_bin([
-        "--output=.tsv",
+def test_interval_calculated_for_last_printed_commit_only(tsv_output_path):
+    """
+    Regression test for a bug where the "last printed row date" was updated for
+    every commit, and not only printed commits. This resulted in not printing
+    commits that were part of a long stream of regular commits each day, even if
+    the that stream of commits went on for longer than the current --min-interval-days.
+    """
+
+    run_git_repo_language_trends_output_test(tsv_output_path, [
         "--min-interval-days=2",
         "--first-commit=v0.3.0",
         ".rs",
-    ]).run()
-
-    result.assert_success()
-    result.assert_stdout(s("""          	.rs
+    ], """          	.rs
 2021-01-19	66
 2021-01-24	196
 2021-01-27	602
-"""))
+""", f"""
+Wrote output to file:
+
+    {tsv_output_path}
+
+""")
 
 
-def test_own_git_repo_max_rows_5():
-    result = git_repo_language_trends_bin([
-        "--output=.tsv",
+def test_own_git_repo_max_rows_5(tsv_output_path):
+    run_git_repo_language_trends_output_test(tsv_output_path, [
         "--min-interval-days=0",
         "--max-commits=5",
         "--first-commit=v0.1.2",
         ".yml",
         ".rs",
-    ]).run()
-
-    result.assert_success()
-    result.assert_stdout(s("""          	.yml	.rs
+    ], """          	.yml	.rs
 2021-01-23	22	121
 2021-01-23	57	121
 2021-01-23	78	121
 2021-01-23	67	121
 2021-01-23	66	121
-"""))
+""", f"""
+Wrote output to file:
+
+    {tsv_output_path}
+
+""")
 
 
-def test_own_git_repo_max_rows_0():
-    result = git_repo_language_trends_bin([
-        "--output=.tsv",
+def test_own_git_repo_max_rows_0(tsv_output_path):
+    run_git_repo_language_trends_output_test(tsv_output_path, [
         "--max-commits=0",
         "--first-commit=v0.1.2",
         ".yml",
         ".rs",
-    ]).run()
+    ], """          	.yml	.rs
+""", f"""
+Wrote output to file:
 
-    result.assert_success()
-    result.assert_stdout(s("""          	.yml	.rs
-"""))
+    {tsv_output_path}
+
+""")
 
 
-def test_all_parents():
-    result = git_repo_language_trends_bin([
-        "--output=.tsv",
+def test_all_parents(tsv_output_path):
+    run_git_repo_language_trends_output_test(tsv_output_path, [
         "--all-parents",
         "--min-interval-days=0",
         "--max-commits=10",
         "--first-commit=v0.2.0",
         ".rs",
-    ]).run()
-
-    result.assert_success()
-    result.assert_stdout(s("""          	.rs
+    ], """          	.rs
 2021-01-24	166
 2021-01-24	185
 2021-01-24	192
@@ -195,91 +178,132 @@ def test_all_parents():
 2021-01-24	196
 2021-01-24	196
 2021-01-24	196
-"""))
+""", f"""
+Wrote output to file:
+
+    {tsv_output_path}
+
+""")
 
 
-def test_no_filter():
-    result = git_repo_language_trends_bin([
-        "--output=.tsv",
+def test_no_filter(tsv_output_path):
+    run_git_repo_language_trends_output_test(tsv_output_path, [
         "--first-commit=v0.2.0",
         "--min-interval-days=2",
-    ]).run()
-
-    result.assert_success()
-    result.assert_stdout(s("""          	.rs	.yml	.md
+    ], """          	.rs	.yml	.md
 2021-01-19	66	0	2
 2021-01-24	196	68	40
-"""))
-    # result.stderr(predicates:: str: : contains(
-    #       "git-repo-language-trends .rs .yml .md",
-    #  ));
+""", f"""No file extensions specified, will use top three.
+Top three extensions were: .rs .yml .md
+
+Wrote output to file:
+
+    {tsv_output_path}
+
+""")
 
 
 def test_list():
-    result = git_repo_language_trends_bin([
-        "--output=.tsv",
+    run_git_repo_language_trends_test([
+        "--no-progress",
         "--list",
         "--first-commit=v0.3.0",
-    ]).run()
-
-    result.assert_success()
-    result.assert_stdout(s("""Available extensions in first commit:
+    ], """Available extensions in first commit:
 .lock .rs .yml .md .toml .json .a
-"""))
+""")
 
 
-def test_auto_sum():
-    result = git_repo_language_trends_bin([
-        "--output=.tsv",
+def test_auto_sum(tsv_output_path):
+    run_git_repo_language_trends_output_test(tsv_output_path, [
         "--first-commit=v0.2.0",
         "--min-interval-days=2",
         ".rs+.yml",
         ".md",
-    ]).run()
-
-    result.assert_stdout(s("""          	.rs+.yml	.md
+    ], """          	.rs+.yml	.md
 2021-01-19	66	2
 2021-01-24	264	40
-"""))
+""", f"""
+Wrote output to file:
+
+    {tsv_output_path}
+
+""")
 
 
-def test_auto_sum_csv():
-    result = git_repo_language_trends_bin([
-        "--o", ".csv",
+def test_auto_sum_csv(csv_output_path):
+    run_git_repo_language_trends_output_test(csv_output_path, [
         "--first-commit=v0.2.0",
         "--min-interval-days=2",
         ".rs+.yml",
         ".md",
-    ]).run()
-
-    result.assert_stdout(s("""          ,.rs+.yml,.md
+    ], """          ,.rs+.yml,.md
 2021-01-19,66,2
 2021-01-24,264,40
-"""))
+""", f"""
+Wrote output to file:
+
+    {csv_output_path}
+
+""")
 
 
 def test_version():
-    result = git_repo_language_trends_bin([
+    run_git_repo_language_trends_test([
         "--version",
-    ]).run()
-
-    result.assert_success()
-    result.assert_stdout(s(f"""git-repo-language-trends {__version__}
-"""))
+    ], f"""git-repo-language-trends {__version__}
+""")
 
 
 def test_invalid_file_format():
-    result = git_repo_language_trends_bin([
+    run_git_repo_language_trends_test([
         "-o", "file.foo",
-    ]).run()
+    ],
+        "",
+        """Output file format '.foo' not supported
+""",
+        1)
 
-    result.assert_failure()
-    result.assert_stderr(s("""Output file format '.foo' not supported
-"""))
 
+def test_custom_git_dir_path(tmp_path):
+    """
+    Test that GIT_DIR env var works to specify git repo to analyze
+    """
 
-# On Windows, command output will include CR.
-# This wrapper makes sure string asserts works on all
-# platforms.
-def s(s):
-    return s.replace('\n', os.linesep)
+    # We will analyze our own git repo. Remember where we are.
+    our_git_repo = os.getcwd()
+
+    # Then change to a dir without a git repo
+    os.chdir(str(tmp_path))
+    assert not Path(".git").exists()
+
+    # Now invoke the tool, and use GIT_DIR
+    output_name = "git_dir_test.csv"
+    result = run_git_repo_language_trends(
+        [
+            "-o", output_name,
+            "--no-progress",
+            "--min-interval-days=7",
+            "--first-commit=v0.2.0",
+            ".rs",
+            ".a",
+        ],
+        {
+            "GIT_DIR": our_git_repo,
+        },
+    )
+
+    result.check_returncode()
+    assert result.stdout == s(f"""
+Wrote output to file:
+
+    {output_name}
+
+""")
+    assert result.stderr == ""
+
+    # Read the file and assert
+    actual = Path(output_name).read_text()
+    expected = """          ,.rs,.a
+2021-01-24,196,4
+"""
+    assert expected == actual

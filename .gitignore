@@ -4,6 +4,9 @@
 *.svg
 *.tsv
 
+# VS Code
+.vscode
+
 
 # Below comes from
 # https://raw.githubusercontent.com/github/gitignore/master/Python.gitignore

@@ -1,4 +1,3 @@
-import sys
 
 
 def get_extensions_sorted_by_popularity(column_to_lines_dict):
@@ -19,4 +18,4 @@ def print_file_written(filename):
 Wrote output to file:
 
     {filename}
-""", file=sys.stderr)
+""")

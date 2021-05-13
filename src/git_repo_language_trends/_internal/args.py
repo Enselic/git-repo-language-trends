@@ -129,15 +129,8 @@ def get_args():
         (default: %(default)s)""",
     )
 
-    parser.add_argument(
-        "--all-parents",
-        action='store_true',
-        help="""[ADVANCED] follow all commit parents with the risk of producing
-        inconsistent a.k.a. jumpy graphs""",
-    )
-
     svg_group = parser.add_argument_group(
-        ".svg and .png output optional arguments:",
+        "SVG and PNG output optional arguments:",
     )
 
     svg_group.add_argument(
@@ -155,6 +148,23 @@ def get_args():
         choices=['dark', 'light'],
         help="""pass 'dark' for black background and 'light' for white background
         (default: %(default)s)""",
+    )
+
+    advanced_group = parser.add_argument_group(
+        "advanced optional arguments:",
+    )
+
+    advanced_group.add_argument(
+        "--no-progress",
+        action='store_true',
+        help="""[ADVANCED] do not print progress""",
+    )
+
+    advanced_group.add_argument(
+        "--all-parents",
+        action='store_true',
+        help="""[ADVANCED] increase pool of candidate commits by following all
+        commit parents, but with the risk of producing inconsistent/jumpy graphs""",
     )
 
     args = parser.parse_args()
