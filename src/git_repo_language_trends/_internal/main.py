@@ -31,13 +31,6 @@ def list_available_file_extensions(args):
     print(f"Available extensions in first commit:\n{' '.join(pop)}")
 
 
-# Calls process_commit for the first commit (possibly from --start-commit)
-def get_data_for_first_commit(args):
-    repo = get_repo()
-    rev = repo.revparse_single(args.first_commit)
-    return process_commit(rev.peel(pygit2.Commit), None, Progress(1))
-
-
 def get_outputs(args):
     # TODO: Support multiple --output arguments
     outputs = []
@@ -58,10 +51,10 @@ def get_outputs(args):
 def process_commits(args, outputs):
     columns = args.columns
     if len(columns) == 0:
-        print("No file extensions specified, will use top three.", file=sys.stderr)
+        print("No file extensions specified, will use top three.")
         data = get_data_for_first_commit(args)
         columns = get_top_three_extensions(data)
-        print(f"Top three extensions were: {' '.join(columns)}", file=sys.stderr)
+        print(f"Top three extensions were: {' '.join(columns)}")
 
     if len(columns) == 0:
         sys.exit("No extensions to count lines for")
@@ -69,7 +62,7 @@ def process_commits(args, outputs):
     ext_to_column = generate_ext_to_column_dict(args.columns)
 
     commits_to_process = get_commits_to_process(args)
-    progress_state = Progress(len(commits_to_process))
+    progress_state = Progress(args, len(commits_to_process))
 
     # Print column headers
     for output in outputs:
@@ -88,6 +81,13 @@ def process_commits(args, outputs):
     # Wrap things up
     for output in outputs:
         output.finish()
+
+
+# Calls process_commit for the first commit (possibly from --first-commit)
+def get_data_for_first_commit(args):
+    repo = get_repo()
+    rev = repo.revparse_single(args.first_commit)
+    return process_commit(rev.peel(pygit2.Commit), None, Progress(args, 1))
 
 
 def get_commits_to_process(args):

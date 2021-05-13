@@ -6,13 +6,18 @@ RATE_LIMIT_INTERVAL_SECONDS = 0.1
 
 class Progress:
 
-    def __init__(self, total_commits):
+    def __init__(self, args, total_commits):
+        self.args = args
+
         self.current_commit = 1
         self.total_commits = total_commits
 
         self.last_print = None
 
     def print_state(self, current_file, total_files):
+        if (self.args.no_progress):
+            return
+
         if (not sys.stderr.isatty):
             return
 
