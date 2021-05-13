@@ -242,7 +242,13 @@ def list_test(option):
         option,
         "--first-commit=v0.3.0",
     ], """Available extensions in first commit:
-.lock .rs .yml .md .toml .json .a
+.lock - 687 lines
+.rs   - 602 lines
+.yml  - 68 lines
+.md   - 43 lines
+.toml - 21 lines
+.json - 20 lines
+.a    - 4 lines
 """)
 
 

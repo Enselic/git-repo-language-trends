@@ -26,9 +26,13 @@ def main():
 
 
 def list_available_file_extensions(args):
-    data = get_data_for_first_commit(args)
-    pop = get_extensions_sorted_by_popularity(data)
-    print(f"Available extensions in first commit:\n{' '.join(pop)}")
+    ext_to_lines = get_data_for_first_commit(args)
+    sorted_exts = get_extensions_sorted_by_popularity(ext_to_lines)
+    print("Available extensions in first commit:")
+
+    len_of_longest_ext = len(max(sorted_exts, key=len))
+    for ext in sorted_exts:
+        print(f"{ext:<{len_of_longest_ext}} - {ext_to_lines[ext]} lines")
 
 
 def get_outputs(args):
