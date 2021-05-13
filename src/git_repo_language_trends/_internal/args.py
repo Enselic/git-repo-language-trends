@@ -177,8 +177,6 @@ def get_args():
         name = ""
     args.output_ext = ext
 
-    args.output_stdout = name == ""
-
     return args
 
 

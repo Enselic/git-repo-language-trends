@@ -1,5 +1,3 @@
-import sys
-
 from .output import Output
 from .utils import print_file_written
 
@@ -46,10 +44,7 @@ class SeparatedValuesOutput(Output):
     def __init__(self, args, separator):
         super().__init__(args)
         self.separator = separator
-        if args.output_stdout:
-            self.dest = sys.stdout
-        else:
-            self.dest = open(args.output, 'w')
+        self.dest = open(args.output, 'w')
 
     def start(self, columns):
         write_header_row(self.dest, self.separator, columns)
@@ -58,6 +53,5 @@ class SeparatedValuesOutput(Output):
         write_row(self.dest, self.separator, columns, date, column_to_lines_dict)
 
     def finish(self):
-        if not self.args.output_stdout:
-            print_file_written(self.args.output)
-            self.dest.close()
+        print_file_written(self.args.output)
+        self.dest.close()
