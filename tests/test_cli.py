@@ -147,7 +147,7 @@ Wrote output to file:
 
 def test_own_git_repo_max_rows_0(tsv_output_path):
     run_git_repo_language_trends_output_test(tsv_output_path, [
-        "--max-commits=0",
+        "-n=0",
         "--first-commit=v0.1.2",
         ".yml",
         ".rs",
@@ -161,8 +161,16 @@ Wrote output to file:
 
 
 def test_all_parents(tsv_output_path):
+    all_parents_test(tsv_output_path, "--all-parents")
+
+
+def test_all_parents_short(tsv_output_path):
+    all_parents_test(tsv_output_path, "-a")
+
+
+def all_parents_test(tsv_output_path, option):
     run_git_repo_language_trends_output_test(tsv_output_path, [
-        "--all-parents",
+        option,
         "--min-interval-days=0",
         "--max-commits=10",
         "--first-commit=v0.2.0",
@@ -204,9 +212,17 @@ Wrote output to file:
 
 
 def test_list():
+    list_test("--list")
+
+
+def test_list_short():
+    list_test("-l")
+
+
+def list_test(option):
     run_git_repo_language_trends_test([
         "--no-progress",
-        "--list",
+        option,
         "--first-commit=v0.3.0",
     ], """Available extensions in first commit:
 .lock .rs .yml .md .toml .json .a

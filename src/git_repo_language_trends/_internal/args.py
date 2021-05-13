@@ -10,7 +10,7 @@ Description:
 Analyze programming language usage over time in a git repository and produce a
 graphical or textual representation of the result.
 
-Several output file formats are available:
+Available output file formats:
 * .svg - Scalable Vector Graphics
 * .png - Portable Network Graphics
 * .csv - Comma-separated values
@@ -36,7 +36,7 @@ create a graph yourself in your spreadsheet software of choice:
 Analyze Java vs Kotlin and write the result to a PNG file with a white
 background and a custom size:
 
-    git-repo-language-trends .java .kt --output=output.png --size-inches=10,6
+    git-repo-language-trends .java .kt --output=output.png --size-inches=10:6 --style=light
 
 Arguments:
 ==========
@@ -61,7 +61,7 @@ def formatter(prog):
     return argparse.RawDescriptionHelpFormatter(
         "git-repo-language-trends",
         indent_increment=4,
-        max_help_position=32,
+        max_help_position=38,
     )
 
 
@@ -77,7 +77,7 @@ def get_args():
         nargs='*',
         help="""For what file extensions lines will be counted. Can be specified
         multiple times. Use '.ext' for regular line counting. Use '.ext1+.ext2'
-        syntax for auto-summation of several file extensions into a single column.
+        syntax for auto-summation of several file extensions, e.g. .c+.h for all C files.
         If you specify no file extensions, the top three extensions in the
         repository will be used, based on the number of lines in files with the
         extensions.""",
@@ -90,7 +90,7 @@ def get_args():
     )
 
     parser.add_argument(
-        "--list",
+        "--list", "-l",
         action='store_true',
         help="list file extensions and their total line count in the first commit",
     )
@@ -105,7 +105,7 @@ def get_args():
     )
 
     parser.add_argument(
-        "--max-commits",
+        "--max-commits", "-n",
         metavar="<int>",
         type=positive_int,
         default=sys.maxsize,
@@ -122,15 +122,15 @@ def get_args():
     )
 
     parser.add_argument(
-        "-o", "--output",
-        metavar="<filename.ext>",
+        "--output", "-o",
+        metavar="<out.ext>",
         default=get_default_output(),
-        help="""output filename (omit for stdout) and format (via extension .svg .png .csv or .tsv)
+        help="""output filename and format (via extension .svg .png .csv or .tsv)
         (default: %(default)s)""",
     )
 
     svg_group = parser.add_argument_group(
-        "SVG and PNG output optional arguments:",
+        "SVG/PNG related optional arguments",
     )
 
     svg_group.add_argument(
@@ -151,7 +151,7 @@ def get_args():
     )
 
     advanced_group = parser.add_argument_group(
-        "advanced optional arguments:",
+        "advanced optional arguments",
     )
 
     advanced_group.add_argument(
@@ -161,7 +161,7 @@ def get_args():
     )
 
     advanced_group.add_argument(
-        "--all-parents",
+        "--all-parents", "-a",
         action='store_true',
         help="""[ADVANCED] increase pool of candidate commits by following all
         commit parents, but with the risk of producing inconsistent/jumpy graphs""",
@@ -186,4 +186,4 @@ def get_default_output():
     cwd = os.getcwd()
     basename = os.path.basename(cwd)
 
-    return f"{basename}_language-trends.png"
+    return f"{basename}-language-trends.png"
