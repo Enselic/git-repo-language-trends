@@ -97,7 +97,6 @@ then make your changes. When done, lint and test:
 
 
 # TODO
-* add line count to top 3 and --list
 * Add .tsv and .csv and .png and .svg CLI test cases
 * handle shallow clones
 * limit size of cache
