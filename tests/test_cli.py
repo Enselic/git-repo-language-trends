@@ -124,7 +124,7 @@ Wrote output to file:
 """)
 
 
-def test_own_git_repo_max_rows_5(tsv_output_path):
+def test_own_git_repo_max_commits_5(tsv_output_path):
     run_git_repo_language_trends_output_test(tsv_output_path, [
         "--min-interval-days=0",
         "--max-commits=5",
@@ -145,7 +145,7 @@ Wrote output to file:
 """)
 
 
-def test_own_git_repo_max_rows_0(tsv_output_path):
+def test_own_git_repo_max_commits_0(tsv_output_path):
     run_git_repo_language_trends_output_test(tsv_output_path, [
         "-n=0",
         "--first-commit=v0.1.2",
@@ -190,6 +190,23 @@ def all_parents_test(tsv_output_path, option):
 Wrote output to file:
 
     {tsv_output_path}
+
+""")
+
+
+def test_parent_directories_created(tmp_path):
+    path_that_does_not_exist = str(tmp_path / "does-not-exist" / "really-not" / "foo.tsv")
+    run_git_repo_language_trends_output_test(path_that_does_not_exist, [
+        "--min-interval-days=0",
+        "--max-commits=1",
+        "--first-commit=v0.1.2",
+        ".rs",
+    ], """          	.rs
+2021-01-23	121
+""", f"""
+Wrote output to file:
+
+    {path_that_does_not_exist}
 
 """)
 
