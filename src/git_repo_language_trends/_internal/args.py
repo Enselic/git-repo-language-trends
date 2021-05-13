@@ -2,6 +2,7 @@ import os
 import sys
 import argparse
 import git_repo_language_trends
+from pathlib import Path
 
 desc = """
 Description:
@@ -176,6 +177,9 @@ def get_args():
         ext = name
         name = ""
     args.output_ext = ext
+
+    # Do a favor to the user, create the parent dirs if they are missing
+    Path(os.path.dirname(args.output)).mkdir(exist_ok=True, parents=True)
 
     return args
 

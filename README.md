@@ -97,11 +97,9 @@ then make your changes. When done, lint and test:
 
 
 # TODO
-* test for overwrite existing file
-* test for creating dir if not exist
+* add line count to top 3 and --list
 * Add .tsv and .csv and .png and .svg CLI test cases
 * handle shallow clones
-* add line count to top 3 and --list
 * limit size of cache
 * Fix CI to use Python 3.6 for app
 * More examples, make image links work on pip repo too
@@ -111,3 +109,4 @@ then make your changes. When done, lint and test:
 * Support import of .tsv or .csv data to support generating e.g. a PNG without re-reunning analysis
 * More short options
 * Support -o args multiple times
+* Warn before overwrite existing file
