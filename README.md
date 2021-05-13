@@ -55,10 +55,10 @@ To compare C and Rust:
 
     git-repo-language-trends .c+.h .rs
 
+If `git-repo-language-trends` is not in your `PATH` after installation you can
+run the tool via its module, e.g.:
 
-# Examples
-
-TODO
+    python3 -m git_repo_language_trends --help
 
 # Method
 
@@ -104,6 +104,7 @@ then make your changes. When done, lint and test:
 * add line count to top 3 and --list
 * limit size of cache
 * Fix CI to use Python 3.6 for app
+* More examples, make image links work on pip repo too
 
 # Features not yet implemeneted
 * Stacked percentage chart
