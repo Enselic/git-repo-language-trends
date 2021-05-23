@@ -68,9 +68,11 @@ characters in files with a given file extension.
 
 # Performance
 
-This program is pretty fast, because it uses the pygit2 wrapper for the C
-library libgit2. On a low-end computer (with an **Intel(R) Celeron(R) J4005 CPU
-@ 2.00GHz**) it counts ~400 000 lines per second.
+This program is pretty fast, because it uses the **pygit2** wrapper for the C
+library **libgit2**. On my low-end computer* it counts ~400 000 lines per
+second.
+
+\*with an *Intel® Celeron® J4005 CPU @ 2.00GHz*
 
 # Development
 
