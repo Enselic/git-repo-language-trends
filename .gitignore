@@ -1,8 +1,8 @@
 # Our program output files
-*.csv
-*.png
-*.svg
-*.tsv
+/*.csv
+/*.png
+/*.svg
+/*.tsv
 
 # VS Code
 .vscode

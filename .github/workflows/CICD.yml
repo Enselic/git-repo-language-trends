@@ -41,6 +41,14 @@ jobs:
       - name: Test with pytest
         run: |
           pytest -vv
+      - name: Test with shallow clone
+        run: |
+          tag=v0.0.3-pip
+          tmpdir=/tmp/shallow
+          git clone --branch ${tag} --depth 2 https://github.com/Enselic/git-repo-language-trends.git ${tmpdir}
+          GIT_DIR=${tmpdir} git-repo-language-trends --first-commit=${tag} -o=shallow.csv
+          cat shallow.csv
+          cmp shallow.csv tests/data/expected-shallow.csv
       - name: Build release
         id: release
         run: |

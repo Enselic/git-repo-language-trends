@@ -100,19 +100,26 @@ def get_commits_to_process(args):
     rows_left = args.max_commits
 
     date_of_last_row = None
-    for commit in get_git_log_walker(args):
-        if rows_left == 0:
-            break
+    try:
+        for commit in get_git_log_walker(args):
+            if rows_left == 0:
+                break
 
-        # Make sure --min-interval days has passed since last printed commit before
-        # processing and printing the data for another commit
-        current_date = commit.commit_time
-        if enough_days_passed(args, date_of_last_row, current_date):
-            date_of_last_row = current_date
+            # Make sure --min-interval days has passed since last printed commit before
+            # processing and printing the data for another commit
+            current_date = commit.commit_time
+            if enough_days_passed(args, date_of_last_row, current_date):
+                date_of_last_row = current_date
 
-            commits_to_process.append(commit)
+                commits_to_process.append(commit)
 
-            rows_left -= 1
+                rows_left -= 1
+    except KeyError:
+        # Analyzing a shallow git clone will cause the walker to throw an
+        # exception in the end. That is not a catastrophe. We already collected
+        # some data. So just keep going after printing a notice.
+        print("WARNING: unexpected end of git log, maybe a shallow git repo?")
+        pass
 
     # git log shows most recent first, but in the graph
     # you want to have from oldest to newest, so reverse
