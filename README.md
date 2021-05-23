@@ -99,10 +99,9 @@ then make your changes. When done, lint and test:
 
 
 # TODO
-* Add .tsv and .csv and .png and .svg CLI test cases
-* handle shallow clones
 * limit size of cache
 * Fix CI to use Python 3.6 for app
+* Add .tsv and .csv and .png and .svg CLI test cases
 * More examples, make image links work on pip repo too
 
 # Features not yet implemeneted
