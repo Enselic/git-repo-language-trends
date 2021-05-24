@@ -27,7 +27,7 @@ jobs:
           fetch-depth: 0
       - uses: actions/setup-python@v2
         with:
-          python-version: 3.7 # for test, 3.6 for app, TODO: Solve this better
+          python-version: 3.6
       - name: Install
         run: |
           # "We recommend you use --use-feature=in-tree-build to test your packages with this new behavior before it becomes the default."

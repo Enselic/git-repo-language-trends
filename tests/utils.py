@@ -21,7 +21,8 @@ def run_git_repo_language_trends(args, env=None):
     print(" ".join(used_args) + "\n")
     result = subprocess.run(
         used_args,
-        capture_output=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
         env=used_env,
     )
 
