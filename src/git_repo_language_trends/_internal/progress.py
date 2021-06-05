@@ -21,7 +21,9 @@ class Progress:
         if (not sys.stderr.isatty):
             return
 
-        if self.is_rate_limited():
+        # If we recently printed, bail out. Always print if this is the last file we
+        # are processig however, since otherwise output seems "incomplete" to a human.
+        if self.is_rate_limited() and current_file < total_files:
             return
 
         if self.total_commits == 1:
