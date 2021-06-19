@@ -51,7 +51,10 @@ class MatplotlibOutput(Output):
         plt.figure(figsize=(width_inches, height_inches))
         plt.stackplot(dates, s, labels=self.columns)
         plt.legend(loc='upper left')
-        plt.ylabel("Total (stacked) line count")
+        if self.args.relative:
+            plt.ylabel("Language usage %")
+        else:
+            plt.ylabel("Total (stacked) line count")
         plt.title(f"{os.path.basename(os.getcwd())} language trends")
         plt.tick_params(axis='x', labelrotation=45)
         plt.tight_layout()

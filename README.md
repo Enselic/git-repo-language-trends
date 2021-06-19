@@ -55,6 +55,12 @@ To compare C and Rust:
 
     git-repo-language-trends .c+.h .rs
 
+If you want relative numbers, enable the `--relative` option:
+
+    git-repo-language-trends --relative .c+.h .rs
+
+Use `git-repo-language-trends --help` to see more options.
+
 If `git-repo-language-trends` is not in your `PATH` after installation you can
 run the tool via its module, e.g.:
 
@@ -104,7 +110,6 @@ then make your changes. When done, lint and test:
 * More examples, make image links work on pip repo too
 
 # Features not yet implemeneted
-* Stacked percentage chart
 * Support import of .tsv or .csv data to support generating e.g. a PNG without re-reunning analysis
 * More short options
 * Support -o args multiple times

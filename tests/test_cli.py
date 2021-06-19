@@ -145,6 +145,28 @@ Wrote output to file:
 """)
 
 
+def test_own_git_repo_max_commits_5_relative(tsv_output_path):
+    run_git_repo_language_trends_output_test(tsv_output_path, [
+        "--min-interval-days=0",
+        "--max-commits=5",
+        "--first-commit=v0.1.2",
+        "--relative",
+        ".yml",
+        ".rs",
+    ], """          	.yml	.rs
+2021-01-23	15.4	84.6
+2021-01-23	32.0	68.0
+2021-01-23	39.2	60.8
+2021-01-23	35.6	64.4
+2021-01-23	35.3	64.7
+""", f"""
+Wrote output to file:
+
+    {tsv_output_path}
+
+""")
+
+
 def test_own_git_repo_max_commits_0(tsv_output_path):
     run_git_repo_language_trends_output_test(tsv_output_path, [
         "-n=0",
@@ -218,6 +240,24 @@ def test_no_filter(tsv_output_path):
     ], """          	.rs	.yml	.md
 2021-01-19	66	0	2
 2021-01-24	196	68	40
+""", f"""No file extensions specified, will use top three.
+Top three extensions were: .rs .yml .md
+
+Wrote output to file:
+
+    {tsv_output_path}
+
+""")
+
+
+def test_no_filter_relative(tsv_output_path):
+    run_git_repo_language_trends_output_test(tsv_output_path, [
+        "--first-commit=v0.2.0",
+        "--min-interval-days=2",
+        "--relative",
+    ], """          	.rs	.yml	.md
+2021-01-19	97.1	0	2.9
+2021-01-24	64.5	22.4	13.2
 """, f"""No file extensions specified, will use top three.
 Top three extensions were: .rs .yml .md
 
