@@ -123,6 +123,12 @@ def get_args():
     )
 
     parser.add_argument(
+        "--relative",
+        action='store_true',
+        help="use relative instead of absolute numbers",
+    )
+
+    parser.add_argument(
         "--output", "-o",
         metavar="<out.ext>",
         default=get_default_output(),

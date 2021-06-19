@@ -13,7 +13,11 @@ from .args import get_args
 from .matplotlib_output import MatplotlibOutput
 from .progress import Progress
 from .separated_values_output import SeparatedValuesOutput
-from .utils import get_extensions_sorted_by_popularity, get_top_three_extensions
+from .utils import (
+    get_extensions_sorted_by_popularity,
+    get_top_three_extensions,
+    to_relative_numbers_if_enabled,
+)
 
 
 def main():
@@ -63,7 +67,7 @@ def process_commits(args, outputs):
     if len(columns) == 0:
         sys.exit("No extensions to count lines for")
 
-    ext_to_column = generate_ext_to_column_dict(args.columns)
+    ext_to_column = generate_ext_to_column_dict(columns)
 
     commits_to_process = get_commits_to_process(args)
     progress_state = Progress(args, len(commits_to_process))
@@ -78,7 +82,11 @@ def process_commits(args, outputs):
         column_to_lines_dict = process_commit(commit, ext_to_column, progress_state)
 
         for output in outputs:
-            output.add_row(columns, date, column_to_lines_dict)
+            output.add_row(
+                columns,
+                date,
+                to_relative_numbers_if_enabled(args, column_to_lines_dict),
+            )
 
         progress_state.commit_processed()
 
