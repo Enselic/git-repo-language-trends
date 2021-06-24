@@ -167,6 +167,28 @@ Wrote output to file:
 """)
 
 
+def test_own_git_repo_max_commits_5_no_cache(tsv_output_path):
+    run_git_repo_language_trends_output_test(tsv_output_path, [
+        "--min-interval-days=0",
+        "--max-commits=5",
+        "--first-commit=v0.1.2",
+        "--no-cache",
+        ".yml",
+        ".rs",
+    ], """          	.yml	.rs
+2021-01-23	22	121
+2021-01-23	57	121
+2021-01-23	78	121
+2021-01-23	67	121
+2021-01-23	66	121
+""", f"""
+Wrote output to file:
+
+    {tsv_output_path}
+
+""")
+
+
 def test_own_git_repo_max_commits_0(tsv_output_path):
     run_git_repo_language_trends_output_test(tsv_output_path, [
         "-n=0",
