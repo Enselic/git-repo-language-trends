@@ -106,7 +106,6 @@ then make your changes. When done, lint and test:
 
 
 # TODO
-* limit size of cache
 * watermark
 * grid
 * Add .tsv and .csv and .png and .svg CLI test cases

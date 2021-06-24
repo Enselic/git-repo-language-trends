@@ -70,6 +70,12 @@ def process_commits(args, outputs):
     ext_to_column = generate_ext_to_column_dict(columns)
 
     commits_to_process = get_commits_to_process(args)
+
+    # Since we analyze many commits, but many commits share the same blobs,
+    # caching how many lines there are in a blob (keyed by git object id) speeds
+    # things up significantly, without a dramatic memory usage increase.
+    blob_to_lines_cache = None if args.no_cache else {}
+
     progress_state = Progress(args, len(commits_to_process))
 
     # Print column headers
@@ -79,7 +85,12 @@ def process_commits(args, outputs):
     # Print rows
     for commit in commits_to_process:
         date = get_commit_date(commit)
-        column_to_lines_dict = process_commit(commit, ext_to_column, progress_state)
+        column_to_lines_dict = process_commit(
+            commit,
+            ext_to_column,
+            blob_to_lines_cache,
+            progress_state,
+        )
 
         for output in outputs:
             output.add_row(
@@ -99,7 +110,7 @@ def process_commits(args, outputs):
 def get_data_for_first_commit(args):
     repo = get_repo()
     rev = repo.revparse_single(args.first_commit)
-    return process_commit(rev.peel(pygit2.Commit), None, Progress(args, 1))
+    return process_commit(rev.peel(pygit2.Commit), None, None, Progress(args, 1))
 
 
 def get_commits_to_process(args):
@@ -136,17 +147,24 @@ def get_commits_to_process(args):
     return commits_to_process
 
 
-def process_commit(commit, ext_to_column, progress_state):
+def process_commit(commit, ext_to_column, blob_to_lines_cache, progress_state):
     """
     Counts lines for files with the given file extensions in a given commit.
     """
 
     blobs = get_blobs_in_commit(commit)
 
-    # Loop through all blobs in the commit tree
     column_to_lines = {}
-    for index, (blob, ext) in enumerate(blobs, start=1):
-        progress_state.print_state(index, len(blobs))
+    len_blobs = len(blobs)
+    # We don't want to use an iterator here, because that will hold on to the
+    # pygit2 Blob object, preventing the libgit2 git_blob_free (or actually;
+    # git_object_free) from being called even though we are done counting lines
+    index = 0
+    while len(blobs) > 0:
+        # One based counting since the printed progress is for human consumption
+        index += 1
+        (blob, ext) = blobs.pop()
+        progress_state.print_state(index, len_blobs)
 
         # Figure out if we should count the lines for the file extension this
         # blob has, by figuring out what column the lines should be added to,
@@ -157,7 +175,7 @@ def process_commit(commit, ext_to_column, progress_state):
 
         # If the blob has an extension we care about, count the lines!
         if column:
-            lines = get_lines_in_blob(blob)
+            lines = get_lines_in_blob(blob, blob_to_lines_cache)
             column_to_lines[column] = column_to_lines.get(column, 0) + lines
 
     return column_to_lines
@@ -187,19 +205,24 @@ def get_blobs_in_commit(commit):
     return blobs
 
 
-c = {}  # TODO: Make optinal and measure memory usage for linux kernel
+def get_lines_in_blob(blob, blob_to_lines_cache):
+    # Don't use the blob.oid directly, because that will keep the underlying git
+    # blob object alive, preventing freeing of the blob content from
+    # git_blob_get_rawcontent(), which quickly accumulate to hundred of megs of
+    # heap memory when analyzing large git projects such as the linux kernel
+    hex = blob.oid.hex
 
-
-def get_lines_in_blob(blob):
-    if blob.oid in c:
-        return c[blob.oid]
+    if blob_to_lines_cache is not None and hex in blob_to_lines_cache:
+        return blob_to_lines_cache[hex]
 
     lines = 0
     for byte in memoryview(blob):
         if byte == 10:  # \n
             lines += 1
 
-    c[blob.oid] = lines
+    if blob_to_lines_cache is not None:
+        blob_to_lines_cache[hex] = lines
+
     return lines
 
 

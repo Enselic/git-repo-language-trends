@@ -162,6 +162,12 @@ def get_args():
     )
 
     advanced_group.add_argument(
+        "--no-cache",
+        action='store_true',
+        help="""[ADVANCED] do not cache how many lines are in a blob""",
+    )
+
+    advanced_group.add_argument(
         "--no-progress",
         action='store_true',
         help="""[ADVANCED] do not print progress""",
