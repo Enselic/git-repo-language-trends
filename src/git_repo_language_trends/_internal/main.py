@@ -40,10 +40,10 @@ def list_available_file_extensions(args):
 
 
 def get_outputs(args):
-    # TODO: Support multiple --output arguments
+    # It should be pretty easy to add support for having multiple
+    # outputs generated at once, but for now we only support one at a time.
     outputs = []
 
-    # TODO: CLI tests
     if args.output_ext == ".svg" or args.output_ext == ".png":
         outputs.append(MatplotlibOutput(args))
     elif args.output_ext == ".tsv":

@@ -42,7 +42,6 @@ class MatplotlibOutput(Output):
         if self.args.style == "light":
             matplotlib_style = "default"
 
-        # TODO: Validate arg earlier
         width_inches, height_inches = self.args.size_inches.split(':')
         width_inches = float(width_inches)
         height_inches = float(height_inches)
@@ -59,6 +58,5 @@ class MatplotlibOutput(Output):
         plt.tick_params(axis='x', labelrotation=45)
         plt.tight_layout()
 
-        # TODO: Support stdout output
         plt.savefig(self.args.output)
         print_file_written(self.args.output)

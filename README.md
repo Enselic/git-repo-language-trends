@@ -80,6 +80,7 @@ second.
 
 \*with an *Intel® Celeron® J4005 CPU @ 2.00GHz*
 
+
 # Development
 
 Clone this repo:
@@ -106,11 +107,10 @@ then make your changes. When done, lint and test:
 
 # TODO
 * limit size of cache
+* watermark
+* grid
 * Add .tsv and .csv and .png and .svg CLI test cases
 * More examples, make image links work on pip repo too
 
 # Features not yet implemeneted
-* Support import of .tsv or .csv data to support generating e.g. a PNG without re-reunning analysis
-* More short options
-* Support -o args multiple times
-* Warn before overwrite existing file
+* Support import of .tsv or .csv data to support generating e.g. a .tsv without re-reunning analysis

@@ -49,18 +49,3 @@ jobs:
           GIT_DIR=${tmpdir} git-repo-language-trends --first-commit=${tag} -o=shallow.csv
           cat shallow.csv
           cmp shallow.csv tests/data/expected-shallow.csv
-      - name: Build release
-        id: release
-        run: |
-          PROJECT_VERSION=$(git describe --dirty) echo TODO
-      - name: Package release build
-        id: package
-        run: |
-          echo TODO
-      - name: Upload artifact
-        run: |
-          echo TODO
-      - name: Create Release
-        if: startsWith(github.ref, 'refs/tags/v')
-        run: |
-          echo TODO
