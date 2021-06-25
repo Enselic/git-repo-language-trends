@@ -38,23 +38,34 @@ class MatplotlibOutput(Output):
         s = np.vstack(line_counts)
 
         # See https://matplotlib.org/stable/gallery/style_sheets/style_sheets_reference.html
+        watermark_color="#505050"
         matplotlib_style = "dark_background"
         if self.args.style == "light":
             matplotlib_style = "default"
+            watermark_color="#c0c0c0"
 
         width_inches, height_inches = self.args.size_inches.split(':')
         width_inches = float(width_inches)
         height_inches = float(height_inches)
 
         plt.style.use(matplotlib_style)
-        plt.figure(figsize=(width_inches, height_inches))
+        fig = plt.figure(figsize=(width_inches, height_inches))
+        if not self.args.no_watermark:
+            fig.text(
+                0.5, 0,
+                "Created with https://github.com/Enselic/git-repo-language-trends",
+                fontsize=9,
+                color=watermark_color,
+                ha='center',
+                va='bottom',
+            )
         plt.stackplot(dates, s, labels=self.columns)
         plt.legend(loc='upper left')
         if self.args.relative:
             plt.ylabel("Language usage %")
         else:
-            plt.ylabel("Total (stacked) line count")
-        plt.title(f"{os.path.basename(os.getcwd())} language trends")
+            plt.ylabel("Total line count")
+        plt.title(f"{os.path.basename(os.getcwd())} language trends, stacked area plot")
         plt.tick_params(axis='x', labelrotation=45)
         plt.tight_layout()
 

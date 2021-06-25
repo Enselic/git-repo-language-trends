@@ -157,6 +157,12 @@ def get_args():
         (default: %(default)s)""",
     )
 
+    svg_group.add_argument(
+        "--no-watermark",
+        action='store_true',
+        help="remove the watermark that is barely visible to begin with",
+    )
+
     advanced_group = parser.add_argument_group(
         "advanced optional arguments",
     )
