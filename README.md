@@ -106,8 +106,7 @@ then make your changes. When done, lint and test:
 
 
 # TODO
-* watermark
-* grid
+* deploy via CI
 * Add .tsv and .csv and .png and .svg CLI test cases
 * More examples, make image links work on pip repo too
 
