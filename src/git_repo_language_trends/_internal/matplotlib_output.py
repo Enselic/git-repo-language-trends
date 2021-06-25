@@ -38,11 +38,11 @@ class MatplotlibOutput(Output):
         s = np.vstack(line_counts)
 
         # See https://matplotlib.org/stable/gallery/style_sheets/style_sheets_reference.html
-        watermark_color="#505050"
+        barely_visible_color = "#505050"
         matplotlib_style = "dark_background"
         if self.args.style == "light":
             matplotlib_style = "default"
-            watermark_color="#c0c0c0"
+            barely_visible_color = "#c0c0c0"
 
         width_inches, height_inches = self.args.size_inches.split(':')
         width_inches = float(width_inches)
@@ -55,12 +55,13 @@ class MatplotlibOutput(Output):
                 0.5, 0,
                 "Created with https://github.com/Enselic/git-repo-language-trends",
                 fontsize=9,
-                color=watermark_color,
+                color=barely_visible_color,
                 ha='center',
                 va='bottom',
             )
         plt.stackplot(dates, s, labels=self.columns)
         plt.legend(loc='upper left')
+        plt.grid(True, color=barely_visible_color, alpha=0.5)
         if self.args.relative:
             plt.ylabel("Language usage %")
         else:
