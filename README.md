@@ -9,15 +9,23 @@ Available output file formats:
 * **.csv** - Comma-separated values
 * **.tsv** - Tab-separated values
 
-Example command and its SVG output:
+# Examples
 
-```
-% cd ~/src/cpython
-% git-repo-language-trends --max-commits 30 --min-interval-days 365 .c+.h .py
-```
+Showing the pace at which **TypeScript** is replacing **JavaScript** in
+[`mattermost-webapp`](https://github.com/mattermost/mattermost-webapp):
 
-![CPython, C vs Python, 1992-2021](./docs/images/cpython-c-vs-python-1992-2021.svg)
+    % cd ~/src/mattermost-webapp
+    % git-repo-language-trends --min-interval-days 30 --max-commits 25 --relative .ts+.tsx .js+.jsx
 
+![mattermost-webapp language trends](https://i.imgur.com/6IGbgjb.png)
+
+Showing how the implementation of CPython has grown over the last decades in
+terms of number of lines of C (.c and .h files) and Python (.py files):
+
+    % cd ~/src/cpython
+    % git-repo-language-trends --max-commits 30 --min-interval-days 365 .c+.h .py
+
+![CPython language trends](https://i.imgur.com/Uv4mK1z.png)
 
 
 
@@ -71,6 +79,8 @@ run the tool via its module, e.g.:
 Programming langauge usage is determined by the total number of newline
 characters in files with a given file extension.
 
+It is easy to come up with something more fancy, but it would be overkill.
+
 
 # Performance
 
@@ -94,7 +104,7 @@ Create a venv:
 
 Install and update dev dependencies:
 
-    python3 -m pip install --upgrade pip flake8 pytest build twine
+    python3 -m pip install --upgrade pip flake8 pytest
 
 Make an editable install:
 
@@ -103,12 +113,3 @@ Make an editable install:
 then make your changes. When done, lint and test:
 
     flake8 && pytest -vv
-
-
-# TODO
-* deploy via CI
-* Add .tsv and .csv and .png and .svg CLI test cases
-* More examples, make image links work on pip repo too
-
-# Features not yet implemeneted
-* Support import of .tsv or .csv data to support generating e.g. a .tsv without re-reunning analysis
