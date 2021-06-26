@@ -154,11 +154,11 @@ def test_own_git_repo_max_commits_5_relative(tsv_output_path):
         ".yml",
         ".rs",
     ], """          	.yml	.rs
-2021-01-23	15.4	84.6
-2021-01-23	32.0	68.0
+2021-01-23	15.38	84.62
+2021-01-23	32.02	67.98
 2021-01-23	39.2	60.8
-2021-01-23	35.6	64.4
-2021-01-23	35.3	64.7
+2021-01-23	35.64	64.36
+2021-01-23	35.29	64.71
 """, f"""
 Wrote output to file:
 
@@ -278,8 +278,8 @@ def test_no_filter_relative(tsv_output_path):
         "--min-interval-days=2",
         "--relative",
     ], """          	.rs	.yml	.md
-2021-01-19	97.1	0	2.9
-2021-01-24	64.5	22.4	13.2
+2021-01-19	97.06	0	2.94
+2021-01-24	64.47	22.37	13.16
 """, f"""No file extensions specified, will use top three.
 Top three extensions were: .rs .yml .md
 
