@@ -55,14 +55,15 @@ class MatplotlibOutput(Output):
         ax.set_xlim([dates[0], dates[-1]])
 
         if self.args.relative:
-            ax.set_ylabel("Language usage %")
+            y_label = "Language usage %"
             ax.set_ylim([0, 100])
         else:
-            ax.set_ylabel("Total line count")
+            y_label = "Total line count"
             title = title + ", stacked area plot"
-        ax.set_title(title)
+        ax.set_ylabel(y_label, fontsize=15)
+        ax.set_title(title, fontsize=20)
 
-        ax.legend(loc='upper left')
+        ax.legend(loc='upper left', fontsize=15)
         ax.grid(True, color=barely_visible_color, alpha=0.5)
         ax.tick_params(axis='x', labelrotation=45)
         # Don't use scientific notation for line counts
