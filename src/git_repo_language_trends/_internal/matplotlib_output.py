@@ -65,6 +65,8 @@ class MatplotlibOutput(Output):
         ax.legend(loc='upper left')
         ax.grid(True, color=barely_visible_color, alpha=0.5)
         ax.tick_params(axis='x', labelrotation=45)
+        # Don't use scientific notation for line counts
+        ax.ticklabel_format(axis='y', style='plain')
 
         fig.autofmt_xdate()
         if not self.args.no_watermark:
