@@ -1,0 +1,32 @@
+name: PyPI upload
+
+on:
+  release:
+    types: [created, released]
+  workflow_dispatch:
+
+jobs:
+  pypi-upload:
+    name: PyPI upload
+    runs-on: ubuntu-18.04
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: 3.6
+      - name: Install
+        run: |
+          # "We recommend you use --use-feature=in-tree-build to test your packages with this new behavior before it becomes the default."
+          pip install --use-feature=in-tree-build .
+      - name: Install dependencies
+        run: |
+          pip install build twine
+      - name: Build dist
+        run: |
+          python3 -m build
+      - name: List dist created
+        run: |
+          ls -l dist
