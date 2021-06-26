@@ -1,9 +1,9 @@
 name: PyPI upload
 
 on:
-  release:
-    types: [created, released]
   workflow_dispatch:
+  release:
+    types: [released]
 
 jobs:
   pypi-upload:
@@ -17,16 +17,16 @@ jobs:
       - uses: actions/setup-python@v2
         with:
           python-version: 3.6
-      - name: Install
-        run: |
-          # "We recommend you use --use-feature=in-tree-build to test your packages with this new behavior before it becomes the default."
-          pip install --use-feature=in-tree-build .
       - name: Install dependencies
         run: |
           pip install build twine
-      - name: Build dist
+      - name: Build
         run: |
           python3 -m build
-      - name: List dist created
+      - name: PyPI upload
         run: |
-          ls -l dist
+          export TWINE_USERNAME=__token__
+          export TWINE_PASSWORD=${{ secrets.PYPI_TOKEN }}
+          python3 -m twine upload dist/*
+          unset TWINE_PASSWORD
+          unset TWINE_USERNAME
