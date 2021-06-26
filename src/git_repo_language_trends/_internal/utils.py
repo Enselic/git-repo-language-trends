@@ -21,7 +21,7 @@ def to_relative_numbers_if_enabled(args, column_to_lines):
 
     total_lines = float(sum(column_to_lines.values()))
     for column in list(column_to_lines.keys()):
-        relative_column_to_lines[column] = round((column_to_lines[column] / total_lines) * 100, 1)
+        relative_column_to_lines[column] = round((column_to_lines[column] / total_lines) * 100, 2)
 
     return relative_column_to_lines
 

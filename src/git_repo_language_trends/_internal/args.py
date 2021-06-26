@@ -188,6 +188,10 @@ def get_args():
 
     args = parser.parse_args()
 
+    # pre-parse width and height
+    width_inches, height_inches = args.size_inches.split(':')
+    args.size_inches = (float(width_inches), float(height_inches))
+
     # Figure out output file extension
     # Without an extension, we treat the entire filename as the extension
     name, ext = os.path.splitext(args.output)

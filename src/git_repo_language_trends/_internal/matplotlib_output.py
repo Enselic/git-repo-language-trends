@@ -37,19 +37,36 @@ class MatplotlibOutput(Output):
 
         s = np.vstack(line_counts)
 
-        # See https://matplotlib.org/stable/gallery/style_sheets/style_sheets_reference.html
         barely_visible_color = "#505050"
         matplotlib_style = "dark_background"
         if self.args.style == "light":
             matplotlib_style = "default"
             barely_visible_color = "#c0c0c0"
 
-        width_inches, height_inches = self.args.size_inches.split(':')
-        width_inches = float(width_inches)
-        height_inches = float(height_inches)
-
+        # See https://matplotlib.org/stable/gallery/style_sheets/style_sheets_reference.html
         plt.style.use(matplotlib_style)
-        fig = plt.figure(figsize=(width_inches, height_inches))
+
+        fig, ax = plt.subplots(figsize=self.args.size_inches)
+
+        ax.stackplot(dates, s, labels=self.columns)
+        title = f"{os.path.basename(os.getcwd())} language trends"
+
+        # Don't leave spaces to the left and right of the plot
+        ax.set_xlim([dates[0], dates[-1]])
+
+        if self.args.relative:
+            ax.set_ylabel("Language usage %")
+            ax.set_ylim([0, 100])
+        else:
+            ax.set_ylabel("Total line count")
+            title = title + ", stacked area plot"
+        ax.set_title(title)
+
+        ax.legend(loc='upper left')
+        ax.grid(True, color=barely_visible_color, alpha=0.5)
+        ax.tick_params(axis='x', labelrotation=45)
+
+        fig.autofmt_xdate()
         if not self.args.no_watermark:
             fig.text(
                 0.5, 0,
@@ -59,16 +76,7 @@ class MatplotlibOutput(Output):
                 ha='center',
                 va='bottom',
             )
-        plt.stackplot(dates, s, labels=self.columns)
-        plt.legend(loc='upper left')
-        plt.grid(True, color=barely_visible_color, alpha=0.5)
-        if self.args.relative:
-            plt.ylabel("Language usage %")
-        else:
-            plt.ylabel("Total line count")
-        plt.title(f"{os.path.basename(os.getcwd())} language trends, stacked area plot")
-        plt.tick_params(axis='x', labelrotation=45)
-        plt.tight_layout()
+        fig.tight_layout()
 
-        plt.savefig(self.args.output)
+        fig.savefig(self.args.output)
         print_file_written(self.args.output)
