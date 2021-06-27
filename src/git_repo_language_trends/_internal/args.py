@@ -37,7 +37,7 @@ create a graph yourself in your spreadsheet software of choice:
 Analyze Java vs Kotlin and write the result to a PNG file with a white
 background and a custom size:
 
-    git-repo-language-trends .java .kt --output=output.png --size-inches=10:6 --style=light
+    git-repo-language-trends .java .kt --output=output.png --size-inches=10,6 --style=light
 
 Arguments:
 ==========
@@ -142,8 +142,8 @@ def get_args():
 
     svg_group.add_argument(
         "--size-inches",
-        metavar="<w:h>",
-        default="11.75:8.25",
+        metavar="<w,h>",
+        default="11.75,8.25",
         help="""width:height in inches of the diagram
         (default: %(default)s)""",
     )
@@ -189,7 +189,7 @@ def get_args():
     args = parser.parse_args()
 
     # pre-parse width and height
-    width_inches, height_inches = args.size_inches.split(':')
+    width_inches, height_inches = args.size_inches.split(',')
     args.size_inches = (float(width_inches), float(height_inches))
 
     # Figure out output file extension

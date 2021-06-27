@@ -18,7 +18,7 @@ fi
 for format in "svg" "png"; do
     for type in "--relative" ""; do
         for watermark in "--no-watermark" ""; do
-            for size in "6:4" "11.75:8.25" "23:16"; do
+            for size in "6,4" "11.75,8.25" "23,16"; do
                 git-repo-language-trends \
                     --first-commit ${TAG} \
                     ${type} \
