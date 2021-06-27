@@ -1,13 +1,19 @@
 #!/usr/bin/env bash
-set -o errexist -o nounset -o pipefail
+set -o errexit -o nounset -o pipefail
 
-echo "This script generates a set of SVG and PNG files that is meant to be"
-echo "used as a visual regression test. Since it is visual regression"
-echo "test, it requires a human."
+echo "
+This script generates a set of SVG and PNG files that is meant to be
+used as a visual regression test. Since it is visual regression
+test, it requires a human.
+"
 
 # Use same tag for consistentcy across runs
 TAG="v0.0.4-pip"
-OUTDIR=$(mktemp -d)
+if [ -z "${OUTDIR-}" ]; then
+    OUTDIR=$(mktemp -d)
+else
+    echo "Using pre-set ${OUTDIR}"
+fi
 
 for format in "svg" "png"; do
     for type in "--relative" ""; do
@@ -24,5 +30,15 @@ for format in "svg" "png"; do
     done
 done
 
-echo "Output put in $OUTDIR, trying to 'xdg-open' for you now"
-xdg-open $OUTDIR
+echo "
+Output put in
+${OUTDIR}
+"
+
+# Automatically open the dir with the result if not in CI
+if [ -z "${CI-}" ]; then
+    echo "Not in CI, opening for you"
+    xdg-open "${OUTDIR}"
+else
+    echo "In CI, not opening anything"
+fi
