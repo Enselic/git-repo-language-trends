@@ -50,3 +50,12 @@ jobs:
           GIT_DIR=${tmpdir} git-repo-language-trends --first-commit=${tag} -o=shallow.csv
           cat shallow.csv
           cmp shallow.csv tests/data/expected-shallow.csv
+      - name: Generate default plots for manual visual regression testing
+        run: |
+          export OUTDIR=grlt-samples
+          ./scripts/generate-png-and-svg-samples.sh
+      - name: Archive code coverage results
+        uses: actions/upload-artifact@v2
+        with:
+          name: grlt-samples-${{ matrix.os.name }}
+          path: grlt-samples
