@@ -11,13 +11,15 @@ Available output file formats:
 
 # Examples
 
-Showing the pace at which **TypeScript** is replacing **JavaScript** in
-[`mattermost-webapp`](https://github.com/mattermost/mattermost-webapp):
+Showing the pace at which **Kotlin** is replacing **Java** in [AndroidX
+`support`
+library](https://android.googlesource.com/platform/frameworks/support/) by
+language usage percentage:
 
-    % cd ~/src/mattermost-webapp
-    % git-repo-language-trends --min-interval-days 30 --max-commits 25 --relative .ts+.tsx .js+.jsx
+    % cd ~/src/androidx
+    % git-repo-language-trends --relative --max-commits 30 --min-interval-days 60  .kt .java
 
-![mattermost-webapp language trends](https://i.imgur.com/6IGbgjb.png)
+![AndroidX language trends](https://i.imgur.com/1B9cN1z.png)
 
 Showing how the implementation of CPython has grown over the last decades in
 terms of number of lines of C (.c and .h files) and Python (.py files):
@@ -26,6 +28,15 @@ terms of number of lines of C (.c and .h files) and Python (.py files):
     % git-repo-language-trends --max-commits 30 --min-interval-days 365 .c+.h .py
 
 ![CPython language trends](https://i.imgur.com/Uv4mK1z.png)
+
+Showing the pace at which **TypeScript** is replacing **JavaScript** in
+[`mattermost-webapp`](https://github.com/mattermost/mattermost-webapp) by
+language usage percentage:
+
+    % cd ~/src/mattermost-webapp
+    % git-repo-language-trends --min-interval-days 30 --max-commits 25 --relative .ts+.tsx .js+.jsx
+
+![mattermost-webapp language trends](https://i.imgur.com/6IGbgjb.png)
 
 
 
@@ -53,9 +64,7 @@ First go to the git repository for a project.
 Then run the tool, passing the file extensions for the languages you are
 interested in as positional arguments:
 
-
     git-repo-language-trends .java .kt
-
 
 For languages with multiple file extensions such as C, you can use the `+`
 syntax which will automatically summarize line counts from both file extensions.
@@ -84,11 +93,11 @@ It is easy to come up with something more fancy, but it would be overkill.
 
 # Performance
 
-This program is pretty fast, because it uses the **pygit2** wrapper for the C
-library **libgit2**. On my low-end computer* it counts ~400 000 lines per
-second.
-
-\*with an *Intel® Celeron® J4005 CPU @ 2.00GHz*
+This program is pretty fast, because it uses the
+[**pygit2**](https://github.com/libgit2/pygit2) wrapper for the C library
+[**libgit2**](https://github.com/libgit2/libgit2). It easily counts hundreds of
+thousands lines per second on low-end machines. It also uses a cache keyed
+by git blob ID to avoid counting lines for the same blob twice.
 
 
 # Development
