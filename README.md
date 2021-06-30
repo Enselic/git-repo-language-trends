@@ -18,6 +18,7 @@ language usage percentage:
 
     % cd ~/src/androidx
     % git-repo-language-trends --relative --max-commits 30 --min-interval-days 60  .kt .java
+    % open androidx-language-trends.png
 
 ![AndroidX language trends](https://i.imgur.com/1B9cN1z.png)
 
@@ -26,6 +27,7 @@ terms of number of lines of C (.c and .h files) and Python (.py files):
 
     % cd ~/src/cpython
     % git-repo-language-trends --max-commits 30 --min-interval-days 365 .c+.h .py
+    % open cpython-language-trends.png
 
 ![CPython language trends](https://i.imgur.com/Uv4mK1z.png)
 
@@ -35,9 +37,37 @@ language usage percentage:
 
     % cd ~/src/mattermost-webapp
     % git-repo-language-trends --min-interval-days 30 --max-commits 25 --relative .ts+.tsx .js+.jsx
+    % open mattermost-webapp-language-trends.png
 
 ![mattermost-webapp language trends](https://i.imgur.com/6IGbgjb.png)
 
+Showing line count trends for **Swift**, **Objective-C** (.m and .h files summed
+together), and **Markdown** (.md) in the [iOS `Charts`
+library](https://github.com/danielgindi/Charts):
+
+    % cd ~/src/Charts
+    % git-repo-language-trends  --min-interval-days 60 .swift .m+.h .md
+    % open Charts-language-trends.png
+
+![iOS Charts language trends](https://i.imgur.com/TVOiSlV.png)
+
+Same data as above, but as a comma-separated values (.csv) file, in case you
+want to generate plots yourself from the raw data, and limited to 10 commits:
+
+    % cd ~/src/Charts
+    % git-repo-language-trends  --max-commits 10 --min-interval-days 60 .swift .m+.h .md -o charts-language-trends.csv
+    % cat charts-language-trends.csv
+            ,.swift,.m+.h,.md
+    2019-03-20,32163,6205,3785
+    2019-06-10,32347,6205,3859
+    2019-09-09,32368,6205,3859
+    2019-11-13,32746,6205,4007
+    2020-02-13,32687,6205,4015
+    2020-04-16,32778,6205,891
+    2020-07-08,32781,6205,897
+    2020-10-08,32785,6205,4215
+    2020-12-15,32176,6219,4225
+    2021-02-26,31771,6219,4252
 
 
 # Installation
