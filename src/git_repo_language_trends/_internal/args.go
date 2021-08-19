@@ -38,31 +38,33 @@ background and a custom size:
 Arguments:
 ==========
 """
+type Args struct {
+	
+}
 
-
-def positive_int(arg):
+func positive_int(arg) {
     i = int(arg)
     if i < 0:
         raise argparse.ArgumentTypeError("Must not be negative")
     return i
+}
 
-
-def positive_float(arg):
+func positive_float(arg) {
     i = float(arg)
     if i < 0:
         raise argparse.ArgumentTypeError("Must not be negative")
     return i
+}
 
-
-def formatter(prog):
+func formatter(prog) {
     return argparse.RawDescriptionHelpFormatter(
         "git-repo-language-trends",
         indent_increment=4,
         max_help_position=38,
     )
+}
 
-
-def get_args():
+func get_args() {
     parser = argparse.ArgumentParser(
         description=desc,
         formatter_class=formatter,
@@ -200,10 +202,11 @@ def get_args():
     Path(os.path.dirname(args.output)).mkdir(exist_ok=True, parents=True)
 
     return args
+}
 
-
-def get_default_output():
+func get_default_output() {
     cwd = os.getcwd()
     basename = os.path.basename(cwd)
 
     return f"{basename}-language-trends.png"
+}
