@@ -4,38 +4,35 @@ import (
 	"github.com/alexflint/go-arg"
 )
 
-var desc = `
-Description:
-	Analyze programming language usage over time in a git repository and produce a
-	graphical or textual representation of the result.
+var desc = `Description:
+  Analyze programming language usage over time in a git repository and produce a
+  graphical or textual representation of the result.
 
-	Available output file formats:
-	* .svg - Scalable Vector Graphics
-	* .png - Portable Network Graphics
-	* .csv - Comma-separated values
-	* .tsv - Tab-separated values
+  Available output file formats:
+  * .svg - Scalable Vector Graphics
+  * .png - Portable Network Graphics
+  * .csv - Comma-separated values
+  * .tsv - Tab-separated values
 
 Examples:
-	First go to any git repository:
+  First go to any git repository:
 
-		cd ~/src/any-git-repository
+    cd ~/src/any-git-repository
 
-	Run the tool without arguments to analyze programing language usage of top three
-	file extensions, and write the result to an SVG file:
+  Run the tool without arguments to analyze programing language usage of top three
+  file extensions, and write the result to an SVG file:
 
-		git-repo-language-trends
+    git-repo-language-trends
 
-	Analyze Objective-C vs Swift and write the result to a .csv file e.g. so you can
-	create a graph yourself in your spreadsheet software of choice:
+  Analyze Objective-C vs Swift and write the result to a .csv file e.g. so you can
+  create a graph yourself in your spreadsheet software of choice:
 
-		git-repo-language-trends .m+.h .swift --output=output.csv
+    git-repo-language-trends .m+.h .swift --output=output.csv
 
-	Analyze Java vs Kotlin and write the result to a PNG file with a white
-	background and a custom size:
+  Analyze Java vs Kotlin and write the result to a PNG file with a white
+  background and a custom size:
 
-		git-repo-language-trends .java .kt --output=output.png --size-inches=10,6 --style=light
-
-Arguments:
+    git-repo-language-trends .java .kt --output=output.png --size-inches=10,6 --style=light
 `
 
 type args struct {
