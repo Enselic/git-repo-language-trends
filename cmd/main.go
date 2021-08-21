@@ -1,9 +1,7 @@
 package main
 
 import (
-	"os"
-
-	"github.com/urfave/cli/v2"
+	"github.com/alexflint/go-arg"
 )
 
 var desc = `
@@ -37,14 +35,17 @@ background and a custom size:
 
 `
 
+type args struct {
+	Foo string
+}
+
+func (args) Description() string {
+	return desc
+}
+
 func main() {
-	app := cli.App{}
-	app.Setup() // So we can later set .Usage to ""
-	app.Usage = ""
-	app.UsageText = ""
-	app.ArgsUsage = ""
-	app.Description = desc
-	app.Run(os.Args)
+	var args args
+	arg.MustParse(&args)
 }
 
 // def positive_int(arg):
