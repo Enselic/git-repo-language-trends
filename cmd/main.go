@@ -36,7 +36,12 @@ Examples:
 `
 
 type args struct {
-	Foo string
+	Foo  string
+	List bool `arg:"-l" help:"list file extensions and their total line count in the first commit"`
+}
+
+func (args) Version() string {
+	return "TODO: --version"
 }
 
 func (args) Description() string {
@@ -47,31 +52,6 @@ func main() {
 	var args args
 	arg.MustParse(&args)
 }
-
-// def positive_int(arg):
-//     i = int(arg)
-//     if i < 0:
-//         raise argparse.ArgumentTypeError("Must not be negative")
-//     return i
-
-// def positive_float(arg):
-//     i = float(arg)
-//     if i < 0:
-//         raise argparse.ArgumentTypeError("Must not be negative")
-//     return i
-
-// def formatter(prog):
-//     return argparse.RawDescriptionHelpFormatter(
-//         "git-repo-language-trends",
-//         indent_increment=4,
-//         max_help_position=38,
-//     )
-
-// def get_args():
-//     parser = argparse.ArgumentParser(
-//         description=desc,
-//         formatter_class=formatter,
-//     )
 
 //     parser.add_argument(
 //         "columns",
@@ -211,3 +191,28 @@ func main() {
 //     basename = os.path.basename(cwd)
 
 //     return f"{basename}-language-trends.png"
+
+// def positive_int(arg):
+//     i = int(arg)
+//     if i < 0:
+//         raise argparse.ArgumentTypeError("Must not be negative")
+//     return i
+
+// def positive_float(arg):
+//     i = float(arg)
+//     if i < 0:
+//         raise argparse.ArgumentTypeError("Must not be negative")
+//     return i
+
+// def formatter(prog):
+//     return argparse.RawDescriptionHelpFormatter(
+//         "git-repo-language-trends",
+//         indent_increment=4,
+//         max_help_position=38,
+//     )
+
+// def get_args():
+//     parser = argparse.ArgumentParser(
+//         description=desc,
+//         formatter_class=formatter,
+//     )
