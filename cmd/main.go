@@ -6,42 +6,45 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
-var desc = `Analyze programming language usage over time in a git repository and produce a graphical or textual representation of the result.
+var desc = `
+Analyze programming language usage over time in a git repository and produce
+a graphical or textual representation of the result.
 
 Available output file formats:
 * .svg - Scalable Vector Graphics
 * .png - Portable Network Graphics
 * .csv - Comma-separated values
 * .tsv - Tab-separated values
-`
 
-var usage = `
-   First go to any git repository:
-   
-       cd ~/src/any-git-repository
-   
-   Run the tool without arguments to analyze programing language usage of top three
-   file extensions, and write the result to an SVG file:
-   
-       git-repo-language-trends
-   
-   Analyze Objective-C vs Swift and write the result to a .csv file e.g. so you can
-   create a graph yourself in your spreadsheet software of choice:
-   
-       git-repo-language-trends .m+.h .swift --output=output.csv
-   
-   Analyze Java vs Kotlin and write the result to a PNG file with a white
-   background and a custom size:
-   
-       git-repo-language-trends .java .kt --output=output.png --size-inches=10,6 --style=light
-   
+First go to any git repository:
+
+	cd ~/src/any-git-repository
+
+Run the tool without arguments to analyze programing language usage of top three
+file extensions, and write the result to an SVG file:
+
+	git-repo-language-trends
+
+Analyze Objective-C vs Swift and write the result to a .csv file e.g. so you can
+create a graph yourself in your spreadsheet software of choice:
+
+	git-repo-language-trends .m+.h .swift --output=output.csv
+
+Analyze Java vs Kotlin and write the result to a PNG file with a white
+background and a custom size:
+
+	git-repo-language-trends .java .kt --output=output.png --size-inches=10,6 --style=light
+
 `
 
 func main() {
-	(&cli.App{
-		Usage:     desc,
-		UsageText: usage,
-	}).Run(os.Args)
+	app := cli.App{}
+	app.Setup() // So we can later set .Usage to ""
+	app.Usage = ""
+	app.UsageText = ""
+	app.ArgsUsage = ""
+	app.Description = desc
+	app.Run(os.Args)
 }
 
 // def positive_int(arg):
