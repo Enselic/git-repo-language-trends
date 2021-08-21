@@ -44,19 +44,10 @@ func main() {
 		IntMap map[string]int `long:"intmap" description:"A map from string to int"`
 	}
 
-	_, err := flags.Parse(&opts)
+	flags.Parse(&opts)
 
-	if err != nil {
-		panic(err)
-	}
 	fmt.Println("Hej")
 }
-
-// import os
-// import sys
-// import argparse
-// import git_repo_language_trends
-// from pathlib import Path
 
 // desc = """
 // Description:
