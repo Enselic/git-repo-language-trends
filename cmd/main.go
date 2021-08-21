@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	"github.com/jessevdk/go-flags/flags"
+	"github.com/jessevdk/go-flags"
 )
 
 type Options struct {
