@@ -54,14 +54,8 @@ type args struct {
 	//         type=positive_int,
 	MinIntervalDays int `arg:"--min-interval-days" default:"7" help:"mimimum interval in days between analyzed commits"`
 
-	//         "--max-commits", "-n",
-	//         default=sys.maxsize,
-	//         help="""maximum number of commits to analyze
-	//         (default: %(default)s)"""
-	//     )
-
 	//         type=positive_int,
-	MaxCommits int `arg:"--max-commits,-n" default:"2100000000" help:"mimimum interval in days between analyzed commits"`
+	MaxCommits int `arg:"--max-commits,-n" default:"2100000000" help:"maximum number of commits to analyze"`
 }
 
 // TODO: Change colWidth in /home/martin/go/pkg/mod/github.com/alexflint/go-arg@v1.4.2/usage.go
