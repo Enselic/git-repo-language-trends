@@ -56,10 +56,22 @@ type args struct {
 
 	//         type=positive_int,
 	MaxCommits int `arg:"--max-commits,-n" default:"2100000000" help:"maximum number of commits to analyze"`
+
+	//     parser.add_argument(
+	//         "",
+	//         metavar="<rev>",
+	//         (default: %(default)s)"""
+	//     )
+	FirstCommit string `arg:"--first-commit" default:"HEAD" help:"the commit or tag or branch to start from"`
 }
 
 // TODO: Change colWidth in /home/martin/go/pkg/mod/github.com/alexflint/go-arg@v1.4.2/usage.go
 func (args) Version() string {
+	//     parser.add_argument(
+	//         '--version',
+	//         action='version',
+	//         version=f"%(prog)s {git_repo_language_trends.__version__}",
+	//     )
 	return "TODO: --version"
 }
 
@@ -71,20 +83,6 @@ func main() {
 	var args args
 	arg.MustParse(&args)
 }
-
-//     parser.add_argument(
-//         '--version',
-//         action='version',
-//         version=f"%(prog)s {git_repo_language_trends.__version__}",
-//     )
-
-//     parser.add_argument(
-//         "--first-commit",
-//         metavar="<rev>",
-//         default="HEAD",
-//         help="""the commit or tag or branch to start from
-//         (default: %(default)s)"""
-//     )
 
 //     parser.add_argument(
 //         "--relative",
