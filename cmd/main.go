@@ -52,17 +52,29 @@ type args struct {
 	List bool `arg:"-l" help:"list file extensions and their total line count in the first commit"`
 
 	//         type=positive_int,
+	// placeholder="<int>"
 	MinIntervalDays int `arg:"--min-interval-days" default:"7" help:"mimimum interval in days between analyzed commits"`
 
 	//         type=positive_int,
+	// placeholder="<int>"
 	MaxCommits int `arg:"--max-commits,-n" default:"2100000000" help:"maximum number of commits to analyze"`
 
-	//     parser.add_argument(
-	//         "",
 	//         metavar="<rev>",
-	//         (default: %(default)s)"""
-	//     )
 	FirstCommit string `arg:"--first-commit" default:"HEAD" help:"the commit or tag or branch to start from"`
+
+	//     parser.add_argument(
+	//         "--relative",
+	//         action='store_true',
+	//         help="use relative instead of absolute numbers",
+	//     )
+
+	//
+	//         metavar="<out.ext>",
+	//         default=get_default_output(),
+	//         help="""
+	//         (default: %(default)s)""",
+	//     )
+	Output string `arg:"--output,-o" default:"out.png" help:"output filename and format (via extension .svg .png .csv or .tsv)"`
 }
 
 // TODO: Change colWidth in /home/martin/go/pkg/mod/github.com/alexflint/go-arg@v1.4.2/usage.go
@@ -83,20 +95,6 @@ func main() {
 	var args args
 	arg.MustParse(&args)
 }
-
-//     parser.add_argument(
-//         "--relative",
-//         action='store_true',
-//         help="use relative instead of absolute numbers",
-//     )
-
-//     parser.add_argument(
-//         "--output", "-o",
-//         metavar="<out.ext>",
-//         default=get_default_output(),
-//         help="""output filename and format (via extension .svg .png .csv or .tsv)
-//         (default: %(default)s)""",
-//     )
 
 //     svg_group = parser.add_argument_group(
 //         "SVG/PNG related optional arguments",
