@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+
 	"github.com/alexflint/go-arg"
 )
 
@@ -92,6 +94,7 @@ func (args) Description() string {
 func main() {
 	var args args
 	arg.MustParse(&args)
+	fmt.Println("Yep: ", args.FirstCommit)
 }
 
 //     svg_group = parser.add_argument_group(
