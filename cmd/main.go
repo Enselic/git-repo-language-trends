@@ -36,8 +36,23 @@ Examples:
 `
 
 type args struct {
-	Foo  string
+
+	//     parser.add_argument(
+	//         "columns",
+	//         metavar=".ext .ext+.ext",
+	//         nargs='*',
+	//         help="""For what file extensions lines will be counted. Can be specified
+	//         multiple times. Use '.ext' for regular line counting. Use '.ext1+.ext2'
+	//         syntax for auto-summation of several file extensions, e.g. .c+.h for all C files.
+	//         If you specify no file extensions, the top three extensions in the
+	//         repository will be used, based on the number of lines in files with the
+	//         extensions.""",
+	//     )
+
 	List bool `arg:"-l" help:"list file extensions and their total line count in the first commit"`
+
+	//         type=positive_int,
+	MinIntervalDays int `arg:"--min-interval-days" default:"7" help:"mimimum interval in days between analyzed commits"`
 }
 
 func (args) Version() string {
@@ -54,36 +69,9 @@ func main() {
 }
 
 //     parser.add_argument(
-//         "columns",
-//         metavar=".ext .ext+.ext",
-//         nargs='*',
-//         help="""For what file extensions lines will be counted. Can be specified
-//         multiple times. Use '.ext' for regular line counting. Use '.ext1+.ext2'
-//         syntax for auto-summation of several file extensions, e.g. .c+.h for all C files.
-//         If you specify no file extensions, the top three extensions in the
-//         repository will be used, based on the number of lines in files with the
-//         extensions.""",
-//     )
-
-//     parser.add_argument(
 //         '--version',
 //         action='version',
 //         version=f"%(prog)s {git_repo_language_trends.__version__}",
-//     )
-
-//     parser.add_argument(
-//         "--list", "-l",
-//         action='store_true',
-//         help="list file extensions and their total line count in the first commit",
-//     )
-
-//     parser.add_argument(
-//         "--min-interval-days",
-//         metavar="<int>",
-//         type=positive_int,
-//         default=7,
-//         help="""mimimum interval in days between analyzed commits
-//         (default: %(default)s)""",
 //     )
 
 //     parser.add_argument(
