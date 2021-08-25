@@ -71,8 +71,6 @@ type args struct {
 	//
 	//         metavar="<out.ext>",
 	//         default=get_default_output(),
-	//         help="""
-	//         (default: %(default)s)""",
 	//     )
 	Output string `arg:"--output,-o" default:"out.png" help:"output filename and format (via extension .svg .png .csv or .tsv)"`
 }
