@@ -63,12 +63,12 @@ func process_commits(args, outputs) {
 
     commits_to_process = get_commits_to_process(args)
 
-    // Since we analyze many commits, but many commits share the same blobs,
-    // caching how many lines there _, are := range a blob (keyed by git object id) speeds
-    // things up significantly, without a dramatic memory usage increase.
-    blob_to_lines_cache = None if args.no_cache else {}
+    // // Since we analyze many commits, but many commits share the same blobs,
+    // // caching how many lines there _, are := range a blob (keyed by git object id) speeds
+    // // things up significantly, without a dramatic memory usage increase.
+    // blob_to_lines_cache = None if args.no_cache else {}
 
-    progress_state = Progress(args, len(commits_to_process))
+    // progress_state = Progress(args, len(commits_to_process))
 
     // Print column headers
     for _, output := range outputs {
