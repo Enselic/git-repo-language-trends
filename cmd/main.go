@@ -19,29 +19,31 @@ func main() {
 	process_commits(args, outputs)
 }
 
-def list_available_file_extensions(args):
-    ext_to_lines = get_data_for_first_commit(args)
-    sorted_exts = get_extensions_sorted_by_popularity(ext_to_lines)
-    print("Available extensions in first commit:")
+// def list_available_file_extensions(args):
+//     ext_to_lines = get_data_for_first_commit(args)
+//     sorted_exts = get_extensions_sorted_by_popularity(ext_to_lines)
+//     print("Available extensions in first commit:")
 
-    len_of_longest_ext = len(max(sorted_exts, key=len))
-    for ext in sorted_exts:
-        print(f"{ext:<{len_of_longest_ext}} - {ext_to_lines[ext]} lines")
+//     len_of_longest_ext = len(max(sorted_exts, key=len))
+//     for ext in sorted_exts:
+//         print(f"{ext:<{len_of_longest_ext}} - {ext_to_lines[ext]} lines")
 
 
 func get_outputs(args) {
     // It should be pretty easy to add support for having multiple
     // outputs generated at once, but for now we only support one at a time.
-    outputs = []
+    outputs := make([]Output)
 
-    if args.output_ext == ".svg" or args.output_ext == ".png":
-        outputs.append(MatplotlibOutput(args))
-    elif args.output_ext == ".tsv":
-        outputs.append(SeparatedValuesOutput(args, "\t"))
-    elif args.output_ext == ".csv":
-        outputs.append(SeparatedValuesOutput(args, ","))
-    else:
-        sys.exit(f"Output file format '{args.output_ext}' not supported")
+    // if args.Output == ".svg" || args.output_ext == ".png":
+    //     outputs.append(MatplotlibOutput(args))
+    // elif args.output_ext == ".tsv":
+    //     outputs.append(SeparatedValuesOutput(args, "\t"))
+    // elif args.output_ext == ".csv":
+    //     outputs.append(SeparatedValuesOutput(args, ","))
+    // else:
+    //     sys.exit(f"Output file format '{args.output_ext}' not supported")
+
+	outputs = append(outputs, )
 
     return outputs
 }
@@ -256,190 +258,3 @@ def generate_ext_to_column_dict(columns):
 def get_commit_date(commit):
     return datetime.utcfromtimestamp(commit.commit_time).strftime('%Y-%m-%d')
 
-
-
-
-	var desc = `Description:
-  Analyze programming language usage over time in a git repository and produce a
-  graphical or textual representation of the result.
-
-  Available output file formats:
-  * .svg - Scalable Vector Graphics
-  * .png - Portable Network Graphics
-  * .csv - Comma-separated values
-  * .tsv - Tab-separated values
-
-Examples:
-  First go to any git repository:
-
-    cd ~/src/any-git-repository
-
-  Run the tool without arguments to analyze programing language usage of top three
-  file extensions, and write the result to an SVG file:
-
-    git-repo-language-trends
-
-  Analyze Objective-C vs Swift and write the result to a .csv file e.g. so you can
-  create a graph yourself in your spreadsheet software of choice:
-
-    git-repo-language-trends .m+.h .swift --output=output.csv
-
-  Analyze Java vs Kotlin and write the result to a PNG file with a white
-  background and a custom size:
-
-    git-repo-language-trends .java .kt --output=output.png --size-inches=10,6 --style=light
-`
-
-type args struct {
-
-	//     parser.add_argument(
-	//         "columns",
-	//         metavar=".ext .ext+.ext",
-	//         nargs='*',
-	//         help="""For what file extensions lines will be counted. Can be specified
-	//         multiple times. Use '.ext' for regular line counting. Use '.ext1+.ext2'
-	//         syntax for auto-summation of several file extensions, e.g. .c+.h for all C files.
-	//         If you specify no file extensions, the top three extensions in the
-	//         repository will be used, based on the number of lines in files with the
-	//         extensions.""",
-	//     )
-
-	List bool `arg:"-l" help:"list file extensions and their total line count in the first commit"`
-
-	//         type=positive_int,
-	// placeholder="<int>"
-	MinIntervalDays int `arg:"--min-interval-days" default:"7" help:"mimimum interval in days between analyzed commits"`
-
-	//         type=positive_int,
-	// placeholder="<int>"
-	MaxCommits int `arg:"--max-commits,-n" default:"2100000000" help:"maximum number of commits to analyze"`
-
-	//         metavar="<rev>",
-	FirstCommit string `arg:"--first-commit" default:"HEAD" help:"the commit or tag or branch to start from"`
-
-	//     parser.add_argument(
-	//         "--relative",
-	//         action='store_true',
-	//         help="use relative instead of absolute numbers",
-	//     )
-
-	//
-	//         metavar="<out.ext>",
-	//         default=get_default_output(),
-	//     )
-	Output string `arg:"--output,-o" default:"out.png" help:"output filename and format (via extension .svg .png .csv or .tsv)"`
-}
-
-// TODO: Change colWidth in /home/martin/go/pkg/mod/github.com/alexflint/go-arg@v1.4.2/usage.go
-func (args) Version() string {
-	//     parser.add_argument(
-	//         '--version',
-	//         action='version',
-	//         version=f"%(prog)s {git_repo_language_trends.__version__}",
-	//     )
-	return "TODO: --version"
-}
-
-func (args) Description() string {
-	return desc
-}
-
-//     svg_group = parser.add_argument_group(
-//         "SVG/PNG related optional arguments",
-//     )
-
-//     svg_group.add_argument(
-//         "--size-inches",
-//         metavar="<w,h>",
-//         default="11.75,8.25",
-//         help="""width:height in inches of the diagram
-//         (default: %(default)s)""",
-//     )
-
-//     svg_group.add_argument(
-//         "--style",
-//         metavar="<name>",
-//         default="dark",
-//         choices=['dark', 'light'],
-//         help="""pass 'dark' for black background and 'light' for white background
-//         (default: %(default)s)""",
-//     )
-
-//     svg_group.add_argument(
-//         "--no-watermark",
-//         action='store_true',
-//         help="remove the watermark that is barely visible to begin with",
-//     )
-
-//     advanced_group = parser.add_argument_group(
-//         "advanced optional arguments",
-//     )
-
-//     advanced_group.add_argument(
-//         "--no-cache",
-//         action='store_true',
-//         help="""[ADVANCED] do not cache how many lines are in a blob""",
-//     )
-
-//     advanced_group.add_argument(
-//         "--no-progress",
-//         action='store_true',
-//         help="""[ADVANCED] do not print progress""",
-//     )
-
-//     advanced_group.add_argument(
-//         "--all-parents", "-a",
-//         action='store_true',
-//         help="""[ADVANCED] increase pool of candidate commits by following all
-//         commit parents, but with the risk of producing inconsistent/jumpy graphs""",
-//     )
-
-//     args = parser.parse_args()
-
-//     # pre-parse width and height
-//     width_inches, height_inches = args.size_inches.split(',')
-//     args.size_inches = (float(width_inches), float(height_inches))
-
-//     # Figure out output file extension
-//     # Without an extension, we treat the entire filename as the extension
-//     name, ext = os.path.splitext(args.output)
-//     if not ext:
-//         ext = name
-//         name = ""
-//     args.output_ext = ext
-
-//     # Do a favor to the user, create the parent dirs if they are missing
-//     Path(os.path.dirname(args.output)).mkdir(exist_ok=True, parents=True)
-
-//     return args
-
-// def get_default_output():
-//     cwd = os.getcwd()
-//     basename = os.path.basename(cwd)
-
-//     return f"{basename}-language-trends.png"
-
-// def positive_int(arg):
-//     i = int(arg)
-//     if i < 0:
-//         raise argparse.ArgumentTypeError("Must not be negative")
-//     return i
-
-// def positive_float(arg):
-//     i = float(arg)
-//     if i < 0:
-//         raise argparse.ArgumentTypeError("Must not be negative")
-//     return i
-
-// def formatter(prog):
-//     return argparse.RawDescriptionHelpFormatter(
-//         "git-repo-language-trends",
-//         indent_increment=4,
-//         max_help_position=38,
-//     )
-
-// def get_args():
-//     parser = argparse.ArgumentParser(
-//         description=desc,
-//         formatter_class=formatter,
-//     )
