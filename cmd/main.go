@@ -50,15 +50,16 @@ func get_outputs(args) {
 
 func process_commits(args, outputs) {
     columns = args.columns
-    if len(columns) == 0:
+    if len(columns) == 0 {
         print("No file extensions specified, will use top three.")
         data = get_data_for_first_commit(args)
         columns = get_top_three_extensions(data)
         print(f"Top three extensions were: {' '.join(columns)}")
 
-    if len(columns) == 0:
+	}
+    if len(columns) == 0 {
         sys.exit("No extensions to count lines for")
-
+	}
     ext_to_column = generate_ext_to_column_dict(columns)
 
     commits_to_process = get_commits_to_process(args)
@@ -71,11 +72,11 @@ func process_commits(args, outputs) {
     progress_state = Progress(args, len(commits_to_process))
 
     // Print column headers
-    for output in outputs:
+    for output in outputs {
         output.start(columns)
-
+	}
     // Print rows
-    for commit in commits_to_process:
+    for commit in commits_to_process {
         date = get_commit_date(commit)
         column_to_lines_dict = process_commit(
             commit,
@@ -84,19 +85,19 @@ func process_commits(args, outputs) {
             progress_state,
         )
 
-        for output in outputs:
+        for output in outputs {
             output.add_row(
                 columns,
                 date,
                 to_relative_numbers_if_enabled(args, column_to_lines_dict),
             )
-
+		}
         progress_state.commit_processed()
-
+	}
     // Wrap things up
-    for output in outputs:
+    for output in outputs {
         output.finish()
-
+}}
 
 // Calls process_commit for the first commit (possibly from --first-commit)
 func get_data_for_first_commit(args) {
