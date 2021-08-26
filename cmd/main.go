@@ -25,7 +25,7 @@ func main() {
 //     print("Available extensions in first commit:")
 
 //     len_of_longest_ext = len(max(sorted_exts, key=len))
-//     for ext in sorted_exts:
+//     for _, ext := range sorted_exts:
 //         print(f"{ext:<{len_of_longest_ext}} - {ext_to_lines[ext]} lines")
 
 
@@ -72,11 +72,11 @@ func process_commits(args, outputs) {
     progress_state = Progress(args, len(commits_to_process))
 
     // Print column headers
-    for output in outputs {
+    for _, output := range outputs {
         output.start(columns)
 	}
     // Print rows
-    for commit in commits_to_process {
+    for _, commit := range commits_to_process {
         date = get_commit_date(commit)
         column_to_lines_dict = process_commit(
             commit,
@@ -85,7 +85,7 @@ func process_commits(args, outputs) {
             progress_state,
         )
 
-        for output in outputs {
+        for _, output := range outputs {
             output.add_row(
                 columns,
                 date,
@@ -95,7 +95,7 @@ func process_commits(args, outputs) {
         progress_state.commit_processed()
 	}
     // Wrap things up
-    for output in outputs {
+    for _, output := range outputs {
         output.finish()
 }}
 
@@ -104,7 +104,7 @@ func get_data_for_first_commit(args) {
     repo = get_repo()
     rev = repo.revparse_single(args.first_commit)
     return process_commit(rev.peel(pygit2.Commit), None, None, Progress(args, 1))
-
+}
 
 func get_commits_to_process(args) {
     commits_to_process = []
@@ -113,7 +113,7 @@ func get_commits_to_process(args) {
 
     date_of_last_row = None
     try:
-        for commit in get_git_log_walker(args):
+        for _, commit := range get_git_log_walker(args):
             if rows_left == 0:
                 break
 
@@ -172,7 +172,7 @@ func process_commit(commit, ext_to_column, blob_to_lines_cache, progress_state) 
             column_to_lines[column] = column_to_lines.get(column, 0) + lines
 
     return column_to_lines
-
+}
 
 func get_all_blobs_in_tree(tree) {
     blobs = []
@@ -180,23 +180,23 @@ func get_all_blobs_in_tree(tree) {
     // Say no to recursion
     while len(trees_left) > 0:
         tree = trees_left.pop()
-        for obj in tree:
+        for _, obj := range tree:
             if isinstance(obj, pygit2.Tree):
                 trees_left.append(obj)
             elif isinstance(obj, pygit2.Blob):
                 blobs.append(obj)
     return blobs
-
+}
 
 func get_blobs_in_commit(commit) {
     blobs = []
-    for obj in get_all_blobs_in_tree(commit.tree):
+    for _, obj := range get_all_blobs_in_tree(commit.tree):
         ext = os.path.splitext(obj.name)[1]
         if ext:
             blobs.append((obj, ext))
 
     return blobs
-
+}
 
 func get_lines_in_blob(blob, blob_to_lines_cache) {
     // Don't use the blob.oid directly, because that will keep the underlying git
@@ -209,7 +209,7 @@ func get_lines_in_blob(blob, blob_to_lines_cache) {
         return blob_to_lines_cache[hex]
 
     lines = 0
-    for byte in memoryview(blob):
+    for _, byte := range memoryview(blob):
         if byte == 10:  // \n
             lines += 1
 
@@ -217,11 +217,11 @@ func get_lines_in_blob(blob, blob_to_lines_cache) {
         blob_to_lines_cache[hex] = lines
 
     return lines
-
+}
 
 func get_repo() {
     return pygit2.Repository(os.environ.get('GIT_DIR', '.'))
-
+}
 
 func get_git_log_walker(args) {
     repo = get_repo()
@@ -234,7 +234,7 @@ func get_git_log_walker(args) {
         walker.simplify_first_parent()
 
     return walker
-
+}
 
 func enough_days_passed(args, date_of_last_row, current_date) {
     """
@@ -246,16 +246,16 @@ func enough_days_passed(args, date_of_last_row, current_date) {
         days = ((date_of_last_row - current_date) / 60 / 60 / 24)
         return days > args.min_interval_days
     return True
-
+}
 
 func generate_ext_to_column_dict(columns) {
     extension_to_column_dict = {}
-    for column in columns:
-        for ext in column.split('+'):
+    for _, column := range columns:
+        for _, ext := range column.split('+'):
             extension_to_column_dict[ext] = column
     return extension_to_column_dict
-
+}
 
 func get_commit_date(commit) {
     return datetime.utcfromtimestamp(commit.commit_time).strftime('%Y-%m-%d')
-
+}
