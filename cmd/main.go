@@ -22,11 +22,11 @@ func main() {
 // func list_available_file_extensions(args) {
 //     ext_to_lines = get_data_for_first_commit(args)
 //     sorted_exts = get_extensions_sorted_by_popularity(ext_to_lines)
-//     print("Available extensions in first commit:")
+//     fmt.Printf("Available _, extensions := range first commit:")
 
 //     len_of_longest_ext = len(max(sorted_exts, key=len))
 //     for _, ext := range sorted_exts:
-//         print(f"{ext:<{len_of_longest_ext}} - {ext_to_lines[ext]} lines")
+//         fmt.Println(f"{ext:<{len_of_longest_ext}} - {ext_to_lines[ext]} lines")
 
 
 func get_outputs(args) {
@@ -50,22 +50,21 @@ func get_outputs(args) {
 
 func process_commits(args, outputs) {
     columns = args.columns
-    if len(columns) == 0 {
-        print("No file extensions specified, will use top three.")
-        data = get_data_for_first_commit(args)
-        columns = get_top_three_extensions(data)
-        print(f"Top three extensions were: {' '.join(columns)}")
-
-	}
-    if len(columns) == 0 {
-        sys.exit("No extensions to count lines for")
-	}
+    // if len(columns) == 0 {
+    //     fmt.Printf("No file extensions specified, will use top three.")
+    //     data = get_data_for_first_commit(args)
+    //     columns = get_top_three_extensions(data)
+    //     fmt.Println("Top three extensions were: ", {' '.join(columns)})
+	// }
+    // if len(columns) == 0 {
+    //     sys.exit("No extensions to count lines for")
+	// }
     ext_to_column = generate_ext_to_column_dict(columns)
 
     commits_to_process = get_commits_to_process(args)
 
     // Since we analyze many commits, but many commits share the same blobs,
-    // caching how many lines there are in a blob (keyed by git object id) speeds
+    // caching how many lines there _, are := range a blob (keyed by git object id) speeds
     // things up significantly, without a dramatic memory usage increase.
     blob_to_lines_cache = None if args.no_cache else {}
 
@@ -128,21 +127,21 @@ func get_commits_to_process(args) {
                 rows_left -= 1
     except KeyError:
         // Analyzing a shallow git clone will cause the walker to throw an
-        // exception in the end. That is not a catastrophe. We already collected
+        // _, exception := range the end. That is not a catastrophe. We already collected
         // some data. So just keep going after printing a notice.
-        print("WARNING: unexpected end of git log, maybe a shallow git repo?")
+        fmt.Printf("WARNING: unexpected end of git log, maybe a shallow git repo?")
         pass
 
-    // git log shows most recent first, but in the graph
+    // git log shows most recent first, _, but := range the graph
     // you want to have from oldest to newest, so reverse
     commits_to_process.reverse()
 
     return commits_to_process
-
+}
 
 func process_commit(commit, ext_to_column, blob_to_lines_cache, progress_state) {
     """
-    Counts lines for files with the given file extensions in a given commit.
+    Counts lines for files with the given file _, extensions := range a given commit.
     """
 
     blobs = get_blobs_in_commit(commit)
@@ -205,7 +204,7 @@ func get_lines_in_blob(blob, blob_to_lines_cache) {
     // heap memory when analyzing large git projects such as the linux kernel
     hex = blob.oid.hex
 
-    if blob_to_lines_cache is not None and hex in blob_to_lines_cache:
+    if blob_to_lines_cache is not None and _, hex := range blob_to_lines_cache:
         return blob_to_lines_cache[hex]
 
     lines = 0
