@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/go-git/go-git/v5"
@@ -83,12 +84,15 @@ func process_commits(args AppArgs, outputs []Output) error {
 	// Print rows
 	for _, commit := range commits_to_process {
 		date := get_commit_date(commit)
-		column_to_lines_dict := process_commit(
+		column_to_lines_dict, err := process_commit(
 			commit,
 			ext_to_column,
 			file_to_lines_cache,
 			//progress_state,
 		)
+		if err != nil {
+			return err
+		}
 
 		fmt.Println("c=", column_to_lines_dict)
 
@@ -192,7 +196,7 @@ func process_commit(
 		// One based counting since the printed progress is for human consumption
 		index += 1
 
-		ext := file
+		ext := filepath.Ext(file.Name)
 		//progress_state.print_state(index, len_blobs)
 
 		// Figure out if we should count the lines for the file extension this
@@ -209,12 +213,15 @@ func process_commit(
 
 		// If the blob has an extension we care about, count the lines!
 		if column != "" {
-			es := get_lines_in_blob(file, file_to_lines_cache)
+			lines, err := get_lines_in_file(file, file_to_lines_cache)
+			if err != nil {
+				return nil, err
+			}
 			column_to_lines[column] = column_to_lines[column] + lines
 		}
 	}
 
-	return column_to_lines
+	return column_to_lines, nil
 }
 
 // func get_all_blobs_in_tree(tree object.Tree) {
@@ -239,8 +246,8 @@ type BlobAndExt struct {
 	ext  string
 }
 
-func get_files_in_commit(commit *object.Commit) ([]*object.File, err) {
-	files := make([]*File, 42)
+func get_files_in_commit(commit *object.Commit) ([]*object.File, error) {
+	files := make([]*object.File, 42)
 
 	iter, err := commit.Files()
 	if err != nil {
@@ -264,7 +271,7 @@ func get_files_in_commit(commit *object.Commit) ([]*object.File, err) {
 	return files, nil
 }
 
-func get_lines_in_file(file *object.File, file_to_lines_cache map[object.Blob]int) int {
+func get_lines_in_file(file *object.File, file_to_lines_cache map[object.Blob]int) (int, error) {
 	// // Don't use the blob.oid directly, because that will keep the underlying git
 	// // blob object alive, preventing freeing of the blob content from
 	// // git_blob_get_rawcontent(), which quickly accumulate to hundred of megs of
@@ -287,7 +294,13 @@ func get_lines_in_file(file *object.File, file_to_lines_cache map[object.Blob]in
 	// }
 
 	// return lines
-	return len(file.Lines())
+
+	lines, err := file.Lines()
+	if err != nil {
+		return 0, err
+	}
+
+	return len(lines), nil
 }
 
 func get_repo() (*git.Repository, error) {
