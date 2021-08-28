@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -137,18 +138,18 @@ func get_commits_to_process(args AppArgs) ([]*object.Commit, error) {
 	if err != nil {
 		return nil, err
 	}
-	iter.ForEach(func(c *object.Commit) error {
+	iter.ForEach(func(commit *object.Commit) error {
 		if rows_left <= 0 {
 			return errors.New("done")
 		}
 
 		// Make sure --min-interval days has passed since last printed commit before
 		// processing and printing the data for another commit
-		current_date := &c.Author.When
+		current_date := &commit.Author.When
 		if enough_days_passed(args, date_of_last_row, current_date) {
 			date_of_last_row = current_date
 
-			commits_to_process = append(commits_to_process, c)
+			commits_to_process = append(commits_to_process, commit)
 
 			rows_left -= 1
 		}
@@ -166,6 +167,8 @@ func get_commits_to_process(args AppArgs) ([]*object.Commit, error) {
 	// // git log shows most recent first, but for the graph
 	// // you want to have from oldest to newest, so reverse
 	reverse_commits(commits_to_process)
+
+	fmt.Println("to process", commits_to_process)
 
 	return commits_to_process, nil
 }
