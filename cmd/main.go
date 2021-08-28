@@ -342,6 +342,7 @@ func generate_ext_to_column_dict(columns []string) map[string]string {
 }
 
 func get_commit_date(commit *object.Commit) string {
-	//return datetime.utcfromtimestamp(commit.commit_time).strftime("%Y-%m-%d")
-	return "date nyi"
+	return commit.Author.When.Format("2006-01-02")
+	// return datetime.utcfromtimestamp(commit.commit_time).strftime("%Y-%m-%d")
+	// return "date nyi"
 }
