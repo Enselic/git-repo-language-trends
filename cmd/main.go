@@ -82,7 +82,9 @@ func process_commits(args AppArgs, outputs []Output) error {
 		output.start(columns)
 	}
 	// Print rows
-	for _, commit := range commits_to_process {
+	fmt.Println("what is this", commits_to_process)
+	for i, commit := range commits_to_process {
+		fmt.Println("hm2", commit, i)
 		date := get_commit_date(commit)
 		column_to_lines_dict, err := process_commit(
 			commit,
@@ -129,11 +131,12 @@ func get_commits_to_process(args AppArgs) ([]*object.Commit, error) {
 
 	ref, _ := repo.Head()
 
-	commits_to_process := make([]*object.Commit, 42)
+	var commits_to_process []*object.Commit
 
 	rows_left := args.MaxCommits
 	iter, _ := repo.Log(&git.LogOptions{From: ref.Hash()})
 	iter.ForEach(func(c *object.Commit) error {
+		fmt.Println("app", c)
 		if rows_left > 0 {
 			rows_left -= 1
 			commits_to_process = append(commits_to_process, c)
@@ -241,13 +244,8 @@ func process_commit(
 // 	// return blobs
 // }
 
-type BlobAndExt struct {
-	blob object.Blob
-	ext  string
-}
-
 func get_files_in_commit(commit *object.Commit) ([]*object.File, error) {
-	files := make([]*object.File, 42)
+	var files []*object.File
 
 	iter, err := commit.Files()
 	if err != nil {
