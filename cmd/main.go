@@ -5,7 +5,8 @@ import (
 	"os"
 	"strings"
 
-	git "github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/plumbing/object"
 )
 
 func main() {
@@ -66,9 +67,9 @@ func process_commits(args AppArgs, outputs []Output) error {
 	// // Since we analyze many commits, but many commits share the same blobs,
 	// // caching how many lines there _, are := range a blob (keyed by git object id) speeds
 	// // things up significantly, without a dramatic memory usage increase.
-	var blob_to_lines_cache map[git.Blob]int
+	var blob_to_lines_cache map[object.Blob]int
 	// if !args.NoCache {
-	// 	blob_to_lines_cache = make(map[git.Blob]int)
+	// 	blob_to_lines_cache = make(map[object.Blob]int)
 	// }
 
 	// progress_state = Progress(args, len(commits_to_process))
@@ -112,16 +113,19 @@ func process_commits(args AppArgs, outputs []Output) error {
 //     return process_commit(rev.peel(pygit2.Commit), None, None, Progress(args, 1))
 // }
 
-func get_commits_to_process(args AppArgs) ([]git.Commit, error) {
+func get_commits_to_process(args AppArgs) ([]*object.Commit, error) {
 	repo, err := get_repo()
 	if err != nil {
 		return nil, err
 	}
 
-	commits_to_process := make([]git.Commit, 42)
+	ref, _ := repo.Head()
+
+	commits_to_process := make([]*object.Commit, 42)
 
 	rows_left := args.MaxCommits
-	repo.Log(&git.LogOptions{From: repo.Head().Hash()}).ForEach(func(c *git.Commit) error {
+	iter, _ := repo.Log(&git.LogOptions{From: ref.Hash()})
+	iter.ForEach(func(c *object.Commit) error {
 		if rows_left > 0 {
 			rows_left -= 1
 			commits_to_process = append(commits_to_process, c)
@@ -164,7 +168,7 @@ func get_commits_to_process(args AppArgs) ([]git.Commit, error) {
 }
 
 // Counts lines for files with the given file _, extensions := range a given commit.
-func process_commit(commit git.Commit, ext_to_column map[string]string, blob_to_lines_cache map[git.Blob]int /*, progress_state*/) map[string]int {
+func process_commit(commit object.Commit, ext_to_column map[string]string, blob_to_lines_cache map[object.Blob]int /*, progress_state*/) map[string]int {
 	blobs := get_blobs_in_commit(commit)
 
 	column_to_lines := make(map[string]int)
@@ -173,10 +177,10 @@ func process_commit(commit git.Commit, ext_to_column map[string]string, blob_to_
 	// pygit2 Blob object, preventing the libgit2 git_blob_free (or actually;
 	// git_object_free) from being called even though we are done counting lines
 	index := 0
-	for len(blobs) > 0 {
+	for _, foo := range blobs {
 		// One based counting since the printed progress is for human consumption
 		index += 1
-		blob, ext := blobs.pop()
+		blob, ext := foo
 		//progress_state.print_state(index, len_blobs)
 
 		// Figure out if we should count the lines for the file extension this
@@ -201,8 +205,8 @@ func process_commit(commit git.Commit, ext_to_column map[string]string, blob_to_
 	return column_to_lines
 }
 
-func get_all_blobs_in_tree(tree git.Tree) {
-	// blobs = make([]git.Blob)
+func get_all_blobs_in_tree(tree object.Tree) {
+	// blobs = make([]object.Blob)
 	// trees_left = [tree]
 	// // Say no to recursion
 	// for len(trees_left) > 0 {
@@ -218,8 +222,13 @@ func get_all_blobs_in_tree(tree git.Tree) {
 	// return blobs
 }
 
-func get_blobs_in_commit(commit git.Commit) []git.Blob {
-	blobs := make([]git.Blob, 42)
+type BlobAndExt struct {
+	blob object.Blob
+	ext  string
+}
+
+func get_blobs_in_commit(commit object.Commit) []BlobAndExt {
+	blobs := make([]BlobAndExt, 42)
 	// for _, obj := range get_all_blobs_in_tree(commit.tree) {
 	//     ext = os.path.splitext(obj.name)[1]
 	//     if ext {
@@ -230,7 +239,7 @@ func get_blobs_in_commit(commit git.Commit) []git.Blob {
 	return blobs
 }
 
-func get_lines_in_blob(blob git.Blob, blob_to_lines_cache map[git.Blob]int) int {
+func get_lines_in_blob(blob object.Blob, blob_to_lines_cache map[object.Blob]int) int {
 	// // Don't use the blob.oid directly, because that will keep the underlying git
 	// // blob object alive, preventing freeing of the blob content from
 	// // git_blob_get_rawcontent(), which quickly accumulate to hundred of megs of
@@ -303,7 +312,7 @@ func generate_ext_to_column_dict(columns []string) map[string]string {
 	return extension_to_column_dict
 }
 
-func get_commit_date(commit git.Commit) string {
+func get_commit_date(commit *object.Commit) string {
 	//return datetime.utcfromtimestamp(commit.commit_time).strftime("%Y-%m-%d")
 	return "date nyi"
 }
