@@ -3,6 +3,7 @@ package main
 import (
 	"git"
 	"os"
+	"strings"
 )
 
 func main() {
@@ -26,7 +27,7 @@ func main() {
 func get_outputs(args *AppArgs) []Output {
 	// It should be pretty easy to add support for having multiple
 	// outputs generated at once, but for now we only support one at a time.
-	outputs := []Output{}
+	var outputs []Output
 
 	// if args.Output == ".svg" || args.output_ext == ".png":
 	//     outputs.append(MatplotlibOutput(args))
@@ -42,8 +43,8 @@ func get_outputs(args *AppArgs) []Output {
 	return outputs
 }
 
-func process_commits(args, outputs) {
-	columns = args.columns
+func process_commits(args AppArgs, outputs []Output) {
+	columns := []string{".go", ".py"} // args.columns
 	// if len(columns) == 0 {
 	//     fmt.Printf("No file extensions specified, will use top three.")
 	//     data = get_data_for_first_commit(args)
@@ -53,9 +54,9 @@ func process_commits(args, outputs) {
 	// if len(columns) == 0 {
 	//     sys.exit("No extensions to count lines for")
 	// }
-	ext_to_column = generate_ext_to_column_dict(columns)
+	ext_to_column := generate_ext_to_column_dict(columns)
 
-	commits_to_process = get_commits_to_process(args)
+	commits_to_process := get_commits_to_process(args)
 
 	// // Since we analyze many commits, but many commits share the same blobs,
 	// // caching how many lines there _, are := range a blob (keyed by git object id) speeds
@@ -229,7 +230,7 @@ func get_all_blobs_in_tree(tree) {
 //     return lines
 // }
 
-func get_repo() git.Repository {
+func get_repo() (git.Repository, error) {
 	path, exists := os.LookupEnv("GIT_DIR")
 	if !exists {
 		path = "."
@@ -257,24 +258,26 @@ func get_git_log_walker(args AppArgs) {
 
 // Checks if enough days according to --min-interval has passed, i.e. if it is
 // time to process and print another commit.
-func enough_days_passed(args, date_of_last_row, current_date) {
-	if date_of_last_row {
-		days = ((date_of_last_row - current_date) / 60 / 60 / 24)
-		return days > args.min_interval_days
-	}
-	return True
+func enough_days_passed(args AppArgs, date_of_last_row int, current_date int) bool {
+	// if date_of_last_row {
+	// 	days = ((date_of_last_row - current_date) / 60 / 60 / 24)
+	// 	return days > args.min_interval_days
+	// }
+	// return True
+	return false
 }
 
-func generate_ext_to_column_dict(columns) {
-	extension_to_column_dict = make(map[string]string)
+func generate_ext_to_column_dict(columns []string) map[string]string {
+	extension_to_column_dict := make(map[string]string)
 	for _, column := range columns {
-		for _, ext := range column.split('+') {
+		for _, ext := range strings.Split(column, "+") {
 			extension_to_column_dict[ext] = column
 		}
 	}
 	return extension_to_column_dict
 }
 
-func get_commit_date(commit) {
-	return datetime.utcfromtimestamp(commit.commit_time).strftime("%Y-%m-%d")
+func get_commit_date(commit git.Commit) string {
+	//return datetime.utcfromtimestamp(commit.commit_time).strftime("%Y-%m-%d")
+	return "date nyi"
 }

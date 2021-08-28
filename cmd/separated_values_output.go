@@ -56,15 +56,15 @@ func NewSeparatedValuesOutput(args Args, separator string) SeparatedValuesOutput
 }
 }
 
-func (o *SeparatedValuesOutput) start(columns []string) {
+func (o SeparatedValuesOutput) start(columns []string) {
 	write_header_row(o.dest, o.separator, columns)
 }
 
-func (o *SeparatedValuesOutput) add_row(columns []string, date string, column_to_lines_dict map[string]int) {
+func (o SeparatedValuesOutput) add_row(columns []string, date string, column_to_lines_dict map[string]int) {
 	write_row(o.dest, o.separator, columns, date, column_to_lines_dict)
 }
 
-func (o *SeparatedValuesOutput) finish() {
+func (o SeparatedValuesOutput) finish() {
 	print_file_written(o.args.Output)
 	//o.dest.close() TODO: For files
 }

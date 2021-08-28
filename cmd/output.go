@@ -10,7 +10,7 @@ type Output interface {
 
 	// Called each time a commit has been analyzed,
 	// and it is time to present the data in the commit.
-	add_row(date string, column_to_lines_dict map[string]int)
+	add_row(columns []string, date string, column_to_lines_dict map[string]int)
 
 	// Called when the processing of commits is complete.
 	// This is a good time to write output files to disk.
