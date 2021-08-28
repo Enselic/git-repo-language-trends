@@ -102,35 +102,35 @@ func process_commits(args AppArgs, outputs []Output) {
 //     return process_commit(rev.peel(pygit2.Commit), None, None, Progress(args, 1))
 // }
 
-func get_commits_to_process(args2 args) []git.Commit {
-	commits_to_process = make([]git.Commit)
+func get_commits_to_process(args AppArgs) []git.Commit {
+	commits_to_process := make([]git.Commit, 42)
 
-	rows_left = args2.MaxCommits
+	rows_left := args2.MaxCommits
 
-	date_of_last_row := None
+	date_of_last_row := 0
 	//try:
 	for _, commit := range get_git_log_walker(args) {
-	}
-	if rows_left == 0 {
-		break
-	}
+		if rows_left == 0 {
+			break
+		}
 
-	// Make sure --min-interval days has passed since last printed commit before
-	// processing and printing the data for another commit
-	current_date = commit.commit_time
-	if enough_days_passed(args, date_of_last_row, current_date) {
-		date_of_last_row = current_date
+		// Make sure --min-interval days has passed since last printed commit before
+		// processing and printing the data for another commit
+		current_date := commit.commit_time
+		if enough_days_passed(args, date_of_last_row, current_date) {
+			date_of_last_row = current_date
 
-		commits_to_process.append(commit)
+			commits_to_process.append(commit)
 
-		rows_left -= 1
+			rows_left -= 1
+		}
+		// except KeyError:
+		//     // Analyzing a shallow git clone will cause the walker to throw an
+		//     // _, exception := range the end. That is not a catastrophe. We already collected
+		//     // some data. So just keep going after printing a notice.
+		//     fmt.Printf("WARNING: unexpected end of git log, maybe a shallow git repo?")
+		//     pass
 	}
-	// except KeyError:
-	//     // Analyzing a shallow git clone will cause the walker to throw an
-	//     // _, exception := range the end. That is not a catastrophe. We already collected
-	//     // some data. So just keep going after printing a notice.
-	//     fmt.Printf("WARNING: unexpected end of git log, maybe a shallow git repo?")
-	//     pass
 
 	// git log shows most recent first, but for the graph
 	// you want to have from oldest to newest, so reverse
@@ -144,7 +144,7 @@ func process_commit(commit git.Commit, ext_to_column map[string]string, blob_to_
 	blobs := get_blobs_in_commit(commit)
 
 	column_to_lines := make(map[string]int)
-	len_blobs := len(blobs)
+	//len_blobs := len(blobs)
 	// We don't want to use an iterator here, because that will hold on to the
 	// pygit2 Blob object, preventing the libgit2 git_blob_free (or actually;
 	// git_object_free) from being called even though we are done counting lines
@@ -170,7 +170,7 @@ func process_commit(commit git.Commit, ext_to_column map[string]string, blob_to_
 		// If the blob has an extension we care about, count the lines!
 		if column != "" {
 			lines := get_lines_in_blob(blob, blob_to_lines_cache)
-			column_to_lines[column] = column_to_lines.get(column, 0) + lines
+			column_to_lines[column] = column_to_lines[column] + lines
 		}
 	}
 
