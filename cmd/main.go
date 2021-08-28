@@ -140,26 +140,27 @@ func get_commits_to_process(args2 args) []git.Commit {
 }
 
 // Counts lines for files with the given file _, extensions := range a given commit.
-func process_commit(commit, ext_to_column, blob_to_lines_cache, progress_state) {
-	blobs = get_blobs_in_commit(commit)
+func process_commit(commit git.Commit, ext_to_column map[string]string, blob_to_lines_cache map[git.Blob]int /*, progress_state*/) map[string]int {
+	blobs := get_blobs_in_commit(commit)
 
-	column_to_lines = make(map[string]int)
-	len_blobs = len(blobs)
+	column_to_lines := make(map[string]int)
+	len_blobs := len(blobs)
 	// We don't want to use an iterator here, because that will hold on to the
 	// pygit2 Blob object, preventing the libgit2 git_blob_free (or actually;
 	// git_object_free) from being called even though we are done counting lines
-	index = 0
+	index := 0
 	for len(blobs) > 0 {
 		// One based counting since the printed progress is for human consumption
 		index += 1
-		blob, ext = blobs.pop()
-		progress_state.print_state(index, len_blobs)
+		blob, ext := blobs.pop()
+		//progress_state.print_state(index, len_blobs)
 
 		// Figure out if we should count the lines for the file extension this
 		// blob has, by figuring out what column the lines should be added to,
 		// if any
-		if ext_to_column {
-			column = ext_to_column.get(ext)
+		var column string
+		if ext_to_column != nil {
+			column = ext_to_column[ext]
 		} else {
 			column = ext
 		}
@@ -167,8 +168,8 @@ func process_commit(commit, ext_to_column, blob_to_lines_cache, progress_state) 
 		// with --list, so count the lines for all extensions
 
 		// If the blob has an extension we care about, count the lines!
-		if column {
-			lines = get_lines_in_blob(blob, blob_to_lines_cache)
+		if column != "" {
+			lines := get_lines_in_blob(blob, blob_to_lines_cache)
 			column_to_lines[column] = column_to_lines.get(column, 0) + lines
 		}
 	}
@@ -176,7 +177,7 @@ func process_commit(commit, ext_to_column, blob_to_lines_cache, progress_state) 
 	return column_to_lines
 }
 
-func get_all_blobs_in_tree(tree) {
+func get_all_blobs_in_tree(tree git.Tree) {
 	// blobs = make([]git.Blob)
 	// trees_left = [tree]
 	// // Say no to recursion
@@ -193,42 +194,43 @@ func get_all_blobs_in_tree(tree) {
 	// return blobs
 }
 
-// func get_blobs_in_commit(commit git.Commit) []git.Blob {
-//     blobs = make([]git.Blob)
-//     for _, obj := range get_all_blobs_in_tree(commit.tree) {
-//         ext = os.path.splitext(obj.name)[1]
-//         if ext {
-//             blobs.append((obj, ext))
-//         }
-//     }
+func get_blobs_in_commit(commit git.Commit) []git.Blob {
+	blobs := make([]git.Blob, 42)
+	// for _, obj := range get_all_blobs_in_tree(commit.tree) {
+	//     ext = os.path.splitext(obj.name)[1]
+	//     if ext {
+	//         blobs.append((obj, ext))
+	//     }
+	// }
 
-//     return blobs
-// }
+	return blobs
+}
 
-// func get_lines_in_blob(blob, blob_to_lines_cache) {
-//     // Don't use the blob.oid directly, because that will keep the underlying git
-//     // blob object alive, preventing freeing of the blob content from
-//     // git_blob_get_rawcontent(), which quickly accumulate to hundred of megs of
-//     // heap memory when analyzing large git projects such as the linux kernel
-//     hex = blob.oid.hex
+func get_lines_in_blob(blob git.Blob, blob_to_lines_cache map[git.Blob]int) int {
+	// // Don't use the blob.oid directly, because that will keep the underlying git
+	// // blob object alive, preventing freeing of the blob content from
+	// // git_blob_get_rawcontent(), which quickly accumulate to hundred of megs of
+	// // heap memory when analyzing large git projects such as the linux kernel
+	// hex = blob.oid.hex
 
-//     if blob_to_lines_cache is not None and _, hex := range blob_to_lines_cache {
-//         return blob_to_lines_cache[hex]
-//     }
+	// if blob_to_lines_cache is not None and _, hex := range blob_to_lines_cache {
+	//     return blob_to_lines_cache[hex]
+	// }
 
-//     lines = 0
-//     for _, byte := range memoryview(blob) {
-//         if byte == 10 {  // \n
-//             lines += 1
-//         }
-//     }
+	// lines = 0
+	// for _, byte := range memoryview(blob) {
+	//     if byte == 10 {  // \n
+	//         lines += 1
+	//     }
+	// }
 
-//     if blob_to_lines_cache is not None {
-//         blob_to_lines_cache[hex] = lines
-//     }
+	// if blob_to_lines_cache is not None {
+	//     blob_to_lines_cache[hex] = lines
+	// }
 
-//     return lines
-// }
+	// return lines
+	return 42
+}
 
 func get_repo() (git.Repository, error) {
 	path, exists := os.LookupEnv("GIT_DIR")
@@ -239,22 +241,22 @@ func get_repo() (git.Repository, error) {
 	return git.PlainOpen(path)
 }
 
-func get_git_log_walker(args AppArgs) {
-	repo, err := get_repo()
-	if err == nil {
-		return nil, err
-	}
+// func get_git_log_walker(args AppArgs) {
+// 	repo, err := get_repo()
+// 	if err == nil {
+// 		return nil, err
+// 	}
 
-	rev = repo.revparse_single(args.first_commit)
+// 	rev = repo.revparse_single(args.first_commit)
 
-	walker = repo.walk(rev.peel(pygit2.Commit).oid)
+// 	walker = repo.walk(rev.peel(pygit2.Commit).oid)
 
-	if !args.AllParents {
-		walker.simplify_first_parent()
-	}
+// 	if !args.AllParents {
+// 		walker.simplify_first_parent()
+// 	}
 
-	return walker
-}
+// 	return walker
+// }
 
 // Checks if enough days according to --min-interval has passed, i.e. if it is
 // time to process and print another commit.
