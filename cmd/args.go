@@ -31,7 +31,7 @@ var desc = `Description:
 	  git-repo-language-trends .java .kt --output=output.png --size-inches=10,6 --style=light
   `
 
-type Args struct {
+type AppArgs struct {
 
 	//     parser.add_argument(
 	//         "columns",
@@ -72,7 +72,7 @@ type Args struct {
 }
 
 // TODO: Change colWidth in /home/martin/go/pkg/mod/github.com/alexflint/go-arg@v1.4.2/usage.go
-func (Args) Version() string {
+func (AppArgs) Version() string {
 	//     parser.add_argument(
 	//         '--version',
 	//         action='version',
@@ -81,7 +81,7 @@ func (Args) Version() string {
 	return "TODO: --version"
 }
 
-func (Args) Description() string {
+func (AppArgs) Description() string {
 	return desc
 }
 
@@ -135,24 +135,24 @@ func (Args) Description() string {
 //         commit parents, but with the risk of producing inconsistent/jumpy graphs""",
 //     )
 
-//     Args = parser.parse_args()
+//     AppArgs = parser.parse_args()
 
 //     # pre-parse width and height
-//     width_inches, height_inches = Args.size_inches.split(',')
-//     Args.size_inches = (float(width_inches), float(height_inches))
+//     width_inches, height_inches = AppArgs.size_inches.split(',')
+//     AppArgs.size_inches = (float(width_inches), float(height_inches))
 
 //     # Figure out output file extension
 //     # Without an extension, we treat the entire filename as the extension
-//     name, ext = os.path.splitext(Args.output)
+//     name, ext = os.path.splitext(AppArgs.output)
 //     if not ext:
 //         ext = name
 //         name = ""
-//     Args.output_ext = ext
+//     AppArgs.output_ext = ext
 
 //     # Do a favor to the user, create the parent dirs if they are missing
-//     Path(os.path.dirname(Args.output)).mkdir(exist_ok=True, parents=True)
+//     Path(os.path.dirname(AppArgs.output)).mkdir(exist_ok=True, parents=True)
 
-//     return Args
+//     return AppArgs
 
 // def get_default_output():
 //     cwd = os.getcwd()

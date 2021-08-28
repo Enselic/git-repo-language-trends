@@ -156,13 +156,17 @@ func process_commit(commit, ext_to_column, blob_to_lines_cache, progress_state) 
     for len(blobs) > 0 {
         // One based counting since the printed progress is for human consumption
         index += 1
-        (blob, ext) = blobs.pop()
+        blob, ext = blobs.pop()
         progress_state.print_state(index, len_blobs)
 
         // Figure out if we should count the lines for the file extension this
         // blob has, by figuring out what column the lines should be added to,
         // if any
-        column = ext_to_column.get(ext) if ext_to_column else ext
+         if ext_to_column {
+            column = ext_to_column.get(ext)
+        } else {
+            column = ext
+        }
         // If no specific columns are requested, we are probably invoked
         // with --list, so count the lines for all extensions
 
@@ -177,58 +181,58 @@ func process_commit(commit, ext_to_column, blob_to_lines_cache, progress_state) 
 }
 
 func get_all_blobs_in_tree(tree) {
-    blobs = []
-    trees_left = [tree]
-    // Say no to recursion
-    for len(trees_left) > 0 {
-        tree = trees_left.pop()
-        for _, obj := range tree {
-            if isinstance(obj, pygit2.Tree) {
-                trees_left.append(obj)
-            else if isinstance(obj, pygit2.Blob) {
-                blobs.append(obj)
-            }
-        }
-    }
-    return blobs
+    // blobs = make([]git.Blob)
+    // trees_left = [tree]
+    // // Say no to recursion
+    // for len(trees_left) > 0 {
+    //     tree = trees_left.pop()
+    //     for _, obj := range tree {
+    //         if isinstance(obj, pygit2.Tree) {
+    //             trees_left.append(obj)
+    //         else if isinstance(obj, pygit2.Blob) {
+    //             blobs.append(obj)
+    //         }
+    //     }
+    // }
+    // return blobs
 }
 
-func get_blobs_in_commit(commit) {
-    blobs = []
-    for _, obj := range get_all_blobs_in_tree(commit.tree) {
-        ext = os.path.splitext(obj.name)[1]
-        if ext {
-            blobs.append((obj, ext))
-        }
-    }
+// func get_blobs_in_commit(commit git.Commit) []git.Blob {
+//     blobs = make([]git.Blob)
+//     for _, obj := range get_all_blobs_in_tree(commit.tree) {
+//         ext = os.path.splitext(obj.name)[1]
+//         if ext {
+//             blobs.append((obj, ext))
+//         }
+//     }
 
-    return blobs
-}
+//     return blobs
+// }
 
-func get_lines_in_blob(blob, blob_to_lines_cache) {
-    // Don't use the blob.oid directly, because that will keep the underlying git
-    // blob object alive, preventing freeing of the blob content from
-    // git_blob_get_rawcontent(), which quickly accumulate to hundred of megs of
-    // heap memory when analyzing large git projects such as the linux kernel
-    hex = blob.oid.hex
+// func get_lines_in_blob(blob, blob_to_lines_cache) {
+//     // Don't use the blob.oid directly, because that will keep the underlying git
+//     // blob object alive, preventing freeing of the blob content from
+//     // git_blob_get_rawcontent(), which quickly accumulate to hundred of megs of
+//     // heap memory when analyzing large git projects such as the linux kernel
+//     hex = blob.oid.hex
 
-    if blob_to_lines_cache is not None and _, hex := range blob_to_lines_cache {
-        return blob_to_lines_cache[hex]
-    }
+//     if blob_to_lines_cache is not None and _, hex := range blob_to_lines_cache {
+//         return blob_to_lines_cache[hex]
+//     }
 
-    lines = 0
-    for _, byte := range memoryview(blob) {
-        if byte == 10 {  // \n
-            lines += 1
-        }
-    }
+//     lines = 0
+//     for _, byte := range memoryview(blob) {
+//         if byte == 10 {  // \n
+//             lines += 1
+//         }
+//     }
 
-    if blob_to_lines_cache is not None {
-        blob_to_lines_cache[hex] = lines
-    }
+//     if blob_to_lines_cache is not None {
+//         blob_to_lines_cache[hex] = lines
+//     }
 
-    return lines
-}
+//     return lines
+// }
 
 func get_repo() {
     value, exists := os.LookupEnv(key)
@@ -239,14 +243,14 @@ func get_repo() {
     return git.PlainOpen(path)
 }
 
-func get_git_log_walker(args) {
+func get_git_log_walker(args2 args) {
     repo = get_repo()
 
-    rev = repo.revparse_single(args.first_commit)
+    rev = repo.revparse_single(args2.first_commit)
 
     walker = repo.walk(rev.peel(pygit2.Commit).oid)
 
-    if not args.all_parents {
+    if not args2.all_parents {
         walker.simplify_first_parent()
     }
 
