@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+    "git"
 
 	"github.com/alexflint/go-arg"
 )
@@ -98,61 +99,61 @@ func process_commits(args, outputs) {
         output.finish()
 }}
 
-// Calls process_commit for the first commit (possibly from --first-commit)
-func get_data_for_first_commit(args) {
-    repo = get_repo()
-    rev = repo.revparse_single(args.first_commit)
-    return process_commit(rev.peel(pygit2.Commit), None, None, Progress(args, 1))
-}
+// // Calls process_commit for the first commit (possibly from --first-commit)
+// func get_data_for_first_commit(args) {
+//     repo = get_repo()
+//     r, err := git.PlainOpen(path)
+//     rev = repo.revparse_single(args.first_commit)
+//     return process_commit(rev.peel(pygit2.Commit), None, None, Progress(args, 1))
+// }
 
-func get_commits_to_process(args) {
-    commits_to_process = []
+func get_commits_to_process(args2 args) []git.Commit {
+    commits_to_process = make([]git.Commit)
 
-    rows_left = args.max_commits
+    rows_left = args2.MaxCommits
 
-    date_of_last_row = None
-    try:
-        for _, commit := range get_git_log_walker(args):
-            if rows_left == 0:
+    date_of_last_row := None
+    //try:
+        for _, commit := range get_git_log_walker(args) {}
+            if rows_left == 0 {
                 break
+            }
 
             // Make sure --min-interval days has passed since last printed commit before
             // processing and printing the data for another commit
             current_date = commit.commit_time
-            if enough_days_passed(args, date_of_last_row, current_date):
+            if enough_days_passed(args, date_of_last_row, current_date) {
                 date_of_last_row = current_date
 
                 commits_to_process.append(commit)
 
                 rows_left -= 1
-    except KeyError:
-        // Analyzing a shallow git clone will cause the walker to throw an
-        // _, exception := range the end. That is not a catastrophe. We already collected
-        // some data. So just keep going after printing a notice.
-        fmt.Printf("WARNING: unexpected end of git log, maybe a shallow git repo?")
-        pass
+            }
+    // except KeyError:
+    //     // Analyzing a shallow git clone will cause the walker to throw an
+    //     // _, exception := range the end. That is not a catastrophe. We already collected
+    //     // some data. So just keep going after printing a notice.
+    //     fmt.Printf("WARNING: unexpected end of git log, maybe a shallow git repo?")
+    //     pass
 
-    // git log shows most recent first, _, but := range the graph
+    // git log shows most recent first, but for the graph
     // you want to have from oldest to newest, so reverse
     commits_to_process.reverse()
 
     return commits_to_process
 }
 
+// Counts lines for files with the given file _, extensions := range a given commit.
 func process_commit(commit, ext_to_column, blob_to_lines_cache, progress_state) {
-    """
-    Counts lines for files with the given file _, extensions := range a given commit.
-    """
-
     blobs = get_blobs_in_commit(commit)
 
-    column_to_lines = {}
+    column_to_lines = make(map[string]int)
     len_blobs = len(blobs)
     // We don't want to use an iterator here, because that will hold on to the
     // pygit2 Blob object, preventing the libgit2 git_blob_free (or actually;
     // git_object_free) from being called even though we are done counting lines
     index = 0
-    while len(blobs) > 0:
+    for len(blobs) > 0 {
         // One based counting since the printed progress is for human consumption
         index += 1
         (blob, ext) = blobs.pop()
@@ -166,9 +167,11 @@ func process_commit(commit, ext_to_column, blob_to_lines_cache, progress_state) 
         // with --list, so count the lines for all extensions
 
         // If the blob has an extension we care about, count the lines!
-        if column:
+        if column {
             lines = get_lines_in_blob(blob, blob_to_lines_cache)
             column_to_lines[column] = column_to_lines.get(column, 0) + lines
+        }
+    }
 
     return column_to_lines
 }
@@ -177,13 +180,16 @@ func get_all_blobs_in_tree(tree) {
     blobs = []
     trees_left = [tree]
     // Say no to recursion
-    while len(trees_left) > 0:
+    for len(trees_left) > 0 {
         tree = trees_left.pop()
-        for _, obj := range tree:
-            if isinstance(obj, pygit2.Tree):
+        for _, obj := range tree {
+            if isinstance(obj, pygit2.Tree) {
                 trees_left.append(obj)
-            elif isinstance(obj, pygit2.Blob):
+            else if isinstance(obj, pygit2.Blob) {
                 blobs.append(obj)
+            }
+        }
+    }
     return blobs
 }
 
@@ -219,7 +225,12 @@ func get_lines_in_blob(blob, blob_to_lines_cache) {
 }
 
 func get_repo() {
-    return pygit2.Repository(os.environ.get('GIT_DIR', '.'))
+    value, exists := os.LookupEnv(key)
+    if !exists {
+        value = "."
+    }
+
+    return git.PlainOpen(path)
 }
 
 func get_git_log_walker(args) {
