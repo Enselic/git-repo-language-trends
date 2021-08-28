@@ -228,7 +228,7 @@ type BlobAndExt struct {
 	ext  string
 }
 
-func get_blobs_in_commit(commit object.Commit) []BlobAndExt {
+func get_blobs_in_commit(commit *object.Commit) []BlobAndExt {
 	blobs := make([]BlobAndExt, 42)
 	// for _, obj := range get_all_blobs_in_tree(commit.tree) {
 	//     ext = os.path.splitext(obj.name)[1]
