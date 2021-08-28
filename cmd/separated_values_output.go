@@ -10,7 +10,6 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
 	"os"
 )
@@ -18,43 +17,44 @@ import (
 type SeparatedValuesOutput struct {
 	args      AppArgs
 	separator string
-	dest      bufio.Writer
+	dest      *os.File
 }
 
-func write_header_row(writer bufio.Writer, separator string, columns []string) {
+func write_header_row(file *os.File, separator string, columns []string) {
 	// To get correct tab alignment, pad with spaces in place of a date
 	// on the first row
-	writer.WriteString("          ") // for YYYY-MM-DD
+	file.WriteString("          ") // for YYYY-MM-DD
 
 	// Now write the columns
 	for _, column := range columns {
-		writer.WriteString(fmt.Sprintf("%s%s", separator, column))
+		file.WriteString(fmt.Sprintf("%s%s", separator, column))
 	}
 
 	// ... and finish with a newline
-	writer.WriteString("\n")
+	file.WriteString("\n")
 }
 
-func write_row(writer bufio.Writer, separator string, columns []string, date string, column_to_lines_dict map[string]int) {
+func write_row(file *os.File, separator string, columns []string, date string, column_to_lines_dict map[string]int) {
 	// Date
-	writer.WriteString(date)
+	file.WriteString(date)
 
 	// Line count information
 	for _, column := range columns {
 		s := fmt.Sprintf("%s%d", separator, column_to_lines_dict[column])
-		fmt.Println("yep", writer, s)
-		writer.WriteString(s)
+		//fmt.Println("yep", file, s)
+		file.WriteString(s)
+		//os.Stdout.WriteString(s)
 	}
 
 	// ... and finish with a newline
-	writer.WriteString("\n")
+	file.WriteString("\n")
 }
 
 func NewSeparatedValuesOutput(args AppArgs, separator string) SeparatedValuesOutput {
 	return SeparatedValuesOutput{
 		args:      args,
 		separator: separator,
-		dest:      *bufio.NewWriter(os.Stdout),
+		dest:      os.Stdout,
 	}
 }
 
