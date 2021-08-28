@@ -2,7 +2,6 @@ package main
 
 import (
 	"errors"
-	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -65,7 +64,6 @@ func process_commits(args AppArgs, outputs []Output) error {
 	if err != nil {
 		return nil
 	}
-	fmt.Println("c=", len(commits_to_process), ext_to_column)
 
 	// // Since we analyze many commits, but many commits share the same blobs,
 	// // caching how many lines there _, are := range a blob (keyed by git object id) speeds
@@ -82,9 +80,7 @@ func process_commits(args AppArgs, outputs []Output) error {
 		output.start(columns)
 	}
 	// Print rows
-	fmt.Println("what is this", commits_to_process)
-	for i, commit := range commits_to_process {
-		fmt.Println("hm2", commit, i)
+	for _, commit := range commits_to_process {
 		date := get_commit_date(commit)
 		column_to_lines_dict, err := process_commit(
 			commit,
@@ -95,8 +91,6 @@ func process_commits(args AppArgs, outputs []Output) error {
 		if err != nil {
 			return err
 		}
-
-		fmt.Println("c=", column_to_lines_dict)
 
 		for _, output := range outputs {
 			output.add_row(
@@ -136,7 +130,6 @@ func get_commits_to_process(args AppArgs) ([]*object.Commit, error) {
 	rows_left := args.MaxCommits
 	iter, _ := repo.Log(&git.LogOptions{From: ref.Hash()})
 	iter.ForEach(func(c *object.Commit) error {
-		fmt.Println("app", c)
 		if rows_left > 0 {
 			rows_left -= 1
 			commits_to_process = append(commits_to_process, c)
