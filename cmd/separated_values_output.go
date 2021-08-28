@@ -42,7 +42,7 @@ func write_row(writer bufio.Writer, separator string, columns []string, date str
 	// Line count information
 	for _, column := range columns {
 		s := fmt.Sprintf("%s%d", separator, column_to_lines_dict[column])
-		//fmt.Println("yep", s)
+		fmt.Println("yep", writer, s)
 		writer.WriteString(s)
 	}
 
