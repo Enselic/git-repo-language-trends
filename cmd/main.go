@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"git"
 	"os"
 	"strings"
@@ -102,41 +103,55 @@ func process_commits(args AppArgs, outputs []Output) {
 //     return process_commit(rev.peel(pygit2.Commit), None, None, Progress(args, 1))
 // }
 
-func get_commits_to_process(args AppArgs) []git.Commit {
-	commits_to_process := make([]git.Commit, 42)
-
-	rows_left := args2.MaxCommits
-
-	date_of_last_row := 0
-	//try:
-	for _, commit := range get_git_log_walker(args) {
-		if rows_left == 0 {
-			break
-		}
-
-		// Make sure --min-interval days has passed since last printed commit before
-		// processing and printing the data for another commit
-		current_date := commit.commit_time
-		if enough_days_passed(args, date_of_last_row, current_date) {
-			date_of_last_row = current_date
-
-			commits_to_process.append(commit)
-
-			rows_left -= 1
-		}
-		// except KeyError:
-		//     // Analyzing a shallow git clone will cause the walker to throw an
-		//     // _, exception := range the end. That is not a catastrophe. We already collected
-		//     // some data. So just keep going after printing a notice.
-		//     fmt.Printf("WARNING: unexpected end of git log, maybe a shallow git repo?")
-		//     pass
+func get_commits_to_process(args AppArgs) ([]git.Commit, error) {
+	repo, err := get_repo()
+	if err != nil {
+		return nil, err
 	}
 
-	// git log shows most recent first, but for the graph
-	// you want to have from oldest to newest, so reverse
-	commits_to_process.reverse()
+	commits_to_process := make([]git.Commit, 42)
 
-	return commits_to_process
+	rows_left := args.MaxCommits
+	repo.Log(&git.LogOptions{From: repo.Head().Hash()}).ForEach(func(c *git.Commit) error {
+		if rows_left > 0 {
+			rows_left -= 1
+			commits_to_process = append(commits_to_process, c)
+			return nil
+		} else {
+			return errors.New("done")
+		}
+	})
+	//date_of_last_row := 0
+	//repo.Log()
+	//try:
+	// for _, commit := range get_git_log_walker(args) {
+	// 	if rows_left == 0 {
+	// 		break
+	// 	}
+
+	// 	// Make sure --min-interval days has passed since last printed commit before
+	// 	// processing and printing the data for another commit
+	// 	current_date := commit.commit_time
+	// 	if enough_days_passed(args, date_of_last_row, current_date) {
+	// 		date_of_last_row = current_date
+
+	// 		commits_to_process.append(commit)
+
+	// 		rows_left -= 1
+	// 	}
+	// 	// except KeyError:
+	// 	//     // Analyzing a shallow git clone will cause the walker to throw an
+	// 	//     // _, exception := range the end. That is not a catastrophe. We already collected
+	// 	//     // some data. So just keep going after printing a notice.
+	// 	//     fmt.Printf("WARNING: unexpected end of git log, maybe a shallow git repo?")
+	// 	//     pass
+	// }
+
+	// // git log shows most recent first, but for the graph
+	// // you want to have from oldest to newest, so reverse
+	// commits_to_process.reverse()
+
+	return commits_to_process, nil
 }
 
 // Counts lines for files with the given file _, extensions := range a given commit.
