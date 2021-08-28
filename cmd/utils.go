@@ -29,9 +29,8 @@ import "fmt"
 // }
 
 func print_file_written(filename string) {
-	fmt.Println(`
-Wrote output to file:
-
-%s
-`, filename)
+	fmt.Println("\n"+
+		"Wrote output to file:\n"+
+		"\n"+
+		"%s\n", filename)
 }
