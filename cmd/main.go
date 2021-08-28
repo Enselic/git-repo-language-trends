@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing/object"
@@ -123,52 +124,59 @@ func get_commits_to_process(args AppArgs) ([]*object.Commit, error) {
 		return nil, err
 	}
 
-	ref, _ := repo.Head()
+	ref, err := repo.Head()
+	if err != nil {
+		return nil, err
+	}
 
 	var commits_to_process []*object.Commit
 
+	var date_of_last_row *time.Time
 	rows_left := args.MaxCommits
-	iter, _ := repo.Log(&git.LogOptions{From: ref.Hash()})
+	iter, err := repo.Log(&git.LogOptions{From: ref.Hash()})
+	if err != nil {
+		return nil, err
+	}
 	iter.ForEach(func(c *object.Commit) error {
-		if rows_left > 0 {
-			rows_left -= 1
-			commits_to_process = append(commits_to_process, c)
-			return nil
-		} else {
+		if rows_left <= 0 {
 			return errors.New("done")
 		}
+
+		// Make sure --min-interval days has passed since last printed commit before
+		// processing and printing the data for another commit
+		current_date := &c.Author.When
+		if enough_days_passed(args, date_of_last_row, current_date) {
+			date_of_last_row = current_date
+
+			commits_to_process = append(commits_to_process, c)
+
+			rows_left -= 1
+		}
+
+		return nil
 	})
-	//date_of_last_row := 0
-	//repo.Log()
-	//try:
-	// for _, commit := range get_git_log_walker(args) {
-	// 	if rows_left == 0 {
-	// 		break
-	// 	}
 
-	// 	// Make sure --min-interval days has passed since last printed commit before
-	// 	// processing and printing the data for another commit
-	// 	current_date := commit.commit_time
-	// 	if enough_days_passed(args, date_of_last_row, current_date) {
-	// 		date_of_last_row = current_date
-
-	// 		commits_to_process.append(commit)
-
-	// 		rows_left -= 1
-	// 	}
-	// 	// except KeyError:
-	// 	//     // Analyzing a shallow git clone will cause the walker to throw an
-	// 	//     // _, exception := range the end. That is not a catastrophe. We already collected
-	// 	//     // some data. So just keep going after printing a notice.
-	// 	//     fmt.Printf("WARNING: unexpected end of git log, maybe a shallow git repo?")
-	// 	//     pass
-	// }
+	// except KeyError:
+	//     // Analyzing a shallow git clone will cause the walker to throw an
+	//     // _, exception := range the end. That is not a catastrophe. We already collected
+	//     // some data. So just keep going after printing a notice.
+	//     fmt.Printf("WARNING: unexpected end of git log, maybe a shallow git repo?")
+	//     pass
 
 	// // git log shows most recent first, but for the graph
 	// // you want to have from oldest to newest, so reverse
-	// commits_to_process.reverse()
+	reverse_commits(commits_to_process)
 
 	return commits_to_process, nil
+}
+
+// I can't belive this is not part of standard library in Go, but oh well
+// https://github.com/golang/go/wiki/SliceTricks#reversing
+func reverse_commits(a []*object.Commit) {
+	for i := len(a)/2 - 1; i >= 0; i-- {
+		opp := len(a) - 1 - i
+		a[i], a[opp] = a[opp], a[i]
+	}
 }
 
 // Counts lines for files with the given file _, extensions := range a given commit.
@@ -322,13 +330,13 @@ func get_repo() (*git.Repository, error) {
 
 // Checks if enough days according to --min-interval has passed, i.e. if it is
 // time to process and print another commit.
-func enough_days_passed(args AppArgs, date_of_last_row int, current_date int) bool {
-	// if date_of_last_row {
-	// 	days = ((date_of_last_row - current_date) / 60 / 60 / 24)
-	// 	return days > args.min_interval_days
-	// }
-	// return True
-	return false
+func enough_days_passed(args AppArgs, date_of_last_row *time.Time, current_date *time.Time) bool {
+	if date_of_last_row != nil {
+		duration := current_date.Sub(*date_of_last_row)
+		days := duration.Milliseconds() / 60 / 60 / 24
+		return days > int64(args.MinIntervalDays)
+	}
+	return true
 }
 
 func generate_ext_to_column_dict(columns []string) map[string]string {
@@ -343,6 +351,4 @@ func generate_ext_to_column_dict(columns []string) map[string]string {
 
 func get_commit_date(commit *object.Commit) string {
 	return commit.Author.When.Format("2006-01-02")
-	// return datetime.utcfromtimestamp(commit.commit_time).strftime("%Y-%m-%d")
-	// return "date nyi"
 }
