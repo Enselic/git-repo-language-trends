@@ -69,9 +69,9 @@ func process_commits(args AppArgs, outputs []Output) error {
 	// // Since we analyze many commits, but many commits share the same blobs,
 	// // caching how many lines there _, are := range a blob (keyed by git object id) speeds
 	// // things up significantly, without a dramatic memory usage increase.
-	var blob_to_lines_cache map[object.Blob]int
+	var file_to_lines_cache map[object.Blob]int
 	// if !args.NoCache {
-	// 	blob_to_lines_cache = make(map[object.Blob]int)
+	// 	file_to_lines_cache = make(map[object.Blob]int)
 	// }
 
 	// progress_state = Progress(args, len(commits_to_process))
@@ -86,7 +86,7 @@ func process_commits(args AppArgs, outputs []Output) error {
 		column_to_lines_dict := process_commit(
 			commit,
 			ext_to_column,
-			blob_to_lines_cache,
+			file_to_lines_cache,
 			//progress_state,
 		)
 
@@ -175,9 +175,12 @@ func get_commits_to_process(args AppArgs) ([]*object.Commit, error) {
 func process_commit(
 	commit *object.Commit,
 	ext_to_column map[string]string,
-	blob_to_lines_cache map[object.Blob]int, /*, progress_state*/
-) map[string]int {
-	files := get_files_in_commit(commit)
+	file_to_lines_cache map[object.Blob]int, /*, progress_state*/
+) (map[string]int, error) {
+	files, err := get_files_in_commit(commit)
+	if err != nil {
+		return nil, err
+	}
 
 	column_to_lines := make(map[string]int)
 	//len_files := len(files)
@@ -188,8 +191,8 @@ func process_commit(
 	for _, file := range files {
 		// One based counting since the printed progress is for human consumption
 		index += 1
-		blob := foo.blob
-		ext := file.
+
+		ext := file
 		//progress_state.print_state(index, len_blobs)
 
 		// Figure out if we should count the lines for the file extension this
@@ -206,7 +209,7 @@ func process_commit(
 
 		// If the blob has an extension we care about, count the lines!
 		if column != "" {
-			lines := get_lines_in_blob(blob, blob_to_lines_cache)
+			es := get_lines_in_blob(file, file_to_lines_cache)
 			column_to_lines[column] = column_to_lines[column] + lines
 		}
 	}
@@ -237,19 +240,19 @@ type BlobAndExt struct {
 }
 
 func get_files_in_commit(commit *object.Commit) ([]*object.File, err) {
-    files := make([]*File, 42)
+	files := make([]*File, 42)
 
-    iter, err := commit.Files()
-    if err != nil {
-        return nil, err
-    }
-    defer iter.Close() // TODO: More places?
+	iter, err := commit.Files()
+	if err != nil {
+		return nil, err
+	}
+	defer iter.Close() // TODO: More places?
 
-    iter.ForEach(func(f *object.File) error {
-        files = append(files, f)
+	iter.ForEach(func(f *object.File) error {
+		files = append(files, f)
 
-        return nil
-    })
+		return nil
+	})
 
 	// for _, obj := range get_all_blobs_in_tree(commit.tree) {
 	//     ext = os.path.splitext(obj.name)[1]
@@ -261,15 +264,15 @@ func get_files_in_commit(commit *object.Commit) ([]*object.File, err) {
 	return files, nil
 }
 
-func get_lines_in_blob(blob object.Blob, blob_to_lines_cache map[object.Blob]int) int {
+func get_lines_in_file(file *object.File, file_to_lines_cache map[object.Blob]int) int {
 	// // Don't use the blob.oid directly, because that will keep the underlying git
 	// // blob object alive, preventing freeing of the blob content from
 	// // git_blob_get_rawcontent(), which quickly accumulate to hundred of megs of
 	// // heap memory when analyzing large git projects such as the linux kernel
 	// hex = blob.oid.hex
 
-	// if blob_to_lines_cache is not None and _, hex := range blob_to_lines_cache {
-	//     return blob_to_lines_cache[hex]
+	// if file_to_lines_cache is not None and _, hex := range file_to_lines_cache {
+	//     return file_to_lines_cache[hex]
 	// }
 
 	// lines = 0
@@ -279,12 +282,12 @@ func get_lines_in_blob(blob object.Blob, blob_to_lines_cache map[object.Blob]int
 	//     }
 	// }
 
-	// if blob_to_lines_cache is not None {
-	//     blob_to_lines_cache[hex] = lines
+	// if file_to_lines_cache is not None {
+	//     file_to_lines_cache[hex] = lines
 	// }
 
 	// return lines
-	return 42
+	return len(file.Lines())
 }
 
 func get_repo() (*git.Repository, error) {
