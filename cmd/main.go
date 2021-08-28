@@ -168,7 +168,7 @@ func get_commits_to_process(args AppArgs) ([]*object.Commit, error) {
 }
 
 // Counts lines for files with the given file _, extensions := range a given commit.
-func process_commit(commit object.Commit, ext_to_column map[string]string, blob_to_lines_cache map[object.Blob]int /*, progress_state*/) map[string]int {
+func process_commit(commit *object.Commit, ext_to_column map[string]string, blob_to_lines_cache map[object.Blob]int /*, progress_state*/) map[string]int {
 	blobs := get_blobs_in_commit(commit)
 
 	column_to_lines := make(map[string]int)
@@ -180,7 +180,8 @@ func process_commit(commit object.Commit, ext_to_column map[string]string, blob_
 	for _, foo := range blobs {
 		// One based counting since the printed progress is for human consumption
 		index += 1
-		blob, ext := foo
+		blob := foo.blob
+		ext := foo.ext
 		//progress_state.print_state(index, len_blobs)
 
 		// Figure out if we should count the lines for the file extension this
@@ -265,7 +266,7 @@ func get_lines_in_blob(blob object.Blob, blob_to_lines_cache map[object.Blob]int
 	return 42
 }
 
-func get_repo() (git.Repository, error) {
+func get_repo() (*git.Repository, error) {
 	path, exists := os.LookupEnv("GIT_DIR")
 	if !exists {
 		path = "."
