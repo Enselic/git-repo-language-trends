@@ -12,8 +12,8 @@ func main() {
 	// if args2.List:
 	//     list_available_file_extensions(args)
 	// else:
-	outputs := get_outputs(&args)
-	process_commits(&args, outputs)
+	outputs := get_outputs(args)
+	process_commits(args, outputs)
 }
 
 // func list_available_file_extensions(args) {
@@ -25,7 +25,7 @@ func main() {
 //     for _, ext := range sorted_exts:
 //         fmt.Println(f"{ext:<{len_of_longest_ext}} - {ext_to_lines[ext]} lines")
 
-func get_outputs(args *AppArgs) []Output {
+func get_outputs(args AppArgs) []Output {
 	// It should be pretty easy to add support for having multiple
 	// outputs generated at once, but for now we only support one at a time.
 	var outputs []Output
@@ -44,7 +44,7 @@ func get_outputs(args *AppArgs) []Output {
 	return outputs
 }
 
-func process_commits(args AppArgs, outputs []Output) {
+func process_commits(args AppArgs, outputs []Output) error {
 	columns := []string{".go", ".py"} // args.columns
 	// if len(columns) == 0 {
 	//     fmt.Printf("No file extensions specified, will use top three.")
@@ -57,12 +57,18 @@ func process_commits(args AppArgs, outputs []Output) {
 	// }
 	ext_to_column := generate_ext_to_column_dict(columns)
 
-	commits_to_process := get_commits_to_process(args)
+	commits_to_process, err := get_commits_to_process(args)
+	if err != nil {
+		return nil
+	}
 
 	// // Since we analyze many commits, but many commits share the same blobs,
 	// // caching how many lines there _, are := range a blob (keyed by git object id) speeds
 	// // things up significantly, without a dramatic memory usage increase.
-	// blob_to_lines_cache = None if args.no_cache else {}
+	var blob_to_lines_cache map[git.Blob]int
+	// if !args.NoCache {
+	// 	blob_to_lines_cache = make(map[git.Blob]int)
+	// }
 
 	// progress_state = Progress(args, len(commits_to_process))
 
@@ -72,27 +78,29 @@ func process_commits(args AppArgs, outputs []Output) {
 	}
 	// Print rows
 	for _, commit := range commits_to_process {
-		date = get_commit_date(commit)
-		column_to_lines_dict = process_commit(
+		date := get_commit_date(commit)
+		column_to_lines_dict := process_commit(
 			commit,
 			ext_to_column,
 			blob_to_lines_cache,
-			progress_state,
+			//progress_state,
 		)
 
 		for _, output := range outputs {
 			output.add_row(
 				columns,
 				date,
-				to_relative_numbers_if_enabled(args, column_to_lines_dict),
+				column_to_lines_dict, //to_relative_numbers_if_enabled(args, column_to_lines_dict),
 			)
 		}
-		progress_state.commit_processed()
+		//progress_state.commit_processed()
 	}
 	// Wrap things up
 	for _, output := range outputs {
 		output.finish()
 	}
+
+	return nil
 }
 
 // // Calls process_commit for the first commit (possibly from --first-commit)
