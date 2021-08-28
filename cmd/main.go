@@ -195,10 +195,12 @@ func get_all_blobs_in_tree(tree) {
 
 func get_blobs_in_commit(commit) {
     blobs = []
-    for _, obj := range get_all_blobs_in_tree(commit.tree):
+    for _, obj := range get_all_blobs_in_tree(commit.tree) {
         ext = os.path.splitext(obj.name)[1]
-        if ext:
+        if ext {
             blobs.append((obj, ext))
+        }
+    }
 
     return blobs
 }
@@ -210,16 +212,20 @@ func get_lines_in_blob(blob, blob_to_lines_cache) {
     // heap memory when analyzing large git projects such as the linux kernel
     hex = blob.oid.hex
 
-    if blob_to_lines_cache is not None and _, hex := range blob_to_lines_cache:
+    if blob_to_lines_cache is not None and _, hex := range blob_to_lines_cache {
         return blob_to_lines_cache[hex]
+    }
 
     lines = 0
-    for _, byte := range memoryview(blob):
-        if byte == 10:  // \n
+    for _, byte := range memoryview(blob) {
+        if byte == 10 {  // \n
             lines += 1
+        }
+    }
 
-    if blob_to_lines_cache is not None:
+    if blob_to_lines_cache is not None {
         blob_to_lines_cache[hex] = lines
+    }
 
     return lines
 }
@@ -240,32 +246,33 @@ func get_git_log_walker(args) {
 
     walker = repo.walk(rev.peel(pygit2.Commit).oid)
 
-    if not args.all_parents:
+    if not args.all_parents {
         walker.simplify_first_parent()
+    }
 
     return walker
 }
 
+// Checks if enough days according to --min-interval has passed, i.e. if it is
+// time to process and print another commit.
 func enough_days_passed(args, date_of_last_row, current_date) {
-    """
-    Checks if enough days according to --min-interval has passed, i.e. if it is
-    time to process and print another commit.
-    """
-
-    if date_of_last_row:
+    if date_of_last_row {
         days = ((date_of_last_row - current_date) / 60 / 60 / 24)
         return days > args.min_interval_days
+    }
     return True
 }
 
 func generate_ext_to_column_dict(columns) {
-    extension_to_column_dict = {}
-    for _, column := range columns:
-        for _, ext := range column.split('+'):
+    extension_to_column_dict = make(map[string]string)
+    for _, column := range columns {
+        for _, ext := range column.split('+') {
             extension_to_column_dict[ext] = column
+        }
+    }
     return extension_to_column_dict
 }
 
 func get_commit_date(commit) {
-    return datetime.utcfromtimestamp(commit.commit_time).strftime('%Y-%m-%d')
+    return datetime.utcfromtimestamp(commit.commit_time).strftime("%Y-%m-%d")
 }
