@@ -49,7 +49,7 @@ func get_outputs(args AppArgs) []Output {
 }
 
 func process_commits(args AppArgs, outputs []Output) error {
-	columns := []string{".go", ".py"} // args.columns
+	columns := args.Columns
 	// if len(columns) == 0 {
 	//     fmt.Printf("No file extensions specified, will use top three.")
 	//     data = get_data_for_first_commit(args)

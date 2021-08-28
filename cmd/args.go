@@ -34,7 +34,7 @@ var desc = `Description:
   `
 
 type AppArgs struct {
-
+	Columns []string `arg:"positional"`
 	//     parser.add_argument(
 	//         "columns",
 	//         metavar=".ext .ext+.ext",
