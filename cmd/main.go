@@ -2,7 +2,6 @@ package main
 
 import (
 	"errors"
-	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -334,10 +333,8 @@ func get_repo() (*git.Repository, error) {
 func enough_days_passed(args AppArgs, date_of_last_row *time.Time, current_date *time.Time) bool {
 	if date_of_last_row != nil {
 		duration := date_of_last_row.Sub(*current_date)
-		fmt.Println("dur", duration)
-		days := duration.Milliseconds() / 60 / 60 / 24
-		fmt.Println("days", days, date_of_last_row, current_date)
-		return days > int64(args.MinIntervalDays)
+		days := duration.Seconds() / 60 / 60 / 24
+		return days > float64(args.MinIntervalDays)
 	}
 	return true
 }
