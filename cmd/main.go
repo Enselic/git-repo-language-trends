@@ -168,8 +168,6 @@ func get_commits_to_process(args AppArgs) ([]*object.Commit, error) {
 	// // you want to have from oldest to newest, so reverse
 	reverse_commits(commits_to_process)
 
-	fmt.Println("to process", commits_to_process)
-
 	return commits_to_process, nil
 }
 
@@ -335,8 +333,10 @@ func get_repo() (*git.Repository, error) {
 // time to process and print another commit.
 func enough_days_passed(args AppArgs, date_of_last_row *time.Time, current_date *time.Time) bool {
 	if date_of_last_row != nil {
-		duration := current_date.Sub(*date_of_last_row)
+		duration := date_of_last_row.Sub(*current_date)
+		fmt.Println("dur", duration)
 		days := duration.Milliseconds() / 60 / 60 / 24
+		fmt.Println("days", days, date_of_last_row, current_date)
 		return days > int64(args.MinIntervalDays)
 	}
 	return true
