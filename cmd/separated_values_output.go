@@ -16,7 +16,7 @@ import (
 )
 
 type SeparatedValuesOutput struct {
-	args      Args
+	args      AppArgs
 	separator string
 	dest      bufio.Writer
 }
@@ -41,19 +41,19 @@ func write_row(writer bufio.Writer, separator string, columns []string, date str
 
 	// Line count information
 	for _, column := range columns {
-		writer.WriteString(fmt.Sprintf("%s%s", separator, column_to_lines_dict.get(column, 0)))
+		writer.WriteString(fmt.Sprintf("%s%d", separator, column_to_lines_dict[column]))
 	}
 
 	// ... and finish with a newline
 	writer.WriteString("\n")
 }
 
-func NewSeparatedValuesOutput(args Args, separator string) SeparatedValuesOutput {
+func NewSeparatedValuesOutput(args AppArgs, separator string) SeparatedValuesOutput {
 	return SeparatedValuesOutput{
-		args: args,
-		 separator: separator, 
-		 dest: *bufio.NewWriter(os.Stdout)
-}
+		args:      args,
+		separator: separator,
+		dest:      *bufio.NewWriter(os.Stdout),
+	}
 }
 
 func (o SeparatedValuesOutput) start(columns []string) {
