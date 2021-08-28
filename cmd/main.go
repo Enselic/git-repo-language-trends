@@ -3,20 +3,15 @@ package main
 import (
 	"git"
 	"os"
-
-	"github.com/alexflint/go-arg"
 )
 
 func main() {
-	var args args2
-	arg.MustParse(&args2)
-
-	args2 = get_args()
+	args := GetArgs()
 	// if args2.List:
 	//     list_available_file_extensions(args)
 	// else:
-	outputs = get_outputs(args)
-	process_commits(args, outputs)
+	outputs := get_outputs(&args)
+	process_commits(&args, outputs)
 }
 
 // func list_available_file_extensions(args) {
@@ -28,10 +23,10 @@ func main() {
 //     for _, ext := range sorted_exts:
 //         fmt.Println(f"{ext:<{len_of_longest_ext}} - {ext_to_lines[ext]} lines")
 
-func get_outputs(args) {
+func get_outputs(args *AppArgs) []Output {
 	// It should be pretty easy to add support for having multiple
 	// outputs generated at once, but for now we only support one at a time.
-	outputs := make([]Output)
+	outputs := []Output{}
 
 	// if args.Output == ".svg" || args.output_ext == ".png":
 	//     outputs.append(MatplotlibOutput(args))

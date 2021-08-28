@@ -1,5 +1,7 @@
 package main
 
+import "github.com/alexflint/go-arg"
+
 var desc = `Description:
 	Analyze programming language usage over time in a git repository and produce a
 	graphical or textual representation of the result.
@@ -83,6 +85,12 @@ func (AppArgs) Version() string {
 
 func (AppArgs) Description() string {
 	return desc
+}
+
+func GetArgs() AppArgs {
+	var args AppArgs
+	arg.MustParse(&args)
+	return args
 }
 
 //     svg_group = parser.add_argument_group(
