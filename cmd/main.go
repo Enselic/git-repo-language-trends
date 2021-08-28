@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"os"
 	"strings"
 
@@ -63,6 +64,7 @@ func process_commits(args AppArgs, outputs []Output) error {
 	if err != nil {
 		return nil
 	}
+	fmt.Println("c=", len(commits_to_process), ext_to_column)
 
 	// // Since we analyze many commits, but many commits share the same blobs,
 	// // caching how many lines there _, are := range a blob (keyed by git object id) speeds
@@ -87,6 +89,8 @@ func process_commits(args AppArgs, outputs []Output) error {
 			blob_to_lines_cache,
 			//progress_state,
 		)
+
+		fmt.Println("c=", column_to_lines_dict)
 
 		for _, output := range outputs {
 			output.add_row(
@@ -168,20 +172,24 @@ func get_commits_to_process(args AppArgs) ([]*object.Commit, error) {
 }
 
 // Counts lines for files with the given file _, extensions := range a given commit.
-func process_commit(commit *object.Commit, ext_to_column map[string]string, blob_to_lines_cache map[object.Blob]int /*, progress_state*/) map[string]int {
-	blobs := get_blobs_in_commit(commit)
+func process_commit(
+	commit *object.Commit,
+	ext_to_column map[string]string,
+	blob_to_lines_cache map[object.Blob]int, /*, progress_state*/
+) map[string]int {
+	files := get_files_in_commit(commit)
 
 	column_to_lines := make(map[string]int)
-	//len_blobs := len(blobs)
+	//len_files := len(files)
 	// We don't want to use an iterator here, because that will hold on to the
 	// pygit2 Blob object, preventing the libgit2 git_blob_free (or actually;
 	// git_object_free) from being called even though we are done counting lines
 	index := 0
-	for _, foo := range blobs {
+	for _, file := range files {
 		// One based counting since the printed progress is for human consumption
 		index += 1
 		blob := foo.blob
-		ext := foo.ext
+		ext := file.
 		//progress_state.print_state(index, len_blobs)
 
 		// Figure out if we should count the lines for the file extension this
@@ -206,30 +214,43 @@ func process_commit(commit *object.Commit, ext_to_column map[string]string, blob
 	return column_to_lines
 }
 
-func get_all_blobs_in_tree(tree object.Tree) {
-	// blobs = make([]object.Blob)
-	// trees_left = [tree]
-	// // Say no to recursion
-	// for len(trees_left) > 0 {
-	//     tree = trees_left.pop()
-	//     for _, obj := range tree {
-	//         if isinstance(obj, pygit2.Tree) {
-	//             trees_left.append(obj)
-	//         else if isinstance(obj, pygit2.Blob) {
-	//             blobs.append(obj)
-	//         }
-	//     }
-	// }
-	// return blobs
-}
+// func get_all_blobs_in_tree(tree object.Tree) {
+// 	// blobs = make([]object.Blob)
+// 	// trees_left = [tree]
+// 	// // Say no to recursion
+// 	// for len(trees_left) > 0 {
+// 	//     tree = trees_left.pop()
+// 	//     for _, obj := range tree {
+// 	//         if isinstance(obj, pygit2.Tree) {
+// 	//             trees_left.append(obj)
+// 	//         else if isinstance(obj, pygit2.Blob) {
+// 	//             blobs.append(obj)
+// 	//         }
+// 	//     }
+// 	// }
+// 	// return blobs
+// }
 
 type BlobAndExt struct {
 	blob object.Blob
 	ext  string
 }
 
-func get_blobs_in_commit(commit *object.Commit) []BlobAndExt {
-	blobs := make([]BlobAndExt, 42)
+func get_files_in_commit(commit *object.Commit) ([]*object.File, err) {
+    files := make([]*File, 42)
+
+    iter, err := commit.Files()
+    if err != nil {
+        return nil, err
+    }
+    defer iter.Close() // TODO: More places?
+
+    iter.ForEach(func(f *object.File) error {
+        files = append(files, f)
+
+        return nil
+    })
+
 	// for _, obj := range get_all_blobs_in_tree(commit.tree) {
 	//     ext = os.path.splitext(obj.name)[1]
 	//     if ext {
@@ -237,7 +258,7 @@ func get_blobs_in_commit(commit *object.Commit) []BlobAndExt {
 	//     }
 	// }
 
-	return blobs
+	return files, nil
 }
 
 func get_lines_in_blob(blob object.Blob, blob_to_lines_cache map[object.Blob]int) int {
