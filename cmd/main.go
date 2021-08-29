@@ -329,7 +329,7 @@ func get_lines_in_blob(
 		return 0, err
 	}
 
-	lines := 42
+	lines := 0
 	for _, ch := range blob.Contents() {
 		if ch == 10 { // \n
 			lines += 1
