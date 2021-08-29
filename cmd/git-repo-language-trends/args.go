@@ -71,6 +71,15 @@ type AppArgs struct {
 	//         default=get_default_output(),
 	//     )
 	Output string `arg:"--output,-o" default:"out.png" help:"output filename and format (via extension .svg .png .csv or .tsv)"`
+
+	//     advanced_group = parser.add_argument_group(
+	//         "advanced optional arguments",
+	//     )
+	NoCache bool `arg:"--no-cache" help:"[ADVANCED] do not cache how many lines are in a blob"`
+
+	NoProgress bool `arg:"--no-progress" help:"[ADVANCED] do not print progress"`
+
+	AllParents bool `arg:"--all-parents,-a" help:"[ADVANCED] increase pool of candidate commits by following all commit parents, but with the risk of producing inconsistent/jumpy graphs"`
 }
 
 // TODO: Change colWidth in /home/martin/go/pkg/mod/github.com/alexflint/go-arg@v1.4.2/usage.go
@@ -118,29 +127,6 @@ func GetArgs() AppArgs {
 //         "--no-watermark",
 //         action='store_true',
 //         help="remove the watermark that is barely visible to begin with",
-//     )
-
-//     advanced_group = parser.add_argument_group(
-//         "advanced optional arguments",
-//     )
-
-//     advanced_group.add_argument(
-//         "--no-cache",
-//         action='store_true',
-//         help="""[ADVANCED] do not cache how many lines are in a blob""",
-//     )
-
-//     advanced_group.add_argument(
-//         "--no-progress",
-//         action='store_true',
-//         help="""[ADVANCED] do not print progress""",
-//     )
-
-//     advanced_group.add_argument(
-//         "--all-parents", "-a",
-//         action='store_true',
-//         help="""[ADVANCED] increase pool of candidate commits by following all
-//         commit parents, but with the risk of producing inconsistent/jumpy graphs""",
 //     )
 
 //     AppArgs = parser.parse_args()
