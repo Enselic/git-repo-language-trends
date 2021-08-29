@@ -121,7 +121,7 @@ func process_commits(args AppArgs, outputs []Output) error {
 				column_to_lines_dict, //to_relative_numbers_if_enabled(args, column_to_lines_dict),
 			)
 		}
-		//progress_state.commit_processed()
+		progress_state.commit_processed()
 	}
 	// Wrap things up
 	for _, output := range outputs {
@@ -312,6 +312,9 @@ func process_commit(
 			column_to_lines[column] = column_to_lines[column] + lines
 		}
 	}
+
+	// So that stderr does not pollute e.g. .csv output
+	progress_state.clear()
 
 	return column_to_lines, nil
 }

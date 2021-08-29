@@ -25,8 +25,8 @@ func NewProgress(args AppArgs, total_commits int) *Progress {
 	}
 }
 
-func (P *Progress) print_state(current_file int, total_files int) {
-	if P.args.NoProgress {
+func (p *Progress) print_state(current_file int, total_files int) {
+	if p.args.NoProgress {
 		return
 	}
 
@@ -37,16 +37,16 @@ func (P *Progress) print_state(current_file int, total_files int) {
 
 	// If we recently printed, bail out. Always print if this is the last file we
 	// are processig however, since otherwise output seems "incomplete" to a human.
-	if P.is_rate_limited() && current_file < total_files {
+	if p.is_rate_limited() && current_file < total_files {
 		return
 	}
 
 	var commit_part string
-	if P.total_commits == 1 {
+	if p.total_commits == 1 {
 		commit_part = ""
 	} else {
 		// "commit  12/345 "
-		commit_part = fmt.Sprintf("commit %s ", padded_progress(P.current_commit, P.total_commits))
+		commit_part = fmt.Sprintf("commit %s ", padded_progress(p.current_commit, p.total_commits))
 	}
 
 	// "file  67/890"
@@ -57,17 +57,25 @@ func (P *Progress) print_state(current_file int, total_files int) {
 }
 
 // Avoid writing large amounts of data to stderr, which can slow down execution significantly
-func (P *Progress) is_rate_limited() bool {
+func (p *Progress) is_rate_limited() bool {
 	now := time.Now()
-	if P.last_print != nil && now.Sub(*P.last_print).Seconds() < RATE_LIMIT_INTERVAL_SECONDS {
+	if p.last_print != nil && now.Sub(*p.last_print).Seconds() < RATE_LIMIT_INTERVAL_SECONDS {
 		return true
 	}
-	P.last_print = &now
+	p.last_print = &now
 	return false
 }
 
-func (P *Progress) commit_processed() {
-	P.current_commit += 1
+func (p *Progress) clear() {
+	if p.args.NoProgress {
+		return
+	}
+
+	os.Stderr.WriteString("                                                                              \r")
+}
+
+func (p *Progress) commit_processed() {
+	p.current_commit += 1
 }
 
 func padded_progress(current_commit int, total_commits int) string {
