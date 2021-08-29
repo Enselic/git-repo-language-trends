@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -180,11 +181,13 @@ func get_commits_to_process(args AppArgs) ([]*git.Commit, error) {
 	if err != nil {
 		return nil, err
 	}
+	fmt.Println("w=", walker)
 	//try:
 	walker.Iterate(func(commit *git.Commit) bool {
 		if rows_left == 0 {
 			return false // don't continue
 		}
+		fmt.Println("c=", commit)
 
 		// Make sure --min-interval days has passed since last printed commit before
 		// processing and printing the data for another commit
