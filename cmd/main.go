@@ -47,6 +47,11 @@ func get_outputs(args AppArgs) []Output {
 }
 
 func process_commits(args AppArgs, outputs []Output) error {
+	repo, err := get_repo()
+	if err != nil {
+		return err
+	}
+
 	columns := args.Columns
 	// if len(columns) == 0 {
 	//     fmt.Printf("No file extensions specified, will use top three.")
@@ -59,7 +64,7 @@ func process_commits(args AppArgs, outputs []Output) error {
 	// }
 	ext_to_column := generate_ext_to_column_dict(columns)
 
-	commits_to_process, err := get_commits_to_process(args)
+	commits_to_process, err := get_commits_to_process(repo, args)
 	if err != nil {
 		return nil
 	}
@@ -82,6 +87,7 @@ func process_commits(args AppArgs, outputs []Output) error {
 	for _, commit := range commits_to_process {
 		date := get_commit_date(commit)
 		column_to_lines_dict, err := process_commit(
+			repo,
 			commit,
 			ext_to_column,
 			file_to_lines_cache,
@@ -170,13 +176,13 @@ func get_commits_to_process(args AppArgs) ([]*git.Commit, error) {
 }
 */
 
-func get_commits_to_process(args AppArgs) ([]*git.Commit, error) {
+func get_commits_to_process(repo *git.Repository, args AppArgs) ([]*git.Commit, error) {
 	var commits_to_process []*git.Commit
 
 	rows_left := args.MaxCommits
 
 	var date_of_last_row *time.Time
-	walker, err := get_git_log_walker(args)
+	walker, err := get_git_log_walker(repo, args)
 	if err != nil {
 		return nil, err
 	}
@@ -224,6 +230,7 @@ func reverse_commits(a []*git.Commit) {
 
 // Counts lines for files with the given file _, extensions := range a given commit.
 func process_commit(
+	repo *git.Repository,
 	commit *git.Commit,
 	ext_to_column map[string]string,
 	file_to_lines_cache map[git.Blob]int, /*, progress_state*/
@@ -260,7 +267,7 @@ func process_commit(
 
 		// If the blob has an extension we care about, count the lines!
 		if column != "" {
-			lines, err := get_lines_in_blob(file, file_to_lines_cache)
+			lines, err := get_lines_in_blob(repo, file, file_to_lines_cache)
 			if err != nil {
 				return nil, err
 			}
@@ -298,55 +305,75 @@ func get_blobs_in_commit(commit *git.Commit) ([]*BlobNameAndOid, error) {
 	if err != nil {
 		return nil, err
 	}
-	// defer iter.Close() // TODO: More places?
-
-	// iter.ForEach(func(f *git.File) error {
-	// 	files = append(files, f)
-
-	// 	return nil
-	// })
-
-	// for _, obj := range get_all_blobs_in_tree(commit.tree) {
-	//     ext = os.path.splitext(obj.name)[1]
-	//     if ext {
-	//         blobs.append((obj, ext))
-	//     }
-	// }
 
 	return get_all_blobs_in_tree(tree), nil
 }
 
-func get_lines_in_blob(file *BlobNameAndOid, file_to_lines_cache map[git.Blob]int) (int, error) {
-	// // Don't use the blob.oid directly, because that will keep the underlying git
-	// // blob object alive, preventing freeing of the blob content from
-	// // git_blob_get_rawcontent(), which quickly accumulate to hundred of megs of
-	// // heap memory when analyzing large git projects such as the linux kernel
+func get_lines_in_blob(
+	repo *git.Repository,
+	blob_name_and_oid *BlobNameAndOid,
+	blob_to_lines_cache map[git.Blob]int,
+) (int, error) {
+	// Don't use the blob.oid directly, because that will keep the underlying git
+	// blob object alive, preventing freeing of the blob content from
+	// git_blob_get_rawcontent(), which quickly accumulate to hundred of megs of
+	// heap memory when analyzing large git projects such as the linux kernel
 	// hex = blob.oid.hex
 
-	// if file_to_lines_cache is not None and _, hex := range file_to_lines_cache {
-	//     return file_to_lines_cache[hex]
+	// if blob_to_lines_cache is not None and hex in blob_to_lines_cache {
+	//     return blob_to_lines_cache[hex]
 	// }
 
-	// lines = 0
-	// for _, byte := range memoryview(blob) {
-	//     if byte == 10 {  // \n
-	//         lines += 1
-	//     }
+	blob, err := repo.LookupBlob(blob_name_and_oid.oid)
+	if err != nil {
+		return 0, err
+	}
+
+	lines := 42
+	for _, ch := range blob.Contents() {
+		if ch == 10 { // \n
+			lines += 1
+		}
+	}
+
+	// if blob_to_lines_cache is not None {
+	//     blob_to_lines_cache[hex] = lines
 	// }
 
-	// if file_to_lines_cache is not None {
-	//     file_to_lines_cache[hex] = lines
-	// }
-
-	// return lines
-
-	// lines, err := file.Lines()
-	// if err != nil {
-	// 	return 0, err
-	// }
-
-	return 42, nil //len(lines), nil
+	return lines, nil
 }
+
+// func get_lines_in_blob(file *BlobNameAndOid, file_to_lines_cache map[git.Blob]int) (int, error) {
+// 	// Don't use the blob.oid directly, because that will keep the underlying git
+// 	// blob object alive, preventing freeing of the blob content from
+// 	// git_blob_get_rawcontent(), which quickly accumulate to hundred of megs of
+// 	// heap memory when analyzing large git projects such as the linux kernel
+// 	hex = blob.oid.hex
+
+// 	if file_to_lines_cache is not None and _, hex := range file_to_lines_cache {
+// 	    return file_to_lines_cache[hex]
+// 	}
+
+// 	lines = 0
+// 	for _, byte := range memoryview(blob) {
+// 	    if byte == 10 {  // \n
+// 	        lines += 1
+// 	    }
+// 	}
+
+// 	if file_to_lines_cache is not None {
+// 	    file_to_lines_cache[hex] = lines
+// 	}
+
+// 	return lines
+
+// 	lines, err := file.Lines()
+// 	if err != nil {
+// 		return 0, err
+// 	}
+
+// 	return 42, nil //len(lines), nil
+// }
 
 func get_repo() (*git.Repository, error) {
 	path, exists := os.LookupEnv("GIT_DIR")
@@ -357,12 +384,10 @@ func get_repo() (*git.Repository, error) {
 	return git.OpenRepository(path)
 }
 
-func get_git_log_walker(args AppArgs) (*git.RevWalk, error) {
-	repo, err := get_repo()
-	if err != nil {
-		return nil, err
-	}
-
+func get_git_log_walker(
+	repo *git.Repository,
+	args AppArgs,
+) (*git.RevWalk, error) {
 	rev, err := repo.RevparseSingle(args.FirstCommit)
 	if err != nil {
 		return nil, err
