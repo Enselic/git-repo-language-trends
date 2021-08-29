@@ -68,7 +68,7 @@ func (self *Progress) commit_processed(self) {
 	self.current_commit += 1
 }
 
-func padded_progress(current_commit int, total_commits int) {
+func padded_progress(current_commit int, total_commits int) string {
     pad = len(strconv.FormatInt(total_commits))
-    return f"{current_commit:>{pad}}/{total_commits}"
+	return fmt.Sprintf("%*d/%d", pad, current_commit, total_commits)
 }
