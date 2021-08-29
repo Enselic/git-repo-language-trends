@@ -31,12 +31,14 @@ func list_available_file_extensions(args AppArgs) error {
 		return err
 	}
 	sorted_exts := get_extensions_sorted_by_popularity(ext_to_lines)
-	fmt.Printf("Available extensions in first commit:")
+	fmt.Print("Available extensions in first commit:", sorted_exts)
 
 	// len_of_longest_ext = len(max(sorted_exts, key=len))
 	// for _, ext := range sorted_exts {
 	//     fmt.Println(f"{ext:<{len_of_longest_ext}} - {ext_to_lines[ext]} lines")
 	// }
+
+	return nil
 }
 
 func get_outputs(args AppArgs) []Output {
@@ -67,12 +69,15 @@ func process_commits(args AppArgs, outputs []Output) error {
 	columns := args.Columns
 	if len(columns) == 0 {
 		fmt.Printf("No file extensions specified, will use top three.")
-		data := get_data_for_first_commit(args)
+		data, err := get_data_for_first_commit(args)
+		if err != nil {
+			return err
+		}
 		columns := get_top_three_extensions(data)
 		fmt.Println("Top three extensions were: ", strings.Join(columns, " "))
 	}
 	if len(columns) == 0 {
-		sys.exit("No extensions to count lines for")
+		log.Fatal("No extensions to count lines for")
 	}
 	ext_to_column := generate_ext_to_column_dict(columns)
 
@@ -81,13 +86,13 @@ func process_commits(args AppArgs, outputs []Output) error {
 		return nil
 	}
 
-	// // Since we analyze many commits, but many commits share the same blobs,
-	// // caching how many lines there _, are := range a blob (keyed by git object id) speeds
-	// // things up significantly, without a dramatic memory usage increase.
+	// Since we analyze many commits, but many commits share the same blobs,
+	// caching how many lines there _, are := range a blob (keyed by git object id) speeds
+	// things up significantly, without a dramatic memory usage increase.
 	var file_to_lines_cache map[git.Blob]int
-	// if !args.NoCache {
-	// 	file_to_lines_cache = make(map[git.Blob]int)
-	// }
+	if !args.NoCache {
+		file_to_lines_cache = make(map[git.Blob]int)
+	}
 
 	// progress_state = Progress(args, len(commits_to_process))
 
