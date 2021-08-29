@@ -1,14 +1,12 @@
 package main
 
 import (
-	"errors"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
 
-	"github.com/go-git/go-git/v5"
-	"github.com/go-git/go-git/v5/plumbing/object"
+	git "github.com/libgit2/git2go/v28"
 )
 
 func main() {
@@ -69,9 +67,9 @@ func process_commits(args AppArgs, outputs []Output) error {
 	// // Since we analyze many commits, but many commits share the same blobs,
 	// // caching how many lines there _, are := range a blob (keyed by git object id) speeds
 	// // things up significantly, without a dramatic memory usage increase.
-	var file_to_lines_cache map[object.Blob]int
+	var file_to_lines_cache map[git.Blob]int
 	// if !args.NoCache {
-	// 	file_to_lines_cache = make(map[object.Blob]int)
+	// 	file_to_lines_cache = make(map[git.Blob]int)
 	// }
 
 	// progress_state = Progress(args, len(commits_to_process))
@@ -118,7 +116,8 @@ func process_commits(args AppArgs, outputs []Output) error {
 //     return process_commit(rev.peel(pygit2.Commit), None, None, Progress(args, 1))
 // }
 
-func get_commits_to_process(args AppArgs) ([]*object.Commit, error) {
+/*
+func get_commits_to_process(args AppArgs) ([]*git.Commit, error) {
 	repo, err := get_repo()
 	if err != nil {
 		return nil, err
@@ -129,7 +128,7 @@ func get_commits_to_process(args AppArgs) ([]*object.Commit, error) {
 		return nil, err
 	}
 
-	var commits_to_process []*object.Commit
+	var commits_to_process []*git.Commit
 
 	var date_of_last_row *time.Time
 	rows_left := args.MaxCommits
@@ -137,14 +136,14 @@ func get_commits_to_process(args AppArgs) ([]*object.Commit, error) {
 	if err != nil {
 		return nil, err
 	}
-	iter.ForEach(func(commit *object.Commit) error {
+	iter.ForEach(func(commit *git.Commit) error {
 		if rows_left <= 0 {
 			return errors.New("done")
 		}
 
 		// Make sure --min-interval days has passed since last printed commit before
 		// processing and printing the data for another commit
-		current_date := &commit.Author.When
+		current_date := &commit.Author().When
 		if enough_days_passed(args, date_of_last_row, current_date) {
 			date_of_last_row = current_date
 
@@ -169,10 +168,45 @@ func get_commits_to_process(args AppArgs) ([]*object.Commit, error) {
 
 	return commits_to_process, nil
 }
+*/
+
+func get_commits_to_process(args AppArgs) ([]*git.Commit, error) {
+	var commits_to_process []*git.Commit
+
+    rows_left = args.max_commits
+
+    date_of_last_row = None
+    try:
+        for commit in get_git_log_walker(args):
+            if rows_left == 0:
+                break
+
+            # Make sure --min-interval days has passed since last printed commit before
+            # processing and printing the data for another commit
+            current_date = commit.commit_time
+            if enough_days_passed(args, date_of_last_row, current_date):
+                date_of_last_row = current_date
+
+                commits_to_process.append(commit)
+
+                rows_left -= 1
+    except KeyError:
+        # Analyzing a shallow git clone will cause the walker to throw an
+        # exception in the end. That is not a catastrophe. We already collected
+        # some data. So just keep going after printing a notice.
+        print("WARNING: unexpected end of git log, maybe a shallow git repo?")
+        pass
+
+    # git log shows most recent first, but in the graph
+    # you want to have from oldest to newest, so reverse
+    commits_to_process.reverse()
+
+    return commits_to_process
+
 
 // I can't belive this is not part of standard library in Go, but oh well
 // https://github.com/golang/go/wiki/SliceTricks#reversing
-func reverse_commits(a []*object.Commit) {
+func reverse_commits(a []*git.Commit) {
 	for i := len(a)/2 - 1; i >= 0; i-- {
 		opp := len(a) - 1 - i
 		a[i], a[opp] = a[opp], a[i]
@@ -181,26 +215,26 @@ func reverse_commits(a []*object.Commit) {
 
 // Counts lines for files with the given file _, extensions := range a given commit.
 func process_commit(
-	commit *object.Commit,
+	commit *git.Commit,
 	ext_to_column map[string]string,
-	file_to_lines_cache map[object.Blob]int, /*, progress_state*/
+	file_to_lines_cache map[git.Blob]int, /*, progress_state*/
 ) (map[string]int, error) {
-	files, err := get_files_in_commit(commit)
+	blobs, err := get_blobs_in_commit(commit)
 	if err != nil {
 		return nil, err
 	}
 
 	column_to_lines := make(map[string]int)
-	//len_files := len(files)
+	//len_blobs := len(blobs)
 	// We don't want to use an iterator here, because that will hold on to the
 	// pygit2 Blob object, preventing the libgit2 git_blob_free (or actually;
 	// git_object_free) from being called even though we are done counting lines
 	index := 0
-	for _, file := range files {
+	for _, file := range blobs {
 		// One based counting since the printed progress is for human consumption
 		index += 1
 
-		ext := filepath.Ext(file.Name)
+		ext := filepath.Ext(file.name)
 		//progress_state.print_state(index, len_blobs)
 
 		// Figure out if we should count the lines for the file extension this
@@ -217,7 +251,7 @@ func process_commit(
 
 		// If the blob has an extension we care about, count the lines!
 		if column != "" {
-			lines, err := get_lines_in_file(file, file_to_lines_cache)
+			lines, err := get_lines_in_blob(file, file_to_lines_cache)
 			if err != nil {
 				return nil, err
 			}
@@ -228,37 +262,40 @@ func process_commit(
 	return column_to_lines, nil
 }
 
-// func get_all_blobs_in_tree(tree object.Tree) {
-// 	// blobs = make([]object.Blob)
-// 	// trees_left = [tree]
-// 	// // Say no to recursion
-// 	// for len(trees_left) > 0 {
-// 	//     tree = trees_left.pop()
-// 	//     for _, obj := range tree {
-// 	//         if isinstance(obj, pygit2.Tree) {
-// 	//             trees_left.append(obj)
-// 	//         else if isinstance(obj, pygit2.Blob) {
-// 	//             blobs.append(obj)
-// 	//         }
-// 	//     }
-// 	// }
-// 	// return blobs
-// }
+type BlobNameAndOid struct {
+	name string
+	oid  *git.Oid
+}
 
-func get_files_in_commit(commit *object.Commit) ([]*object.File, error) {
-	var files []*object.File
+func get_all_blobs_in_tree(tree *git.Tree) []*BlobNameAndOid {
+	var blobs []*BlobNameAndOid
 
-	iter, err := commit.Files()
+	tree.Walk(func(s string, te *git.TreeEntry) int {
+		if te.Type == git.ObjectBlob {
+			blobs = append(blobs, &BlobNameAndOid{
+				te.Name,
+				te.Id,
+			})
+		}
+
+		return 0 // < 0 stops walk
+	})
+
+	return blobs
+}
+
+func get_blobs_in_commit(commit *git.Commit) ([]*BlobNameAndOid, error) {
+	tree, err := commit.Tree()
 	if err != nil {
 		return nil, err
 	}
-	defer iter.Close() // TODO: More places?
+	// defer iter.Close() // TODO: More places?
 
-	iter.ForEach(func(f *object.File) error {
-		files = append(files, f)
+	// iter.ForEach(func(f *git.File) error {
+	// 	files = append(files, f)
 
-		return nil
-	})
+	// 	return nil
+	// })
 
 	// for _, obj := range get_all_blobs_in_tree(commit.tree) {
 	//     ext = os.path.splitext(obj.name)[1]
@@ -267,10 +304,10 @@ func get_files_in_commit(commit *object.Commit) ([]*object.File, error) {
 	//     }
 	// }
 
-	return files, nil
+	return get_all_blobs_in_tree(tree), nil
 }
 
-func get_lines_in_file(file *object.File, file_to_lines_cache map[object.Blob]int) (int, error) {
+func get_lines_in_blob(file *BlobNameAndOid, file_to_lines_cache map[git.Blob]int) (int, error) {
 	// // Don't use the blob.oid directly, because that will keep the underlying git
 	// // blob object alive, preventing freeing of the blob content from
 	// // git_blob_get_rawcontent(), which quickly accumulate to hundred of megs of
@@ -294,12 +331,12 @@ func get_lines_in_file(file *object.File, file_to_lines_cache map[object.Blob]in
 
 	// return lines
 
-	lines, err := file.Lines()
-	if err != nil {
-		return 0, err
-	}
+	// lines, err := file.Lines()
+	// if err != nil {
+	// 	return 0, err
+	// }
 
-	return len(lines), nil
+	return 42, nil //len(lines), nil
 }
 
 func get_repo() (*git.Repository, error) {
@@ -308,25 +345,34 @@ func get_repo() (*git.Repository, error) {
 		path = "."
 	}
 
-	return git.PlainOpen(path)
+	return git.OpenRepository(path)
 }
 
-// func get_git_log_walker(args AppArgs) {
-// 	repo, err := get_repo()
-// 	if err == nil {
-// 		return nil, err
-// 	}
+func get_git_log_walker(args AppArgs) (*git.RevWalk, error) {
+	repo, err := get_repo()
+	if err == nil {
+		return nil, err
+	}
 
-// 	rev = repo.revparse_single(args.first_commit)
+	rev, err := repo.RevparseSingle(args.FirstCommit)
+	if err == nil {
+		return nil, err
+	}
 
-// 	walker = repo.walk(rev.peel(pygit2.Commit).oid)
+	commit, err := rev.Peel(git.ObjectCommit)
+	if err != nil {
+		return nil, err
+	}
 
-// 	if !args.AllParents {
-// 		walker.simplify_first_parent()
-// 	}
+	walker, err := repo.Walk()
+	walker.Push(commit.Id())
 
-// 	return walker
-// }
+	// if !args.AllParents {
+	// 	walker.SimplifyFirstParent()
+	// }
+
+	return walker, nil
+}
 
 // Checks if enough days according to --min-interval has passed, i.e. if it is
 // time to process and print another commit.
@@ -349,6 +395,6 @@ func generate_ext_to_column_dict(columns []string) map[string]string {
 	return extension_to_column_dict
 }
 
-func get_commit_date(commit *object.Commit) string {
-	return commit.Author.When.Format("2006-01-02")
+func get_commit_date(commit *git.Commit) string {
+	return commit.Author().When.Format("2006-01-02")
 }
