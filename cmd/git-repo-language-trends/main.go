@@ -94,7 +94,7 @@ func process_commits(args AppArgs, outputs []Output) error {
 		file_to_lines_cache = make(map[git.Blob]int)
 	}
 
-	// progress_state = Progress(args, len(commits_to_process))
+	progress_state := NewProgress(args, len(commits_to_process))
 
 	// Print column headers
 	for _, output := range outputs {
@@ -108,7 +108,7 @@ func process_commits(args AppArgs, outputs []Output) error {
 			commit,
 			ext_to_column,
 			file_to_lines_cache,
-			//progress_state,
+			progress_state,
 		)
 		if err != nil {
 			return err
