@@ -147,7 +147,7 @@ func get_data_for_first_commit(args AppArgs) (map[string]int, error) {
 		return nil, err
 	}
 
-	return process_commit(repo, commit, nil, nil)
+	return process_commit(repo, commit, nil, nil, NewProgress(args, 1))
 }
 
 func revparse_single_to_object(repo *git.Repository, spec string) (*git.Object, error) {
@@ -270,7 +270,8 @@ func process_commit(
 	repo *git.Repository,
 	commit *git.Commit,
 	ext_to_column map[string]string,
-	file_to_lines_cache map[git.Blob]int, /*, progress_state*/
+	file_to_lines_cache map[git.Blob]int,
+	progress_state *Progress,
 ) (map[string]int, error) {
 	blobs, err := get_blobs_in_commit(commit)
 	if err != nil {
@@ -278,7 +279,7 @@ func process_commit(
 	}
 
 	column_to_lines := make(map[string]int)
-	//len_blobs := len(blobs)
+	len_blobs := len(blobs)
 	// We don't want to use an iterator here, because that will hold on to the
 	// pygit2 Blob object, preventing the libgit2 git_blob_free (or actually;
 	// git_object_free) from being called even though we are done counting lines
@@ -288,7 +289,7 @@ func process_commit(
 		index += 1
 
 		ext := filepath.Ext(file.name)
-		//progress_state.print_state(index, len_blobs)
+		progress_state.print_state(index, len_blobs)
 
 		// Figure out if we should count the lines for the file extension this
 		// blob has, by figuring out what column the lines should be added to,
