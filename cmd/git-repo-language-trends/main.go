@@ -159,60 +159,6 @@ func revparse_single_to_object(repo *git.Repository, spec string) (*git.Object, 
 	return rev.Peel(git.ObjectCommit)
 }
 
-/*
-func get_commits_to_process(args AppArgs) ([]*git.Commit, error) {
-	repo, err := get_repo()
-	if err != nil {
-		return nil, err
-	}
-
-	ref, err := repo.Head()
-	if err != nil {
-		return nil, err
-	}
-
-	var commits_to_process []*git.Commit
-
-	var date_of_last_row *time.Time
-	rows_left := args.MaxCommits
-	iter, err := repo.Log(&git.LogOptions{From: ref.Hash()})
-	if err != nil {
-		return nil, err
-	}
-	iter.ForEach(func(commit *git.Commit) error {
-		if rows_left <= 0 {
-			return errors.New("done")
-		}
-
-		// Make sure --min-interval days has passed since last printed commit before
-		// processing and printing the data for another commit
-		current_date := &commit.Author().When
-		if enough_days_passed(args, date_of_last_row, current_date) {
-			date_of_last_row = current_date
-
-			commits_to_process = append(commits_to_process, commit)
-
-			rows_left -= 1
-		}
-
-		return nil
-	})
-
-	// except KeyError:
-	//     // Analyzing a shallow git clone will cause the walker to throw an
-	//     // _, exception := range the end. That is not a catastrophe. We already collected
-	//     // some data. So just keep going after printing a notice.
-	//     fmt.Printf("WARNING: unexpected end of git log, maybe a shallow git repo?")
-	//     pass
-
-	// // git log shows most recent first, but for the graph
-	// // you want to have from oldest to newest, so reverse
-	reverse_commits(commits_to_process)
-
-	return commits_to_process, nil
-}
-*/
-
 func get_commits_to_process(repo *git.Repository, args AppArgs) ([]*git.Commit, error) {
 	var commits_to_process []*git.Commit
 
@@ -335,7 +281,7 @@ func get_all_blobs_in_tree(tree *git.Tree) []*BlobNameAndOid {
 			})
 		}
 
-		return 0 // < 0 stops walk
+		return 0 // less than 0 stops walk, but we want to continue
 	})
 
 	return blobs
@@ -383,38 +329,6 @@ func get_lines_in_blob(
 
 	return lines, nil
 }
-
-// func get_lines_in_blob(file *BlobNameAndOid, file_to_lines_cache map[git.Blob]int) (int, error) {
-// 	// Don't use the blob.oid directly, because that will keep the underlying git
-// 	// blob object alive, preventing freeing of the blob content from
-// 	// git_blob_get_rawcontent(), which quickly accumulate to hundred of megs of
-// 	// heap memory when analyzing large git projects such as the linux kernel
-// 	hex = blob.oid.hex
-
-// 	if file_to_lines_cache is not None and _, hex := range file_to_lines_cache {
-// 	    return file_to_lines_cache[hex]
-// 	}
-
-// 	lines = 0
-// 	for _, byte := range memoryview(blob) {
-// 	    if byte == 10 {  // \n
-// 	        lines += 1
-// 	    }
-// 	}
-
-// 	if file_to_lines_cache is not None {
-// 	    file_to_lines_cache[hex] = lines
-// 	}
-
-// 	return lines
-
-// 	lines, err := file.Lines()
-// 	if err != nil {
-// 		return 0, err
-// 	}
-
-// 	return 42, nil //len(lines), nil
-// }
 
 func get_repo() (*git.Repository, error) {
 	path, exists := os.LookupEnv("GIT_DIR")
