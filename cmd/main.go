@@ -173,36 +173,45 @@ func get_commits_to_process(args AppArgs) ([]*git.Commit, error) {
 func get_commits_to_process(args AppArgs) ([]*git.Commit, error) {
 	var commits_to_process []*git.Commit
 
-    rows_left = args.max_commits
+	rows_left := args.MaxCommits
 
-    date_of_last_row = None
-    try:
-        for commit in get_git_log_walker(args):
-            if rows_left == 0:
-                break
+	var date_of_last_row *time.Time
+	walker, err := get_git_log_walker(args)
+	if err != nil {
+		return nil, err
+	}
+	//try:
+	walker.Iterate(func(commit *git.Commit) bool {
+		if rows_left == 0 {
+			return false // don't continue
+		}
 
-            # Make sure --min-interval days has passed since last printed commit before
-            # processing and printing the data for another commit
-            current_date = commit.commit_time
-            if enough_days_passed(args, date_of_last_row, current_date):
-                date_of_last_row = current_date
+		// Make sure --min-interval days has passed since last printed commit before
+		// processing and printing the data for another commit
+		current_date := &commit.Author().When
+		if enough_days_passed(args, date_of_last_row, current_date) {
+			date_of_last_row = current_date
 
-                commits_to_process.append(commit)
+			commits_to_process = append(commits_to_process, commit)
 
-                rows_left -= 1
-    except KeyError:
-        # Analyzing a shallow git clone will cause the walker to throw an
-        # exception in the end. That is not a catastrophe. We already collected
-        # some data. So just keep going after printing a notice.
-        print("WARNING: unexpected end of git log, maybe a shallow git repo?")
-        pass
+			rows_left -= 1
+		}
 
-    # git log shows most recent first, but in the graph
-    # you want to have from oldest to newest, so reverse
-    commits_to_process.reverse()
+		return true // continue
+	})
+	// except KeyError:
+	//     // Analyzing a shallow git clone will cause the walker to throw an
+	//     // exception in the end. That is not a catastrophe. We already collected
+	//     // some data. So just keep going after printing a notice.
+	//     print("WARNING: unexpected end of git log, maybe a shallow git repo?")
+	//     pass
 
-    return commits_to_process
+	// git log shows most recent first, but in the graph
+	// you want to have from oldest to newest, so reverse
+	reverse_commits(commits_to_process)
 
+	return commits_to_process, nil
+}
 
 // I can't belive this is not part of standard library in Go, but oh well
 // https://github.com/golang/go/wiki/SliceTricks#reversing
@@ -365,6 +374,9 @@ func get_git_log_walker(args AppArgs) (*git.RevWalk, error) {
 	}
 
 	walker, err := repo.Walk()
+	if err != nil {
+		return nil, err
+	}
 	walker.Push(commit.Id())
 
 	// if !args.AllParents {
