@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -11,21 +12,24 @@ import (
 
 func main() {
 	args := GetArgs()
-	// if args2.List:
-	//     list_available_file_extensions(args)
-	// else:
-	outputs := get_outputs(args)
-	process_commits(args, outputs)
+	if args.List {
+		list_available_file_extensions(args)
+	} else {
+		outputs := get_outputs(args)
+		process_commits(args, outputs)
+	}
 }
 
-// func list_available_file_extensions(args) {
-//     ext_to_lines = get_data_for_first_commit(args)
-//     sorted_exts = get_extensions_sorted_by_popularity(ext_to_lines)
-//     fmt.Printf("Available _, extensions := range first commit:")
+func list_available_file_extensions(args AppArgs) {
+	ext_to_lines := get_data_for_first_commit(args)
+	sorted_exts := get_extensions_sorted_by_popularity(ext_to_lines)
+	fmt.Printf("Available extensions in first commit:")
 
-//     len_of_longest_ext = len(max(sorted_exts, key=len))
-//     for _, ext := range sorted_exts:
-//         fmt.Println(f"{ext:<{len_of_longest_ext}} - {ext_to_lines[ext]} lines")
+	// len_of_longest_ext = len(max(sorted_exts, key=len))
+	// for _, ext := range sorted_exts {
+	//     fmt.Println(f"{ext:<{len_of_longest_ext}} - {ext_to_lines[ext]} lines")
+	// }
+}
 
 func get_outputs(args AppArgs) []Output {
 	// It should be pretty easy to add support for having multiple
@@ -53,15 +57,15 @@ func process_commits(args AppArgs, outputs []Output) error {
 	}
 
 	columns := args.Columns
-	// if len(columns) == 0 {
-	//     fmt.Printf("No file extensions specified, will use top three.")
-	//     data = get_data_for_first_commit(args)
-	//     columns = get_top_three_extensions(data)
-	//     fmt.Println("Top three extensions were: ", {' '.join(columns)})
-	// }
-	// if len(columns) == 0 {
-	//     sys.exit("No extensions to count lines for")
-	// }
+	if len(columns) == 0 {
+		fmt.Printf("No file extensions specified, will use top three.")
+		data = get_data_for_first_commit(args)
+		columns = get_top_three_extensions(data)
+		fmt.Println("Top three extensions were: ", strings.Join(columns, " "))
+	}
+	if len(columns) == 0 {
+		sys.exit("No extensions to count lines for")
+	}
 	ext_to_column := generate_ext_to_column_dict(columns)
 
 	commits_to_process, err := get_commits_to_process(repo, args)
@@ -114,13 +118,33 @@ func process_commits(args AppArgs, outputs []Output) error {
 	return nil
 }
 
-// // Calls process_commit for the first commit (possibly from --first-commit)
-// func get_data_for_first_commit(args) {
-//     repo = get_repo()
-//     r, err := git.PlainOpen(path)
-//     rev = repo.revparse_single(args.first_commit)
-//     return process_commit(rev.peel(pygit2.Commit), None, None, Progress(args, 1))
-// }
+// Calls process_commit for the first commit (possibly from --first-commit)
+func get_data_for_first_commit(args AppArgs) (map[string]int, error) {
+	repo, err := get_repo()
+	if err != nil {
+		return nil, err
+	}
+	object, err := revparse_single_to_object(repo, args.FirstCommit)
+	if err != nil {
+		return nil, err
+	}
+
+	commit, err := object.AsCommit()
+	if err != nil {
+		return nil, err
+	}
+
+	return process_commit(repo, commit, nil, nil)
+}
+
+func revparse_single_to_object(repo *git.Repository, spec string) (*git.Object, error) {
+	rev, err := repo.RevparseSingle(spec)
+	if err != nil {
+		return nil, err
+	}
+
+	return rev.Peel(git.ObjectCommit)
+}
 
 /*
 func get_commits_to_process(args AppArgs) ([]*git.Commit, error) {
@@ -388,12 +412,7 @@ func get_git_log_walker(
 	repo *git.Repository,
 	args AppArgs,
 ) (*git.RevWalk, error) {
-	rev, err := repo.RevparseSingle(args.FirstCommit)
-	if err != nil {
-		return nil, err
-	}
-
-	commit, err := rev.Peel(git.ObjectCommit)
+	commit, err := revparse_single_to_object(repo, args.FirstCommit)
 	if err != nil {
 		return nil, err
 	}
