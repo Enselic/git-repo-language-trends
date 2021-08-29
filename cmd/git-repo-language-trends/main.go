@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -12,16 +13,23 @@ import (
 
 func main() {
 	args := GetArgs()
+	var err error
 	if args.List {
-		list_available_file_extensions(args)
+		err = list_available_file_extensions(args)
 	} else {
 		outputs := get_outputs(args)
-		process_commits(args, outputs)
+		err = process_commits(args, outputs)
+	}
+	if err != nil {
+		log.Fatal(err)
 	}
 }
 
-func list_available_file_extensions(args AppArgs) {
-	ext_to_lines := get_data_for_first_commit(args)
+func list_available_file_extensions(args AppArgs) error {
+	ext_to_lines, err := get_data_for_first_commit(args)
+	if err != nil {
+		return err
+	}
 	sorted_exts := get_extensions_sorted_by_popularity(ext_to_lines)
 	fmt.Printf("Available extensions in first commit:")
 
@@ -59,8 +67,8 @@ func process_commits(args AppArgs, outputs []Output) error {
 	columns := args.Columns
 	if len(columns) == 0 {
 		fmt.Printf("No file extensions specified, will use top three.")
-		data = get_data_for_first_commit(args)
-		columns = get_top_three_extensions(data)
+		data := get_data_for_first_commit(args)
+		columns := get_top_three_extensions(data)
 		fmt.Println("Top three extensions were: ", strings.Join(columns, " "))
 	}
 	if len(columns) == 0 {
