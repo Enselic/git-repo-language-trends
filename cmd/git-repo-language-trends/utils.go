@@ -17,8 +17,6 @@ func get_extensions_sorted_by_popularity(column_to_lines_dict map[string]int) []
 		entries = append(entries, StringAndInt{k, v})
 	}
 
-	// TODO: r = sorted(column_to_lines_dict, key=column_to_lines_dict.get)
-	// r.reverse()
 	sort.Slice(entries, func(i, j int) bool { return entries[i].i < entries[j].i })
 
 	var extensions []string
@@ -31,8 +29,14 @@ func get_extensions_sorted_by_popularity(column_to_lines_dict map[string]int) []
 // Excludes some extensions very unlikely to be of interest, e.g. '.lock'
 func get_top_three_extensions(column_to_lines_dict map[string]int) []string {
 	data := get_extensions_sorted_by_popularity(column_to_lines_dict)
-	// TODO: filtered_data = list(filter(lambda e: e != ".lock", data))
-	return data[0:3]
+	var result []string
+	for _, item := range data {
+		if item != ".lock" {
+			result = append(result, item)
+		}
+	}
+
+	return result[0:3]
 }
 
 // func to_relative_numbers_if_enabled(args, column_to_lines) {
