@@ -46,11 +46,11 @@ func (p *Progress) print_state(current_file int, total_files int) {
 		commit_part = ""
 	} else {
 		// "commit  12/345 "
-		commit_part = fmt.Sprintf("commit %s ", padded_progress(p.current_commit, p.total_commits))
+		commit_part = fmt.Sprintf("commit %s ", PaddedProgress(p.current_commit, p.total_commits))
 	}
 
 	// "file  67/890"
-	var file_part = fmt.Sprintf("file %s", padded_progress(current_file, total_files))
+	var file_part = fmt.Sprintf("file %s", PaddedProgress(current_file, total_files))
 
 	// "Counting lines in commit  12/345 file  67/890"
 	os.Stderr.WriteString(fmt.Sprintf("Counting lines in %s%s\r", commit_part, file_part))
@@ -78,7 +78,7 @@ func (p *Progress) commit_processed() {
 	p.current_commit += 1
 }
 
-func padded_progress(current_commit int, total_commits int) string {
+func PaddedProgress(current_commit int, total_commits int) string {
 	pad := len(strconv.FormatInt(int64(total_commits), 10))
 	return fmt.Sprintf("%*d/%d", pad, current_commit, total_commits)
 }
