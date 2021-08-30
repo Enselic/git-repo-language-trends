@@ -1,15 +1,31 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"sort"
+)
+
+// Is there not a nicer way to do this?? Go is such a silly language sometimes ...
+type StringAndInt struct {
+	s string
+	i int
+}
 
 func get_extensions_sorted_by_popularity(column_to_lines_dict map[string]int) []string {
-	var keys []string
-	for key := range column_to_lines_dict {
-		keys = append(keys, key)
+	var entries []StringAndInt
+	for k, v := range column_to_lines_dict {
+		entries = append(entries, StringAndInt{k, v})
 	}
+
 	// TODO: r = sorted(column_to_lines_dict, key=column_to_lines_dict.get)
 	// r.reverse()
-	return keys
+	sort.Slice(entries, func(i, j int) bool { return entries[i].i < entries[j].i })
+
+	var extensions []string
+	for _, entry := range entries {
+		extensions = append(extensions, entry.s)
+	}
+	return extensions
 }
 
 // Excludes some extensions very unlikely to be of interest, e.g. '.lock'
