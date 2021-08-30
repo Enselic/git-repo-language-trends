@@ -31,12 +31,19 @@ func list_available_file_extensions(args AppArgs) error {
 		return err
 	}
 	sorted_exts := get_extensions_sorted_by_popularity(ext_to_lines)
-	fmt.Print("Available extensions in first commit:", sorted_exts)
+	fmt.Print("Available extensions in first commit:")
 
-	// len_of_longest_ext = len(max(sorted_exts, key=len))
-	// for _, ext := range sorted_exts {
-	//     fmt.Println(f"{ext:<{len_of_longest_ext}} - {ext_to_lines[ext]} lines")
-	// }
+	len_of_longest_ext := 0
+	for _, ext := range sorted_exts {
+		cur_len := len(ext)
+		if cur_len > len_of_longest_ext {
+			len_of_longest_ext = cur_len
+		}
+	}
+
+	for _, ext := range sorted_exts {
+		fmt.Printf("%*s - %d lines\n", len_of_longest_ext, ext, ext_to_lines[ext])
+	}
 
 	return nil
 }
@@ -354,9 +361,9 @@ func get_git_log_walker(
 	}
 	walker.Push(commit.Id())
 
-	// if !args.AllParents {
-	// 	walker.SimplifyFirstParent()
-	// }
+	if !args.AllParents {
+		walker.SimplifyFirstParent()
+	}
 
 	return walker, nil
 }
