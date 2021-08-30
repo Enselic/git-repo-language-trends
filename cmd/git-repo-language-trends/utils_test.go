@@ -54,7 +54,11 @@ func TestGetExtensionsSortedByPopularity() {
 
 // Helper function that tests that input hash map entries are transformed
 // to the expected result
-func PerformMapToArrayTest(input_map_entries, transformer, expected_output_entries) {
+func PerformMapToArrayTest(
+	input_map_entries map[string]int,
+	 transformer func(map[string]int) []string,
+	  expected_output_entries []string,
+	  ) {
     result = transformer(input_map_entries)
     assert result == expected_output_entries
 }
