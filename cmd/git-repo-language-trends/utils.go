@@ -36,7 +36,17 @@ func get_top_three_extensions(column_to_lines_dict map[string]int) []string {
 		}
 	}
 
-	return result[0:3]
+	// More clever way must exist?
+	l := len(result)
+	if l > 2 {
+		return result[0:3]
+	} else if l > 1 {
+		return result[0:2]
+	} else if l > 0 {
+		return result[0:1]
+	} else {
+		return result
+	}
 }
 
 // func to_relative_numbers_if_enabled(args, column_to_lines) {
