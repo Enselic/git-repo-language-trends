@@ -7,7 +7,7 @@ import (
 )
 
 func TestGetTopThreeExtensionsFrom_0(t *testing.T) {
-	performMapToArrayTest(t, map[string]int{}, get_top_three_extensions, []string{})
+	performMapToArrayTest(t, map[string]int{}, get_top_three_extensions, nil)
 }
 
 func TestGetTopThreeExtensionsFrom_1(t *testing.T) {
@@ -67,5 +67,5 @@ func performMapToArrayTest(
 	expected_output_entries []string,
 ) {
 	result := transformer(input_map_entries)
-	assert.Equal(t, result, expected_output_entries, "works")
+	assert.Equal(t, expected_output_entries, result, "works")
 }

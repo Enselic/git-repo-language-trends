@@ -17,7 +17,7 @@ func get_extensions_sorted_by_popularity(column_to_lines_dict map[string]int) []
 		entries = append(entries, StringAndInt{k, v})
 	}
 
-	sort.Slice(entries, func(i, j int) bool { return entries[i].i < entries[j].i })
+	sort.Slice(entries, func(i, j int) bool { return entries[i].i > entries[j].i })
 
 	var extensions []string
 	for _, entry := range entries {
