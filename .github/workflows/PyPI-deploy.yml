@@ -8,15 +8,12 @@ on:
 jobs:
   pypi-upload:
     name: PyPI upload
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-24.04
     defaults:
       run:
         shell: bash
     steps:
       - uses: actions/checkout@v2
-      - uses: actions/setup-python@v2
-        with:
-          python-version: 3.6
       - name: Install dependencies
         run: |
           pip install build twine

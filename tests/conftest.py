@@ -5,7 +5,7 @@ import pytest
 
 @pytest.fixture
 def random_output_basename(tmp_path):
-    return str(tmp_path / f"output-{randint(1,100000)}")
+    return str(tmp_path / f"output-{randint(1, 100000)}")
 
 
 @pytest.fixture
