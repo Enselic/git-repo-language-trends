@@ -72,6 +72,14 @@ want to generate plots yourself from the raw data, and limited to 10 commits:
 
 # Installation
 
+Ubuntu/Debian
+
+```
+sudo apt install python3-pygit
+sudo apt install python3-pygit2
+PYTHONPATH=$(pwd)/src python3 -m git_repo_language_trends
+ ```
+
 Requirements:
 * **Python 3.6** or later
 * **pip 19.0** or later
