@@ -206,11 +206,11 @@ def get_blobs_in_commit(commit):
 
 
 def get_lines_in_blob(blob, blob_to_lines_cache):
-    # Don't use the blob.oid directly, because that will keep the underlying git
+    # Don't use the blob.id directly, because that will keep the underlying git
     # blob object alive, preventing freeing of the blob content from
     # git_blob_get_rawcontent(), which quickly accumulate to hundred of megs of
     # heap memory when analyzing large git projects such as the linux kernel
-    hex = blob.oid.hex
+    hex = str(blob.id)
 
     if blob_to_lines_cache is not None and hex in blob_to_lines_cache:
         return blob_to_lines_cache[hex]
@@ -235,7 +235,7 @@ def get_git_log_walker(args):
 
     rev = repo.revparse_single(args.first_commit)
 
-    walker = repo.walk(rev.peel(pygit2.Commit).oid)
+    walker = repo.walk(rev.peel(pygit2.Commit).id)
 
     if not args.all_parents:
         walker.simplify_first_parent()

@@ -15,9 +15,8 @@ jobs:
       fail-fast: false
       matrix:
         os:
-          - { name: ubuntu-18.04 }
-          - { name: macos-10.15 }
-          - { name: windows-2019 }
+          - { name: ubuntu-22.04 }
+          - { name: macos-15 }
     runs-on: ${{ matrix.os.name }}
     defaults:
       run:
@@ -26,13 +25,9 @@ jobs:
       - uses: actions/checkout@v2
         with:
           fetch-depth: 0
-      - uses: actions/setup-python@v2
-        with:
-          python-version: 3.6
       - name: Install
         run: |
-          # "We recommend you use --use-feature=in-tree-build to test your packages with this new behavior before it becomes the default."
-          pip install --use-feature=in-tree-build .
+          pip install .
       - name: Install dev dependencies
         run: |
           pip install flake8 pytest
@@ -54,8 +49,3 @@ jobs:
         run: |
           export OUTDIR=grlt-samples
           ./scripts/generate-png-and-svg-samples.sh
-      - name: Archive code coverage results
-        uses: actions/upload-artifact@v2
-        with:
-          name: grlt-samples-${{ matrix.os.name }}
-          path: grlt-samples

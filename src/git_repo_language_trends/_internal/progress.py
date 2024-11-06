@@ -30,10 +30,10 @@ class Progress:
             commit_part = ""
         else:
             # "commit  12/345 "
-            commit_part = f"commit {padded_progress(self.current_commit,self.total_commits)} "
+            commit_part = f"commit {padded_progress(self.current_commit, self.total_commits)} "
 
         # "file  67/890"
-        file_part = f"file {padded_progress(current_file,total_files)}"
+        file_part = f"file {padded_progress(current_file, total_files)}"
 
         # "Counting lines in commit  12/345 file  67/890"
         print(
