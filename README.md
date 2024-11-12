@@ -72,20 +72,17 @@ want to generate plots yourself from the raw data, and limited to 10 commits:
 
 # Installation
 
-Requirements:
-* **Python 3.6** or later
-* **pip 19.0** or later
-
-When in doubt, begin by upgrading `pip`:
-
-    python3 -m pip install --upgrade pip
-
-Then install with
-
-    python3 -m pip install git-repo-language-trends
+```sh
+# Install the tool to ~/opt/git-repo-language-trends/bin/git-repo-language-trends
+python3 -m venv ~/opt/git-repo-language-trends
+~/opt/git-repo-language-trends/bin/pip install git-repo-language-trends
+```
 
 
 # Usage
+
+For brevity `~/opt/git-repo-language-trends/bin/git-repo-language-trends` is
+shortented to `git-repo-language-trends` below.
 
 First go to the git repository for a project.
 
